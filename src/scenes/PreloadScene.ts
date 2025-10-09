@@ -21,8 +21,8 @@ export default class PreloadScene extends Phaser.Scene {
 
     // Sprite sheet-ek
     this.load.spritesheet('bean-growth', 'assets/images/bean-growth.png', {
-      frameWidth: 64,
-      frameHeight: 64,
+      frameWidth: 68,  // Helyes méret
+      frameHeight: 92, // Helyes méret
     });
 
     // Sajt képek külön

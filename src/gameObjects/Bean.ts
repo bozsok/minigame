@@ -102,12 +102,33 @@ export class Bean extends Phaser.GameObjects.Sprite {
   }
 
   /**
-   * Bab begyűjtése
+   * Bab klikk kezelése - csak esemény küldése, nem automatikus gyűjtés
    */
   public collect(): void {
     if (!this.isCollectable || this.beanState === BeanState.COLLECTED) {
       return;
     }
+
+    console.log(`Bean ${this.beanData.id} klikkelve - esemény küldése BeanManager-nek`);
+
+    // Esemény küldése a BeanManager-nek - BeanManager dönti el, hogy elfogadja-e
+    this.scene.events.emit('bean-collected', {
+      beanId: this.beanData.id,
+      x: this.x,
+      y: this.y,
+      timestamp: Date.now()
+    });
+  }
+
+  /**
+   * Bab tényleges begyűjtése - csak a BeanManager hívhatja
+   */
+  public performCollection(): void {
+    if (!this.isCollectable || this.beanState === BeanState.COLLECTED) {
+      return;
+    }
+
+    console.log(`Bean ${this.beanData.id} tényleges gyűjtése`);
 
     this.isCollectable = false;
     this.beanState = BeanState.COLLECTED;
@@ -123,14 +144,6 @@ export class Bean extends Phaser.GameObjects.Sprite {
       onComplete: () => {
         this.destroy();
       }
-    });
-
-    // Esemény küldése a BeanManager-nek
-    this.scene.events.emit('bean-collected', {
-      beanId: this.beanData.id,
-      x: this.x,
-      y: this.y,
-      timestamp: Date.now()
     });
   }
 

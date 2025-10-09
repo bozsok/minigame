@@ -15,6 +15,9 @@ Ez az architektúra úgy lett tervezve, hogy támogassa a játékterv dokumentum
 | 2025-01-09 | 2.0 | Phase 2: Bab gyűjtés rendszer implementálva | Maya |
 | 2025-01-09 | 2.1 | Phase 2 TELJES: Teljesképernyős rendszer tökéletesítve | Maya |
 | 2025-01-09 | 2.2 | Bab gyűjtés rendszer befejezve - klikk mechanika + egér optimalizálás | Maya |
+| 2025-10-10 | 3.0 | **PHASE 2 INTERACTIVE SYSTEMS COMPLETE** - Interaktív üveg és korsó rendszer | Maya |
+| 2025-10-10 | 3.1 | Jar Management System - Dupla klikk, drag & drop, pitcher integrációval | Maya |
+| 2025-10-10 | 3.2 | Responsive Scaling System - Valós arányosítás minden elemre | Maya |
 
 ## Technikai Áttekintés
 
@@ -472,38 +475,77 @@ export const GameBalance = {
 - "Basic Scene Management System"
 - "Asset Loading Foundation"
 
-### 2. Fázis: Játék Rendszerek (3 hét)
+### 2. Fázis: Játék Rendszerek (3 hét) - **BEFEJEZVE** ✅
 
 #### Játékmenet Rendszerek
 - [x] Bab gyűjtés implementáció - **BEFEJEZVE** (teljes funkcionalitás)
 - [x] Teljesképernyős rendszer - **BEFEJEZVE**
-- [ ] Fizika és ütközés rendszer
-- [ ] Játék állapot kezelés
-- [-] UI keretrendszer alapok - **RÉSZBEN KÉSZ**
+- [x] **Üveg interakció rendszer** - **BEFEJEZVE** (dupla-klikk + drag & drop)
+- [x] **Pitcher drop rendszer** - **BEFEJEZVE** (glow + validáció + animáció)
+- [x] **Responsive scaling rendszer** - **BEFEJEZVE** (valós arányosítás)
+- [x] UI keretrendszer alapok - **BEFEJEZVE** (bab számláló + üveg fázis)
 
 #### Story Epics
 - [x] "Bean Collection System Implementation" - **BEFEJEZVE** (spawn + klikk + UI)
 - [x] "Fullscreen System with Dynamic Background Scaling" - **BEFEJEZVE**
 - [x] "External HTML Integration API" - **BEFEJEZVE**
-- [ ] "Physics and Collision Framework"
-- [ ] "Game State Management System"
+- [x] **"Interactive Jar Management System"** - **BEFEJEZVE** (dupla-klikk + animáció)
+- [x] **"Drag & Drop Pitcher Integration"** - **BEFEJEZVE** (precision collision)
+- [x] **"Universal Responsive Scaling"** - **BEFEJEZVE** (valós arányosítás)
 
-#### Megvalósított Komponensek (Phase 2 - MAJDNEM KÉSZ):
-**Bab Rendszer Funkcionális:**
+### 3. Fázis: Interaktív Rendszerek (ÚJ - BEFEJEZVE) ✅
+
+#### Fejlett Játékmenet Funkciók
+- [x] **Jar Lifecycle Management** - Nyitás → Töltés → Zárás → Szállítás
+- [x] **Advanced Animation System** - Kétfázisú lid animációk reális mozgással
+- [x] **Precision Interaction System** - Téglalap alapú collision detection
+- [x] **Visual Feedback System** - Glow effektek és highlighting rendszer  
+- [x] **Responsive Design System** - Valós matematikai arányosítás
+- [x] **Game Progression System** - Automatikus jar váltás és victory detection
+
+#### Megvalósított Komponensek (Phase 2 + 3 - TELJES):
+
+**🫘 Bab Rendszer (BEFEJEZVE):**
 - ✅ `src/gameObjects/Bean.ts` - Teljes bab objektum klikk kezeléssel és animációkkal
-- ✅ `src/systems/BeanManager.ts` - 250 bab egyidejű spawn optimalizált eloszlással
+- ✅ `src/systems/BeanManager.ts` - 250 bab egyidejű spawn + valós arányosítás
 - ✅ `src/types/BeanTypes.ts` - Kiterjesztett bab típusdefiníciók klaszter támogatással
 - ✅ Véletlenszerű frame kiválasztás (0,1,2) - 3 különböző bab sprite
-- ✅ - Collision map alapú spawning - pantry-collision.jpg pixel alapú fehér területeken
-- Egér gyakorlás optimalizáció - 80px minimum távolság a babok között
-- Klaszter-mentes eloszlás - minden bab egyedi pozícióban
-- 250 bab egyidejű spawn - 5 üveg × 50 bab matematikával
-- Klikk gyűjtés mechanika - bal egérgomb kezelés animációval
-- UI valós idejű frissítés - bab számláló és üveg fázis kijelző fehér területek
+- ✅ Collision map alapú spawning - pantry-collision.jpg pixel alapú fehér területeken
+- ✅ Egér gyakorlás optimalizáció - 80px minimum távolság babok között
+- ✅ Klaszter-mentes eloszlás - minden bab egyedi pozícióban
+- ✅ 250 bab egyidejű spawn - 5 üveg × 50 bab matematikával
 - ✅ Klikk gyűjtés mechanika - bal egérgomb + animáció + eseménykezelés
-- ✅ Egér gyakorlás optimalizálás - 80px minimum távolság babok között
-- ✅ Üveg fázis számítás - 10 bab/fázis, 50 bab/üveg, 5 üveg összesen
 - ✅ UI frissítés rendszer - valós idejű számláló és fázis kijelző
+- ✅ **Responsive Scaling** - Valós canvas arányosítás (fullscreen ↔ ablakos)
+
+**🏺 Üveg Rendszer (ÚJ - TELJES):**
+- ✅ `src/gameObjects/Jar.ts` - Interaktív üveg dupla-klikk mechanikával
+- ✅ `src/systems/JarManager.ts` - 5 üveg koordinációval és automatikus váltással
+- ✅ Dupla-klikk nyitás/zárás - 300ms időzítéssel és animációkkal
+- ✅ Fedő animáció rendszer - Kétfázisú eltűnés/megjelenés (tetejére ↔ oldalra)
+- ✅ Bean growth vizualizáció - 68x92px sprite 5 fázissal (10 bab/fázis)
+- ✅ Drag & Drop mechanika - Teli üvegek húzhatók a korsóhoz
+- ✅ Proximity glow system - Valós idejű közelség érzékelés
+- ✅ Jar highlighting - Automatikus villogtatás következő üveg jelzésére
+- ✅ **Responsive Scaling** - Valós canvas arányosítás pozíciókkal
+
+**🍺 Pitcher Rendszer (ÚJ - TELJES):**
+- ✅ `src/gameObjects/Pitcher.ts` - Drop zone korsó jobb alsó sarokban
+- ✅ Glow effekt rendszer - Pulzáló arany/sárga kör animációval
+- ✅ Jar validáció - Csak teli és zárt üvegeket fogad el
+- ✅ Drop animáció - Esési effekt forgatással és átlátszósággal
+- ✅ Jar counter - 5 üveg leadásának nyomonkövetése
+- ✅ Victory detection - Mind az 5 üveg leadásakor játék befejezés
+- ✅ **Responsive Scaling** - Valós canvas arányosítás és pozicionálás
+
+**🎯 Responsive Scaling Rendszer (ÚJ - FORRADALMI):**
+- ✅ **Valós arányosítás** - Huszárvágás (0.25) helyett matematikai pontosság
+- ✅ **Canvas méret tárolás** - Eredeti spawn méretek megőrzése
+- ✅ **Dinamic positioning** - Pozíciók arányos átskálázása
+- ✅ **Universal scaling** - Babok, üvegek, korsó egységes kezelése
+- ✅ **Fullscreen ↔ Ablakos** - Zökkenőmentes váltás minden elemmel
+- ✅ **Precision collision** - Téglalap alapú ütközésdetektálás
+- ✅ **Child-friendly UX** - Nagy toleranciájú interakciók
 
 **Teljesképernyős Rendszer:**
 - ✅ `src/gameObjects/FullscreenButton.ts` - Teljesképernyős funkció

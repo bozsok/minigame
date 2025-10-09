@@ -6,12 +6,27 @@ Egy 2D oktatási játék gyerekeknek, ahol egérműveleteket gyakorolhatnak szó
 
 A játék célja az egérkezelés fejlesztése játékos formában. A játékos babokat gyűjt befőttes üvegekbe, sajtokat eszik energiafeltöltéshez, és teli üvegeket szállít el időkorlát alatt.
 
+### 🎮 Komplett Játékmenet Folyamat
+1. **Play gomb** → Automatikus teljesképernyős mód
+2. **1 másodperc késés** → 250 bab spawn + 5 üveg + korsó megjelenés
+3. **Bab gyűjtés** → Bal klikk, automatikus üveg töltés (10 bab/fázis)
+4. **Üveg kezelés** → Dupla-klikk nyitás/zárás, fedő animációk
+5. **Drag & Drop** → Teli üvegek húzása a korsóhoz, glow feedback
+6. **Victory** → Mind az 5 üveg leadása után játék befejezés
+
+### 🎯 Fejlesztési Célok (Gyerekeknek)
+- **Egér pontosság** - Kis babok precíz klikkelése
+- **Dupla-klikk készség** - Üvegek nyitás/zárás (300ms időzítés)
+- **Drag & Drop** - Koordináció és célzás fejlesztése
+- **Térbeli gondolkodás** - Pozícionálás és közelség értékelése
+
 ### Mechanikák
-- **Bal klikk:** Bab gyűjtés ⚠️ *RÉSZBEN IMPLEMENTÁLVA*
-- **Jobb klikk:** Sajt evés energiafeltöltéshez
-- **Dupla klikk:** Üveg nyitás/zárás
-- **Húzás:** Üveg szállítás a kancsóhoz
-- **Teljesképernyős mód:** tm.png gombbal ✅ *IMPLEMENTÁLVA*
+- **Bal klikk:** Bab gyűjtés ✅ *TELJES IMPLEMENTÁCIÓ* (250 bab spawn + klikk kezelés)
+- **Dupla klikk:** Üveg nyitás/zárás ✅ *TELJES IMPLEMENTÁCIÓ* (animációkkal)
+- **Húzás:** Üveg szállítás a kancsóhoz ✅ *TELJES IMPLEMENTÁCIÓ* (drag & drop)
+- **Teljesképernyős mód:** tm.png/em.png gombokkal ✅ *TELJES IMPLEMENTÁCIÓ*
+- **Responsive Scaling:** Valós arányosítás ✅ *FORRADALMI ÚJÍTÁS*
+- **Jobb klikk:** Sajt evés energiafeltöltéshez ⏳ *TERVEZETT*
 
 ## Telepítés
 
@@ -52,30 +67,74 @@ npm run build
 ```
 eger-kaland-kamraban/
 ├── src/
-│   ├── scenes/          # Játék jelenetek
-│   ├── gameObjects/     # Játék objektumok (Bean, FullscreenButton)
-│   ├── systems/         # Játék rendszerek (BeanManager)
+│   ├── scenes/          # Játék jelenetek (MenuScene, GameScene)
+│   ├── gameObjects/     # Játék objektumok
+│   │   ├── Bean.ts      # Bab objektum klikk kezeléssel
+│   │   ├── Jar.ts       # Interaktív üveg dupla-klikk + drag & drop
+│   │   ├── Pitcher.ts   # Drop zone korsó glow effektekkel
+│   │   └── FullscreenButton.ts # Teljesképernyős vezérlő
+│   ├── systems/         # Játék rendszerek
+│   │   ├── BeanManager.ts   # 250 bab spawn + gyűjtés + responsive scaling
+│   │   └── JarManager.ts    # 5 üveg koordináció + progression
 │   ├── utils/           # Segéd eszközök (ObjectPool)
-│   ├── config/          # Konfigurációk
-│   ├── types/           # TypeScript típusok
+│   ├── config/          # Konfigurációk (GameBalance, GameConfig)
+│   ├── types/           # TypeScript típusok (BeanTypes, GameData)
 │   └── main.ts          # Belépési pont
-├── assets/              # Eszközök
+├── assets/              # Eszközök (images/, képek)
 ├── docs/                # Dokumentáció
+│   └── eger-kaland-kamraban-game-architecture.md
 ├── dist/                # Build output
+├── CHANGELOG.md         # Részletes változásnapló
 └── README.md
 ```
 
 ## Fejlesztési Státusz
 
-### ⚠️ Phase 2 - RÉSZBEN KÉSZ (2025-01-09)
-- **Bab Rendszer Alapok:** Bean objektumok 32x20px sprite frame-ekkel
-- **Teljesképernyős Mód:** Dinamikus háttér skálázás minden felbontáshoz
-- **Külső Integráció:** HTML Play gomb API automatikus teljesképernyős indítással
+### ✅ Phase 2-3 - TELJES IMPLEMENTÁCIÓ (2025-10-10)
+
+**🫘 Bab Gyűjtés Rendszer (BEFEJEZVE):**
+- 250 bab természetes klaszter eloszlással
+- Collision map alapú spawning (pantry-collision.jpg)
+- Bal klikk gyűjtés animációkkal
+- Egér gyakorlás optimalizálás (80px minimum távolság)
+- Valós idejű UI frissítés (bab számláló + üveg fázis)
+
+**🏺 Interaktív Üveg Rendszer (ÚJ - BEFEJEZVE):**
+- 5 üveg bal felső sarokban (50px spacing)
+- Dupla-klikk nyitás/zárás (300ms időzítés)
+- Kétfázisú fedő animáció (tetejére ↔ oldalra)
+- Bean growth vizualizáció (68x92px, 5 fázis)
+- Automatikus jar váltás és highlighting
+
+**🍺 Pitcher Drop Rendszer (ÚJ - BEFEJEZVE):**
+- Drag & Drop mechanika teli üvegekkel
+- Glow effekt közelség érzékeléssel
+- Precision collision detection (téglalap alapú)
+- Jar validáció (csak teli és zárt üvegeket fogad)
+- Victory detection (5 üveg leadása)
+
+**🎯 Responsive Scaling (FORRADALMI ÚJÍTÁS):**
+- **Valós arányosítás** huszárvágás helyett
+- Matematikai pontosság (pl. 860/1920 = 0.448)
+- Fullscreen ↔ Ablakos zökkenőmentes váltás
+- Pozíciók és méretek egységes kezelése
+- Child-friendly nagy tolerancia
+
+**📱 Teljesképernyős Rendszer:**
+- tm.png/em.png gombokkal mód váltás
+- Dinamikus háttér skálázás (cover mode)
+- Cross-browser kompatibilitás
+- HTML API integráció
+
+**🎮 Komplett Játékmenet:**
+- Play gomb → 1s késés → 250 bab + interaktív elemek
+- Bab gyűjtés → Üveg töltés → Drag & drop → Victory
+- Responsive minden eszközön
 
 ### 🚧 Következő Fázisok
-- **Phase 3:** Sajt evés rendszer (jobb-klikk mechanika)
-- **Phase 4:** Üveg kezelés (dupla-klikk, drag-and-drop)
+- **Phase 4:** Sajt evés rendszer (jobb-klikk mechanika)
 - **Phase 5:** Audio integráció és fényezés
+- **Phase 6:** Teljesítmény optimalizálás és tesztelés
 
 ## Licenc
 

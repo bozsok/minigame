@@ -15,12 +15,16 @@ import { GameBalance } from '../config/GameBalance';
 export class BeanManager {
   private scene: Phaser.Scene;
   private beans: Map<string, Bean> = new Map();
+  private beanOriginalPositions: Map<string, {x: number, y: number}> = new Map(); // Eredeti pozíciók tárolása
+  private originalCanvasWidth: number = 0; // Eredeti canvas szélesség (spawn-kori)
+  private originalCanvasHeight: number = 0; // Eredeti canvas magasság (spawn-kori)
   private spawnPoints: BeanSpawnPoint[] = [];
   private config: BeanConfig;
   private lastSpawnTime: number = 0;
   private collectedBeansCount: number = 0;
   private currentJarPhase: number = 0;
   private beansInCurrentJar: number = 0;
+  private isGameRunning: boolean = true; // Játék állapot követése
 
   // Collision map referencia az érvényes spawn pontokhoz
   private collisionMap?: Phaser.GameObjects.Image;
@@ -271,9 +275,13 @@ export class BeanManager {
       Math.floor(Math.random() * availableSpawnPoints.length)
     ];
     
-    // Bab létrehozása
+    // Bab létrehozása megfelelő skálával
     const bean = new Bean(this.scene, spawnPoint.x, spawnPoint.y);
+    bean.setScale(this.getCurrentScale()); // Automatikus skálázás
     this.beans.set(bean.getBeanData().id, bean);
+    
+    // Eredeti pozíció tárolása (fullscreen koordináták)
+    this.beanOriginalPositions.set(bean.getBeanData().id, {x: spawnPoint.x, y: spawnPoint.y});
     
     // Spawn pont frissítése
     spawnPoint.lastSpawnTime = Date.now();
@@ -295,6 +303,11 @@ export class BeanManager {
     
     console.log(`Aktuális játék méret: ${gameWidth}x${gameHeight}`);
     
+    // Eredeti canvas méret tárolása (spawn-kori méret)
+    this.originalCanvasWidth = gameWidth;
+    this.originalCanvasHeight = gameHeight;
+    console.log(`Eredeti canvas méret tárolva: ${gameWidth}x${gameHeight}`);
+    
     // Collision map újragenerálása aktuális méretek alapján
     this.regenerateSpawnPointsForCurrentSize();
     
@@ -313,11 +326,15 @@ export class BeanManager {
         
         // Collision map ellenőrzés
         if (this.isPositionOnCollisionMap(position.x, position.y, gameWidth, gameHeight)) {
-          // Bab létrehozása növekvő depth-tel (legutolsó = legfelső)
+          // Bab létrehozása növekvő depth-tel és megfelelő skálával
           const bean = new Bean(this.scene, position.x, position.y);
           bean.setDepth(1000 + beansSpawned); // Depth növelése
+          bean.setScale(this.getCurrentScale()); // Automatikus skálázás
           
           this.beans.set(bean.getBeanData().id, bean);
+          
+          // Eredeti pozíció tárolása (fullscreen koordináták)
+          this.beanOriginalPositions.set(bean.getBeanData().id, {x: position.x, y: position.y});
           spawnedPositions.push(position);
           beansSpawned++;
           
@@ -482,7 +499,31 @@ export class BeanManager {
     const bean = this.beans.get(event.beanId);
     if (!bean) return;
     
-    // Bean eltávolítása a listából
+    console.log('=== BEAN COLLECTION DEBUG ===');
+    console.log('Bean ID:', event.beanId);
+    
+    // Közvetlenül kérjük meg a JarManager-től, hogy fogadja el a babot
+    const gameScene = this.scene as any; // GameScene típus cast
+    
+    if (!gameScene.jarManager) {
+      console.log('ERROR: JarManager nem található!');
+      return;
+    }
+    
+    const jarAccepted = gameScene.jarManager.tryCollectBean();
+    console.log('Jar elfogadta a babot:', jarAccepted);
+    
+    if (!jarAccepted) {
+      console.log('Bab nem lett elfogadva - üveg zárt vagy tele - BAB MEGMARAD');
+      return; // Bab megmarad
+    }
+    
+    console.log('Bab elfogadva - tényleges gyűjtés indítása');
+    
+    // Bean tényleges gyűjtésének elindítása
+    bean.performCollection();
+    
+    // Bean eltávolítása a listából (csak ha elfogadva)
     this.beans.delete(event.beanId);
     
     // Számláló növelése
@@ -569,7 +610,12 @@ export class BeanManager {
     }
     
     const bean = new Bean(this.scene, x, y);
+    bean.setScale(this.getCurrentScale()); // Automatikus skálázás
     this.beans.set(bean.getBeanData().id, bean);
+    
+    // Eredeti pozíció tárolása (fullscreen koordináták)
+    this.beanOriginalPositions.set(bean.getBeanData().id, {x: x, y: y});
+    
     return bean;
   }
 
@@ -584,10 +630,88 @@ export class BeanManager {
   }
 
   /**
+   * Játék leállítása (victory esetén)
+   */
+  public stopGame(): void {
+    console.log('BeanManager: Játék leállítva');
+    // Minden további bean spawn letiltása
+    this.isGameRunning = false;
+    
+    // Aktív babok letiltása (nem gyűjthetők)
+    this.beans.forEach(bean => {
+      bean.disableInteractive();
+    });
+  }
+
+  /**
+   * Jelenlegi skála meghatározása a játékméret alapján
+   * FONTOS: Fullscreen-ben is csak 70% (eredeti beállítás)
+   */
+  private getCurrentScale(): number {
+    const gameWidth = this.scene.scale.width;
+    const isFullscreen = gameWidth > 1200;
+    return isFullscreen ? 0.7 : 0.175; // 0.7 és 0.7*0.25 = 0.175
+  }
+
+  /**
+   * Eredeti canvas méret getterek (GameScene számára)
+   */
+  public getOriginalCanvasWidth(): number {
+    return this.originalCanvasWidth || this.scene.scale.width;
+  }
+
+  public getOriginalCanvasHeight(): number {
+    return this.originalCanvasHeight || this.scene.scale.height;
+  }
+
+  /**
+   * Babok skálázása
+   * HUSZÁRVÁGÁS: Fullscreen (1.0) vagy Ablakos (0.25)
+   */
+  public updateScale(gameScale: number, gameWidth: number, gameHeight: number): void {
+    const isFullscreen = gameScale >= 1.0;
+    console.log(`🫘 BeanManager ${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'} skálázás: ${gameScale}`);
+    
+    // Minden aktív bab skálázása ÉS pozíció arányosítása
+    this.beans.forEach((bean) => {
+      const beanId = bean.getBeanData().id;
+      const originalPos = this.beanOriginalPositions.get(beanId);
+      
+      if (!originalPos) {
+        console.warn(`Nincs eredeti pozíció tárolva a bab számára: ${beanId}`);
+        return;
+      }
+      
+      if (isFullscreen) {
+        // Fullscreen: 70% méret és eredeti pozíció
+        bean.setScale(0.7);
+        bean.setPosition(originalPos.x, originalPos.y);
+      } else {
+        // Ablakos: 17.5% méret és valós canvas arányosítás
+        bean.setScale(0.175);
+        
+        // Valós arányosítás: fullscreen → ablakos canvas méret szerint
+        // originalPos alapja a spawn-kori canvas méret (pl. 1920x1080)
+        // Most át kell számolni 860x484-re
+        const scaleX = gameWidth / this.originalCanvasWidth;
+        const scaleY = gameHeight / this.originalCanvasHeight;
+        
+        const scaledX = originalPos.x * scaleX;
+        const scaledY = originalPos.y * scaleY;
+        
+        bean.setPosition(scaledX, scaledY);
+      }
+    });
+    
+    console.log(`🫘 BeanManager: ${this.beans.size} bab átskálázva (${isFullscreen ? 'nagy' : 'kicsi'} méret)`);
+  }
+
+  /**
    * Rendszer leállítása és cleanup
    */
   public cleanup(): void {
     this.clearAllBeans();
+    this.beanOriginalPositions.clear();
     this.scene.events.off('bean-collected');
     console.log('BeanManager cleanup befejezve');
   }

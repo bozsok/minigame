@@ -6,6 +6,7 @@ node_modules
 .github
 .qwen
 .vscode
+dist
 
 #Egyéb
 .kilocodemodes

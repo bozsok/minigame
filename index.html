@@ -43,9 +43,15 @@
             border: none;
             border-radius: 10px;
             cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
         }
-        .play-button:hover {
+        .play-button:hover:not(:disabled) {
             background: #45a049;
+        }
+        .play-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
         }
         .right-panel {
             width: 900px;
@@ -103,7 +109,7 @@
 <body>
     <div class="main-screen">
         <div class="left-panel">
-            <button class="play-button" id="play-button">Play</button>
+            <button class="play-button" id="play-button" disabled>Play</button>
         </div>
         <div class="right-panel">
             <div class="game-area" id="game-container"></div>
@@ -121,8 +127,26 @@
     </div>
     <script>
         document.getElementById('play-button').addEventListener('click', () => {
-            // Start the game
-            window.startGame();
+            console.log('HTML Play gomb kattintás!');
+            // API elérhetőség check
+            if (window.EgerKalandAPI && window.EgerKalandAPI.startGame) {
+                window.EgerKalandAPI.startGame();
+            } else {
+                console.error('EgerKalandAPI nem elérhető!');
+                alert('Játék API nem elérhető. Próbáld újra pár másodperc múlva.');
+            }
+        });
+
+        // Play gomb aktiválás amikor a játék betöltődött
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const playButton = document.getElementById('play-button');
+                if (playButton) {
+                    playButton.disabled = false;
+                    playButton.style.opacity = '1';
+                    console.log('Play gomb aktiválva!');
+                }
+            }, 2000); // 2 másodperc várakozás a játék betöltésére
         });
     </script>
 </body>

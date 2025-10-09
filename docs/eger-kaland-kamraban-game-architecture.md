@@ -12,6 +12,9 @@ Ez az architektúra úgy lett tervezve, hogy támogassa a játékterv dokumentum
 | :--- | :------ | :---------- | :----- |
 | 2025-10-09 | 1.0 | Kezdeti architektúra dokumentum | Maya |
 | 2025-10-09 | 1.1 | Megvalósított konfigurációk és UI elrendezés hozzáadása | Maya |
+| 2025-01-09 | 2.0 | Phase 2: Bab gyűjtés rendszer implementálva | Maya |
+| 2025-01-09 | 2.1 | Phase 2 TELJES: Teljesképernyős rendszer tökéletesítve | Maya |
+| 2025-01-09 | 2.2 | Bab gyűjtés rendszer befejezve - klikk mechanika + egér optimalizálás | Maya |
 
 ## Technikai Áttekintés
 
@@ -472,15 +475,48 @@ export const GameBalance = {
 ### 2. Fázis: Játék Rendszerek (3 hét)
 
 #### Játékmenet Rendszerek
-- Bab gyűjtés implementáció
-- Fizika és ütközés rendszer
-- Játék állapot kezelés
-- UI keretrendszer
+- [x] Bab gyűjtés implementáció - **BEFEJEZVE** (teljes funkcionalitás)
+- [x] Teljesképernyős rendszer - **BEFEJEZVE**
+- [ ] Fizika és ütközés rendszer
+- [ ] Játék állapot kezelés
+- [-] UI keretrendszer alapok - **RÉSZBEN KÉSZ**
 
 #### Story Epics
-- "Bean Collection System Implementation"
-- "Physics and Collision Framework"
-- "Game State Management System"
+- [x] "Bean Collection System Implementation" - **BEFEJEZVE** (spawn + klikk + UI)
+- [x] "Fullscreen System with Dynamic Background Scaling" - **BEFEJEZVE**
+- [x] "External HTML Integration API" - **BEFEJEZVE**
+- [ ] "Physics and Collision Framework"
+- [ ] "Game State Management System"
+
+#### Megvalósított Komponensek (Phase 2 - MAJDNEM KÉSZ):
+**Bab Rendszer Funkcionális:**
+- ✅ `src/gameObjects/Bean.ts` - Teljes bab objektum klikk kezeléssel és animációkkal
+- ✅ `src/systems/BeanManager.ts` - 250 bab egyidejű spawn optimalizált eloszlással
+- ✅ `src/types/BeanTypes.ts` - Kiterjesztett bab típusdefiníciók klaszter támogatással
+- ✅ Véletlenszerű frame kiválasztás (0,1,2) - 3 különböző bab sprite
+- ✅ - Collision map alapú spawning - pantry-collision.jpg pixel alapú fehér területeken
+- Egér gyakorlás optimalizáció - 80px minimum távolság a babok között
+- Klaszter-mentes eloszlás - minden bab egyedi pozícióban
+- 250 bab egyidejű spawn - 5 üveg × 50 bab matematikával
+- Klikk gyűjtés mechanika - bal egérgomb kezelés animációval
+- UI valós idejű frissítés - bab számláló és üveg fázis kijelző fehér területek
+- ✅ Klikk gyűjtés mechanika - bal egérgomb + animáció + eseménykezelés
+- ✅ Egér gyakorlás optimalizálás - 80px minimum távolság babok között
+- ✅ Üveg fázis számítás - 10 bab/fázis, 50 bab/üveg, 5 üveg összesen
+- ✅ UI frissítés rendszer - valós idejű számláló és fázis kijelző
+
+**Teljesképernyős Rendszer:**
+- ✅ `src/gameObjects/FullscreenButton.ts` - Teljesképernyős funkció
+- ✅ tm.png/em.png képekkel történő mód váltás
+- ✅ Automatikus canvas skálázás teljesképernyős módban
+- ✅ Cross-browser kompatibilitás (Chrome, Firefox, Safari, Edge)
+- ✅ MenuScene és GameScene keresztkompatibilitás
+- ✅ Dinamikus háttér skálázás (cover mode) minden felbontáshoz
+
+**Külső Integráció:**
+- ✅ HTML Play gomb API (`window.EgerKalandAPI.startGame()`)
+- ✅ Automatikus teljesképernyős indítás
+- ✅ Tiszta MenuScene külső vezérléshez
 
 ### 3. Fázis: Tartalom és Fényezés (2 hét)
 

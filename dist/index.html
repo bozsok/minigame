@@ -1,26 +1,119 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Egér Kaland a Kamrában</title>
-    <style>
+<!doctype html><html lang="hu"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="favicon.ico"><title>Egér Kaland a Kamrában</title><style>*, *::before, *::after {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
         body {
             margin: 0;
             padding: 0;
-            background: #000;
+            background: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             font-family: Arial, sans-serif;
         }
-        canvas {
-            display: block;
+        .main-screen {
+            width: 1200px;
+            height: 700px;
+            background: #fff;
+            border-radius: 20px;
+            display: flex;
+            overflow: hidden;
         }
-    </style>
-<script defer src="main.js"></script></head>
-<body>
-    <div id="game-container"></div>
-</body>
-</html>
+        .left-panel {
+            width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .play-button {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+        .play-button:hover:not(:disabled) {
+            background: #45a049;
+        }
+        .play-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+        .right-panel {
+            width: 900px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .game-area {
+            width: 860px;
+            height: 484px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .instruction-area {
+            width: 860px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .instruction-title {
+            font-size: 32px;
+            color: #000000;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .instruction-description {
+            font-size: 18px;
+            color: #000000;
+            margin-bottom: 20px;
+        }
+        .instruction-button {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .instruction-button:hover {
+            background: #45a049;
+        }
+        .instruction-text {
+            font-size: 16px;
+            color: #000000;
+        }</style><script defer="defer" src="main.js"></script></head><body><div class="main-screen"><div class="left-panel"><button class="play-button" id="play-button" disabled="disabled">Play</button></div><div class="right-panel"><div class="game-area" id="game-container"></div><div class="instruction-area"><div class="instruction-title">Egér Kaland a Kamrában</div><div class="instruction-description">Gyakorold az egér műveleteket játékos módon! Gyűjtögetj babokat, egyél sajtot és szállíts üvegeket.</div><div class="instruction-text">Bal klikk: bab gyűjtés<br>Jobb klikk: sajt evés<br>Dupla klikk: üveg nyitás/zárás<br>Húzás: üveg szállítás</div></div></div></div><script>document.getElementById('play-button').addEventListener('click', () => {
+            console.log('HTML Play gomb kattintás!');
+            // API elérhetőség check
+            if (window.EgerKalandAPI && window.EgerKalandAPI.startGame) {
+                window.EgerKalandAPI.startGame();
+            } else {
+                console.error('EgerKalandAPI nem elérhető!');
+                alert('Játék API nem elérhető. Próbáld újra pár másodperc múlva.');
+            }
+        });
+
+        // Play gomb aktiválás amikor a játék betöltődött
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const playButton = document.getElementById('play-button');
+                if (playButton) {
+                    playButton.disabled = false;
+                    playButton.style.opacity = '1';
+                    console.log('Play gomb aktiválva!');
+                }
+            }, 2000); // 2 másodperc várakozás a játék betöltésére
+        });</script></body></html>

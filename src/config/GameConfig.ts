@@ -5,6 +5,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   parent: 'game-container',
   scale: {
     mode: Phaser.Scale.NONE,
+    autoCenter: Phaser.Scale.NO_CENTER,
   },
   physics: {
     default: 'arcade',

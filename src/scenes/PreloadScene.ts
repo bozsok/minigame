@@ -9,8 +9,12 @@ export default class PreloadScene extends Phaser.Scene {
     // Háttér betöltése
     this.load.image('pantry-bg', 'assets/images/pantry-bg.jpg');
 
-    // Sprite-ok betöltése
-    this.load.image('beans', 'assets/images/beans.png');
+    // Sprite-ok betöltése  
+    // beans.png sprite sheet betöltése (3 bab: 32x20px each, horizontally)
+    this.load.spritesheet('beans', 'assets/images/beans.png', {
+      frameWidth: 32,   // Egy bab szélessége
+      frameHeight: 20   // Egy bab magassága
+    });
     this.load.image('jar-body', 'assets/images/jar-body.png');
     this.load.image('jar-lid', 'assets/images/jar-lid.png');
     this.load.image('pitcher', 'assets/images/pitcher.png');
@@ -33,7 +37,6 @@ export default class PreloadScene extends Phaser.Scene {
 
     // Kurzor képek
     this.load.image('cursor-default', 'assets/images/cursor-default.png');
-    this.load.image('cursor-drag', 'assets/images/cursor-drag.png');
     this.load.image('cursor-eat', 'assets/images/cursor-eat.png');
 
     // Egyéb

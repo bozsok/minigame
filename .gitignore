@@ -1,0 +1,11 @@
+##Könyvtárak
+node_modules
+.bmad-2d-phaser-game-dev
+.bmad-core
+.gemini
+.github
+.qwen
+.vscode
+
+#Egyéb
+.kilocodemodes

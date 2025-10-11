@@ -96,9 +96,55 @@ eger-kaland-kamraban/
 
 ## Fejlesztési Státusz
 
+### ✅ Phase 4.7 - ENERGY SYSTEM REFINEMENT (2025-10-11)
+
+**🎮 Játékmechanika Finomhangolás (ÚJ - BEFEJEZVE):**
+- **KURZOR KÖVETŐ ENERGIA CSÍK** - 120px széles, 12px magas energia csík
+  - Egérkurzor felett 30px-re követi a mozgást
+  - Pixel alapú fogyás: 2px/mp (60 másodperc alatt merül le)
+  - Vizuális energia csík színváltással (zöld → narancs → piros)
+
+**🎯 Sajt Evés Logika Javítva (ÚJ - BEFEJEZVE):**
+- **Pontos idő bonus** - Minden sajt klikk +15 másodperc
+- **Fázis korlátozás** - Csak az első 4 fázis ad időt (utolsó fázis nem)
+- **Maximális bonus** - 4 fázis × 15mp = 60 másodperc per sajt
+- **Stratégiai mélység** - 5 sajt × 60mp = 300 másodperc extra idő
+
+**🎨 Vizuális Fejlesztések (ÚJ - BEFEJEZVE):**
+- **Dinamikus energia csík** - Valós idejű fogyás vizualizációja
+- **Szín alapú visszajelzés** - Piros (<10s), narancs (10-30s), zöld (>30s)
+- **Zöld bonus effekt** - Vizuális visszajelzés sajt evéskor
+- **Kurzor integráció** - Energia csík követi az egeret
+
+**🔧 Technikai Optimalizálás (ÚJ - BEFEJEZVE):**
+- **Pixel alapú energia rendszer** - Pontosabb vizuális visszajelzés
+- **Egérkövetés** - Real-time pozíció frissítés pointermove eseménnyel
+- **Performance javítás** - Optimizált frissítési ciklusok
+- **UIConstants bővítés** - cursorOffset és consumptionRate konstansok
+
+### ✅ Phase 4.6 - ENERGY SYSTEM IMPLEMENTATION (2025-10-11)
+
+**🎮 Új Játékmechanika (Befejezve):**
+- **Energia rendszer** - 60 másodperc kezdő energia, folyamatos csökkenés
+- **Sajt evés bonus** - +15 másodperc minden sajt evésnél
+- **Energia UI kijelző** - Bal felső sarokban, színváltással (zöld → narancs → piros)
+- **Stratégiai mélység** - Balance bab gyűjtés és sajt evés között
+- **Game over** - Amikor energia eléri a 0-t
+
+**🎨 UI/UX Javítások (Befejezve):**
+- **Bonus effekt** - Zöld felvillanás sajt evéskor
+- **Responsive design** - Energia UI skálázása minden képernyőmérethez
+- **Szín visszajelzés** - Energia szint alapján dinamikus színváltás
+
+**🔧 Technikai Implementáció (Befejezve):**
+- **Eseménykezelés** - Sajt evés események (`cheese-eaten`) implementálva
+- **Timer rendszer** - Energia timer másodpercenkénti frissítéssel
+- **Performance optimalizálás** - Időzített frissítések optimalizálva
+- **UIConstants bővítés** - Energie konstansok hozzáadva
+
 ### ✅ Phase 4.5 - CODE QUALITY & UX IMPROVEMENTS (2025-10-11)
 
-**🔧 Kód Minőség Javítások (ÚJ - BEFEJEZVE):**
+**🔧 Kód Minőség Javítások (Befejezve):**
 - **Logger rendszer** - Központosított logging környezet alapú szűréssel
 - **Típusbiztonság javítás** - `any` típusok cseréje megfelelő interfészekre
 - **Mágikus számok központosítása** - `UIConstants.ts` modul konfigurációkkal

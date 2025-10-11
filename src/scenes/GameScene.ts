@@ -12,6 +12,7 @@ import {
   JarUIUpdateEvent,
   JarHighlightEvent,
   JarDeliveredEvent,
+  CheeseEatenEvent,
   ResizeEvent,
   PhaserResizeEvent
 } from '../types/EventTypes';
@@ -24,10 +25,16 @@ export default class GameScene extends Phaser.Scene {
   private fullscreenButton!: FullscreenButton;
   private background!: Phaser.GameObjects.Image;
   private gameStartTime: number = 0;
-  private energyRemaining: number = GameBalance.energy.initialTime;
+  private energyRemaining: number = GameBalance.energy.initialTime; // Másodpercben
+  private energyPixels: number = UIConstants.energy.baseWidth; // Pixel alapú energia (120px = 60s)
+  private energyLastUpdate: number = 0; // Utolsó energia frissítés időpontja
   private countdownTime: number = GameBalance.time.totalTime; // Konfigurációból olvassuk az időt
   private timerStarted: boolean = false; // Timer csak babok betöltése után indul
+  private energyTimerStarted: boolean = false; // Energia timer indítása
+  private gameActive: boolean = true; // Játék állapot követése
   private timerBackground!: Phaser.GameObjects.Graphics;
+  private energyBackground!: Phaser.GameObjects.Image;
+  private energyBar!: Phaser.GameObjects.Graphics; // Fogyó energia csík
   private uiElements: {
     energyText?: Phaser.GameObjects.Text;
     timerText?: Phaser.GameObjects.Text;
@@ -41,7 +48,11 @@ export default class GameScene extends Phaser.Scene {
   create(): void {
     this.gameStartTime = Date.now();
     this.energyRemaining = GameBalance.energy.initialTime;
+    this.energyPixels = UIConstants.energy.baseWidth; // Energia pixel reset teljes értékre
+    this.energyTimerStarted = false; // Energia timer reset
     this.timerStarted = false; // Timer még nem indult el
+    this.gameActive = true; // Játék állapot reset
+    this.countdownTime = GameBalance.time.totalTime; // Timer reset
 
     // Natív cursor használata
     const canvas = this.game.canvas;
@@ -103,8 +114,25 @@ export default class GameScene extends Phaser.Scene {
       // this.timerBackground újra létre lesz hozva createTimerBackground()-ban
     }
     
+    // Energia UI elemek tisztítása
+    if (this.uiElements.energyText) {
+      this.uiElements.energyText.destroy();
+      this.uiElements.energyText = undefined;
+    }
+    if (this.energyBackground) {
+      // Border objektum törlése ha létezik
+      if ((this.energyBackground as any).border) {
+        (this.energyBackground as any).border.destroy();
+      }
+      this.energyBackground.destroy();
+      // this.energyBackground újra létre lesz hozva createEnergyBackground()-ban
+    }
+    
     // Időszámláló azonnal létrehozása REJTVE - betűtípus betöltéséhez
     this.createHiddenTimerElements();
+    
+    // Energia kijelző létrehozása REJTVE
+    this.createHiddenEnergyElements();
   }
 
   /**
@@ -150,6 +178,23 @@ export default class GameScene extends Phaser.Scene {
     this.timerBackground.setVisible(false);
     
     Logger.debug('⏰ Rejtett időszámláló elemek létrehozva - BBH Sans Hegarty (PreloadScene-ben előbetöltött)');
+  }
+
+  /**
+   * Rejtett energia elemek létrehozása (scene indításakor)
+   */
+  private createHiddenEnergyElements(): void {
+    // Energia háttér létrehozása REJTVE
+    this.createEnergyBackground();
+    
+    // Energia csík létrehozása REJTVE
+    this.createEnergyBar();
+    
+    // REJTÉS - nem látható amíg a Play gomb meg nem nyomva
+    this.energyBackground.setVisible(false);
+    this.energyBar.setVisible(false);
+    
+    Logger.debug('⚡ Rejtett energia elemek létrehozva');
   }
 
   /**
@@ -230,6 +275,127 @@ export default class GameScene extends Phaser.Scene {
       this.uiElements.timerText.setPosition(timerX + timerWidth / 2, timerY + timerHeight / 2);
       Logger.debug(`⏰ Timer szöveg pozícionálva: (${timerX + timerWidth / 2}, ${timerY + timerHeight / 2})`);
     }
+  }
+
+  /**
+   * Energia háttér létrehozása
+   */
+  private createEnergyBackground(): void {
+    // Fekete háttér az energia csík alá - ez mindig látszik
+    this.energyBackground = this.add.image(0, 0, '__BLACK');
+    this.energyBackground.setDisplaySize(UIConstants.energy.baseWidth, UIConstants.energy.baseHeight);
+    this.energyBackground.setOrigin(0, 0);
+    this.energyBackground.setDepth(9999);
+    
+    // Border létrehozása külön Graphics objektummal
+    const border = this.add.graphics();
+    border.lineStyle(UIConstants.energy.baseBorderWidth, parseInt(UIConstants.energy.borderColor.replace('#', '0x')));
+    border.strokeRect(0, 0, UIConstants.energy.baseWidth, UIConstants.energy.baseHeight);
+    border.setDepth(10001); // A színátmenet felett
+    
+    // Border referencia tárolása cleanup-hoz
+    (this.energyBackground as any).border = border;
+  }
+
+  /**
+   * Energia csík létrehozása (maszk a háttér gradient-hez)
+   */
+  private createEnergyBar(): void {
+    // Graphics objektum létrehozása - ez fogja rajzolni a színátmenetet
+    this.energyBar = this.add.graphics();
+    
+    // Kezdeti színátmenetes energia csík rajzolása
+    this.updateEnergyBarMask(this.energyPixels);
+    
+    // Magasabb depth, mint a fekete háttér
+    this.energyBar.setDepth(10000);
+  }
+
+  /**
+   * Színinterpoláció segédfüggvény (Piros → Sárga → Zöld)
+   */
+  private interpolateEnergyColor(ratio: number): number {
+    // ratio: 0.0 = üres (piros), 1.0 = tele (zöld)
+    
+    if (ratio <= 0.5) {
+      // Első fél: Piros (FF0000) → Sárga (FFFF00)
+      const localRatio = ratio * 2; // 0..1 tartománybe
+      const r = 255;
+      const g = Math.floor(255 * localRatio);
+      const b = 0;
+      return (r << 16) | (g << 8) | b;
+    } else {
+      // Második fél: Sárga (FFFF00) → Zöld (00FF00)
+      const localRatio = (ratio - 0.5) * 2; // 0..1 tartománybe
+      const r = Math.floor(255 * (1 - localRatio));
+      const g = 255;
+      const b = 0;
+      return (r << 16) | (g << 8) | b;
+    }
+  }
+
+  /**
+   * Energia csík színátmenetes rajzolása
+   */
+  private updateEnergyBarMask(width: number): void {
+    this.energyBar.clear();
+    
+    // Színátmenetes energia csík rajzolása pixelenként
+    const maxWidth = UIConstants.energy.baseWidth;
+    const height = UIConstants.energy.baseHeight;
+    
+    for (let x = 0; x < width; x++) {
+      const ratio = x / maxWidth; // 0..1 arány
+      const color = this.interpolateEnergyColor(ratio);
+      
+      this.energyBar.fillStyle(color);
+      this.energyBar.fillRect(x, 0, 1, height);
+    }
+  }
+
+  /**
+   * Energia kijelző megjelenítése (játék indításakor)
+   */
+  private showEnergyElements(): void {
+    if (this.energyBackground && this.energyBar) {
+      // Elemek láthatóvá tétele
+      this.energyBackground.setVisible(true);
+      this.energyBar.setVisible(true);
+      
+      // Energia timer indítása
+      this.energyTimerStarted = true;
+      this.energyLastUpdate = Date.now();
+      
+      // Energia UI kezdeti frissítése (teljes energia csík)
+      this.updateEnergyUI();
+      
+      // Egermozgás figyelés beállítása
+      this.setupEnergyCursorTracking();
+      
+      Logger.debug('⚡ Energia kijelző megjelenítve és elindítva');
+    }
+  }
+
+  /**
+   * Energia csík követése az egérkurzorral
+   */
+  private setupEnergyCursorTracking(): void {
+    // Egermozgás esemény figyelése
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (this.energyBackground && this.energyBar) {
+        // Pozíció frissítése az egérkurzorhoz képest
+        const x = pointer.x - UIConstants.energy.baseWidth / 2;
+        const y = pointer.y - UIConstants.energy.cursorOffset;
+        
+        this.energyBackground.setPosition(x, y);
+        this.energyBar.setPosition(x, y);
+        
+        // Border is mozgatása
+        if ((this.energyBackground as any).border) {
+          (this.energyBackground as any).border.setPosition(x, y);
+        }
+      }
+    });
   }
 
   /**
@@ -380,6 +546,12 @@ export default class GameScene extends Phaser.Scene {
       this.handleGameComplete();
     });
 
+    // Sajt evés energia bonus
+    this.events.on('cheese-eaten', (data: CheeseEatenEvent) => {
+      Logger.info(`🧀 CHEESE-EATEN EVENT FOGADVA: ${data.cheeseType} sajt, frame: ${data.currentFrame}, energyTimerStarted: ${this.energyTimerStarted}`);
+      this.addEnergyBonus();
+    });
+
     // Méretváltás kezelése
     this.events.on('resize', (data: ResizeEvent) => {
       this.resize(data);
@@ -410,6 +582,9 @@ export default class GameScene extends Phaser.Scene {
       // Energia csökkentés indítása
       this.startEnergyCountdown();
       
+      // ENERGIA KIJELZŐ MEGJELENÍTÉSE
+      this.showEnergyElements();
+      
       // IDŐSZÁMLÁLÓ MEGJELENÍTÉSE ÉS INDÍTÁSA - babok betöltése után
       Logger.info('⏰ Időszámláló megjelenítése és indítása - 5 perc visszaszámlálás!');
       this.showTimerElements();
@@ -422,9 +597,9 @@ export default class GameScene extends Phaser.Scene {
    */
   private startEnergyCountdown(): void {
     Logger.debug('Energia számláló indítva...');
-    // ENERGIA RENDSZER: Jelenleg nincs implementálva, mert a játék időalapú
-    // A játékosnak van fix ideje (GameBalance.time.totalTime), nincs külön energia rendszer
-    // Ha szükséges, a jövőben itt lehetne implementálni egy energia csökkentő logikát
+    // ENERGIA RENDSZER: Implementálva - energia csökkenés idővel
+    // A játékosnak van energiája, ami csökken másodpercenként
+    // Sajt evés esetén bonus idő jár
   }
 
   /**
@@ -434,8 +609,8 @@ export default class GameScene extends Phaser.Scene {
     // BeanManager frissítése
     this.beanManager.update(delta);
 
-    // Időszámláló logika frissítése - csak ha elindult
-    if (this.timerStarted && this.uiElements.timerText) {
+    // Időszámláló logika frissítése - csak ha elindult és a játék aktív
+    if (this.timerStarted && this.uiElements.timerText && this.gameActive) {
       const currentTime = Date.now();
       const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
       const newCountdownTime = Math.max(0, GameBalance.time.totalTime - elapsedSeconds); // Konfigurációból olvassuk az időt
@@ -454,14 +629,33 @@ export default class GameScene extends Phaser.Scene {
         this.timerStarted = false; // Leállítjuk a timer logikáját
         this.handleTimeUp();
       }
+    } else if (this.timerStarted && !this.gameActive) {
+      // Ha a játék inaktív, de a timer még fut, állítsuk le
+      Logger.debug('⏰ Timer leállítva játék inaktivitás miatt');
+      this.timerStarted = false;
     }
-    
 
-    
-    // Egyéb UI frissítése
-    const currentTime = Date.now();
-    const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
-    this.updateEnergyUI(elapsedSeconds);
+    // Energia logika frissítése - csak ha elindult és a játék aktív
+    if (this.energyTimerStarted && this.energyPixels > 0 && this.gameActive) {
+      const currentTime = Date.now();
+      const deltaTime = (currentTime - this.energyLastUpdate) / 1000; // másodpercben
+      
+      // Pixel alapú fogyás: 2px/mp
+      const pixelsToConsume = Math.floor(deltaTime * UIConstants.energy.consumptionRate);
+      
+      if (pixelsToConsume > 0) {
+        this.energyPixels = Math.max(0, this.energyPixels - pixelsToConsume);
+        this.energyRemaining = Math.max(0, this.energyPixels / UIConstants.energy.consumptionRate); // Visszaszámítás másodpercre
+        this.energyLastUpdate = currentTime;
+        
+        this.updateEnergyUI();
+        
+        // Energia elfogyása ellenőrzése
+        if (this.energyPixels <= 0) {
+          this.handleEnergyDepleted();
+        }
+      }
+    }
   }
 
   /**
@@ -594,13 +788,80 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
-   * UI frissítések - csak információs célból, nincs időkorlát
+   * Energia UI frissítése
    */
-  private updateEnergyUI(elapsedSeconds: number): void {
-    if (this.uiElements.energyText) {
-      // Eltelt időt mutatjuk, nem hátralevőt
-      this.uiElements.energyText.setText(`Eltelt idő: ${elapsedSeconds}s`);
-      this.uiElements.energyText.setBackgroundColor(UIConstants.colors.energyBackground);
+  private updateEnergyUI(): void {
+    if (this.energyBar) {
+      // Színátmenetes energia csík frissítése
+      this.updateEnergyBarMask(this.energyPixels);
+    }
+  }
+
+  /**
+   * Energia elfogyásának kezelése
+   */
+  private handleEnergyDepleted(): void {
+    Logger.warn('⚡ ENERGIA ELFogyott! Game over - csak 1x piros glow!');
+    
+    // Energia timer leállítása
+    this.energyTimerStarted = false;
+    
+    // Timer leállítása (ne számoljon tovább)
+    this.timerStarted = false;
+    
+    // Babok interakciójának LEÁLLÍTSA - de a többi elem működjön
+    this.beanManager.stopGame();
+    
+    // Piros körvonal hozzáadása a maradék babokhoz (csak 1x)
+    this.beanManager.highlightRemainingBeans();
+    
+    // CSAK bab interakciót tiltjuk le, sajt evés továbbra működik
+    if (this.jarManager) {
+      this.jarManager.setGameActive(false);
+    }
+    
+    Logger.info('⚡ Babok interakciója leállítva - sajt evés továbbra működik');
+  }
+
+  /**
+   * Sajt evés bonus hozzáadása az energiához
+   */
+  public addEnergyBonus(): void {
+    // Csak akkor adunk bonuszt, ha az energia timer még fut (tehát NEM game over)
+    if (this.energyTimerStarted) {
+      const bonusSeconds = GameBalance.energy.cheeseBonus;
+      const bonusPixels = bonusSeconds * UIConstants.energy.consumptionRate; // 15s * 2px/s = 30px
+      
+      // Ellenőrizzük, hogy van-e hely a bonusznak
+      const newEnergyPixels = Math.min(UIConstants.energy.baseWidth, this.energyPixels + bonusPixels);
+      
+      if (newEnergyPixels > this.energyPixels) {
+        // Valóban növekedett az energia
+        const actualBonus = newEnergyPixels - this.energyPixels;
+        this.energyPixels = newEnergyPixels;
+        this.energyRemaining = this.energyPixels / UIConstants.energy.consumptionRate; // Visszaszámítás másodpercre
+        
+        Logger.info(`⚡ Sajt evés bonus: +${bonusSeconds}s energia (+${actualBonus}px, új összesen: ${Math.floor(this.energyRemaining)}s)`);
+        
+        // UI frissítése
+        this.updateEnergyUI();
+        
+        // Bonus effekt - zöld felvillanás
+        if (this.energyBar) {
+          // Zöld felvillanás effekt
+          this.energyBar.fillStyle(0x00ff00); // Erős zöld
+          this.energyBar.fillRect(0, 0, this.energyPixels, UIConstants.energy.baseHeight);
+          
+          // Visszaállítás eredeti színre
+          this.time.delayedCall(500, () => {
+            this.updateEnergyUI();
+          });
+        }
+      } else {
+        Logger.debug(`⚡ Sajt evés bonus nem adható: energia csík már tele van (${this.energyPixels}/${UIConstants.energy.baseWidth}px)`);
+      }
+    } else {
+      Logger.debug(`⚡ Sajt evés bonus nem adható: energyTimerStarted=${this.energyTimerStarted} (game over vagy még nem indult el)`);
     }
   }
 
@@ -632,11 +893,19 @@ export default class GameScene extends Phaser.Scene {
     // A villogás elég vizuális feedback
   }
 
+  private handleCheeseEaten(): void {
+    // Sajt evés bonus hozzáadása az energiához
+    this.addEnergyBonus();
+  }
+
   private handleGameComplete(): void {
     Logger.info('🎉 JÁTÉK BEFEJEZVE! Mind az 5 üveg leadva!');
     
     // Timer megállítása - győzelem esetén nincs időkorlát
     this.timerStarted = false;
+    
+    // Energia timer megállítása - győzelem után ne fogyjon tovább
+    this.energyTimerStarted = false;
     
     // Játék logika leállítása
     this.beanManager.stopGame();

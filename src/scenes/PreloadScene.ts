@@ -68,7 +68,17 @@ export default class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Üres
+    // Fehér textúra létrehozása az energia gradient háttérhez
+    this.add.graphics()
+      .fillStyle(0xffffff)
+      .fillRect(0, 0, 1, 1)
+      .generateTexture('__WHITE', 1, 1);
+    
+    // Fekete textúra létrehozása az energia háttérhez
+    this.add.graphics()
+      .fillStyle(0x000000)
+      .fillRect(0, 0, 1, 1)
+      .generateTexture('__BLACK', 1, 1);
   }
 
   /**

@@ -45,6 +45,14 @@ export interface BeanCollectionEvent {
   beanId: string;
 }
 
+// Sajt evés esemény
+export interface CheeseEatenEvent {
+  cheeseId: string;
+  cheeseType: string;
+  currentFrame: number;
+  energyBonus: number;
+}
+
 // Resize esemény
 export interface ResizeEvent {
   width: number;

@@ -1,7 +1,7 @@
 export const GameBalance = {
   energy: {
     initialTime: 60, // másodperc
-    cheeseBonus: 15 // másodperc fázisonként
+    cheeseBonus: 15 // másodperc klikkenként (max 4× sajt esetén = 60 másodperc)
   },
   jar: {
     beansPerJar: 50,     // 50 bab tölt ki egy üveget teljesen

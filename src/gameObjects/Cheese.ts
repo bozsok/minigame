@@ -1,3 +1,5 @@
+import { Logger } from '../utils/Logger';
+
 export class Cheese extends Phaser.GameObjects.Image {
   private cheeseType: number; // 1-5
   private currentFrame: number = 0; // 0-4 (5 frame)
@@ -45,10 +47,10 @@ export class Cheese extends Phaser.GameObjects.Image {
     
     // DEBUG
     if (cheeseType === 3) {
-      console.log(`🧀 CHEESE-3 EGYSZERŰ IMAGE DEBUG:`);
-      console.log(`  Pozíció: (${this.x}, ${this.y})`);
-      console.log(`  Origin: (${this.originX}, ${this.originY})`);
-      console.log(`  Méret: ${this.frameWidth}x${this.frameHeight}`);
+      Logger.debug(`🧀 CHEESE-3 EGYSZERŰ IMAGE DEBUG:`);
+      Logger.debug(`  Pozíció: (${this.x}, ${this.y})`);
+      Logger.debug(`  Origin: (${this.originX}, ${this.originY})`);
+      Logger.debug(`  Méret: ${this.frameWidth}x${this.frameHeight}`);
     }
   }
 
@@ -66,12 +68,12 @@ export class Cheese extends Phaser.GameObjects.Image {
       // GAME ACTIVE ELLENŐRZÉS - első prioritás
       const gameScene = this.scene as any;
       if (gameScene.cheeseManager && !gameScene.cheeseManager.isGameActive()) {
-        console.log(`🚫 Sajt ${this.cheeseType} evés TILTVA - játék inaktív`);
+        Logger.debug(`🚫 Sajt ${this.cheeseType} evés TILTVA - játék inaktív`);
         return;
       }
 
       if (pointer.rightButtonDown()) {
-        console.log(`Right-click sajt ${this.cheeseType}-ra (frame: ${this.currentFrame}) - pixel-perfect hit!`);
+        Logger.debug(`Right-click sajt ${this.cheeseType}-ra (frame: ${this.currentFrame}) - pixel-perfect hit!`);
         this.eatCheese();
       }
     });
@@ -108,9 +110,9 @@ export class Cheese extends Phaser.GameObjects.Image {
           });
         }
         
-        console.log(`🖱️✨ Custom cursor + Glow bekapcsolva sajt ${this.cheeseType}-nál (frame: ${this.currentFrame})`);
+        Logger.debug(`🖱️✨ Custom cursor + Glow bekapcsolva sajt ${this.cheeseType}-nál (frame: ${this.currentFrame})`);
       } else {
-        console.log(`🖱️ Sajt ${this.cheeseType} már teljesen elfogyott - nincs hover effekt`);
+        Logger.debug(`🖱️ Sajt ${this.cheeseType} már teljesen elfogyott - nincs hover effekt`);
       }
     });
 
@@ -137,7 +139,7 @@ export class Cheese extends Phaser.GameObjects.Image {
         });
       }
       
-      console.log(`🖱️✨ Custom cursor + Glow kikapcsolva`);
+      Logger.debug(`🖱️✨ Custom cursor + Glow kikapcsolva`);
     });
   }
 
@@ -149,18 +151,32 @@ export class Cheese extends Phaser.GameObjects.Image {
       this.currentFrame++;
       this.updateFrame();
       
-      console.log(`Sajt ${this.cheeseType} evés: ${this.currentFrame}/4 frame`);
+      Logger.debug(`Sajt ${this.cheeseType} evés: ${this.currentFrame}/4 frame`);
+      
+      // Esemény küldése a GameScene-nek az energia bonus hozzáadásához
+      // Mind a 4 kattintás ad bonust (frame 1-4): 4×30px = 120px = teljes energia csík
+      if (this.currentFrame <= 4) {
+        Logger.info(`🧀 SAJT EVÉS EVENT: ${this.cheeseType} sajt, ${this.currentFrame}/4 frame - ENERGIA BONUS KÜLDÉS!`);
+        this.scene.events.emit('cheese-eaten', {
+          cheeseId: `cheese-${this.cheeseType}-${this.x}-${this.y}`,
+          cheeseType: this.cheeseType.toString(),
+          currentFrame: this.currentFrame,
+          energyBonus: 30 // 30px bonus a GameBalance alapján
+        });
+      } else {
+        Logger.debug(`🧀 Sajt ${this.cheeseType} már teljesen elfogyott (${this.currentFrame}) - nincs további bonus`);
+      }
       
       // Ha elértük az utolsó frame-et (5. fázis)
       if (this.currentFrame === 4) {
         this.isEaten = true;
-        console.log(`Sajt ${this.cheeseType} teljesen elfogyott! Morzsák maradnak.`);
+        Logger.debug(`Sajt ${this.cheeseType} teljesen elfogyott! Morzsák maradnak.`);
         
         // Morzsák normál láthatósággal maradnak
       }
     } else {
       // Ha már az 5. frame-nél vagyunk, nem történik semmi
-      console.log(`Sajt ${this.cheeseType} már teljesen elfogyott - nincs több frame!`);
+      Logger.debug(`Sajt ${this.cheeseType} már teljesen elfogyott - nincs több frame!`);
     }
   }
 
@@ -174,8 +190,8 @@ export class Cheese extends Phaser.GameObjects.Image {
 
     
     // PIXEL-PERFECT collision automatikusan frissül frame váltásnál!
-    console.log(`🧀 Sajt ${this.cheeseType} frame váltás: ${this.currentFrame}`);
-    console.log(`  pozíció: (${this.x}, ${this.y}) - pixel-perfect collision aktív!`);
+    Logger.debug(`🧀 Sajt ${this.cheeseType} frame váltás: ${this.currentFrame}`);
+    Logger.debug(`  pozíció: (${this.x}, ${this.y}) - pixel-perfect collision aktív!`);
   }
 
   // Getterek
@@ -226,7 +242,7 @@ export class Cheese extends Phaser.GameObjects.Image {
         const hotspotY = scaledHeight / 2; // Középpont Y
         canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
         
-        console.log(`🖱️ Egérke száj cursor méretezve ${scale * 100}%-ra: ${scaledWidth}x${scaledHeight}px`);
+        Logger.debug(`🖱️ Egérke száj cursor méretezve ${scale * 100}%-ra: ${scaledWidth}x${scaledHeight}px`);
       }
     };
     

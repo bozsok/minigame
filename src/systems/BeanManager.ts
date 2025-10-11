@@ -729,9 +729,16 @@ export class BeanManager {
     
     this.beans.forEach((bean) => {
       if (bean.visible) {
-        // Piros körvonal glow effekt
-        bean.preFX?.addGlow(0xff0000, 4, 0, false, 0.8, 8); // Piros, 4px outer, 8px inner
-        Logger.debug(`Bean ${bean.getData('id')} piros glow hozzáadva`);
+        // Egyszerűsített megoldás - csak akkor adjunk hozzá glow-t, ha még nincs
+        // Használunk egy egyszerű flag-et a bab data-jában
+        const hasGlow = bean.getData('hasRedGlow') || false;
+        
+        if (!hasGlow) {
+          // Piros körvonal glow effekt - csak egyszer
+          bean.preFX?.addGlow(0xff0000, 4, 0, false, 0.8, 8); // Piros, 4px outer, 8px inner
+          bean.setData('hasRedGlow', true); // Jelöljük, hogy már van glow
+          Logger.debug(`Bean ${bean.getData('id')} piros glow hozzáadva`);
+        }
       }
     });
   }

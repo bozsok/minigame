@@ -4,6 +4,91 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.8.0] - 2025-10-11 - **ENERGY SYSTEM FINAL REFINEMENT**
+
+### 🎮 Game Over Logika Javítva
+- **ENERGIA ELFogyása** - Game over állapot, de timer megállítva
+  - Visszaszámláló leáll, nem számol tovább
+  - Piros glow csak egyszer a babok körül (energia miatt, időzítő miatt nem)
+  - Minden interakció leállítása, de elemek láthatók maradnak
+
+### 🎨 Energia Csík Design Újradefiniálva
+- **SZÖGLETES DESIGN** - Nincs lekerekítés, tiszta szögletes forma
+- **SZÍNÁTMENETES HÁTTÉR** - Piros-sárga-zöld gradiens háttér
+- **OPTIMIZÁLT BORDER** - 1px border, #242424 szín, nem számít a fogyásba
+- **PONTOS MÉRETEK** - 120px széles, 12px magas, cursor 30px felett
+
+### 🎯 Sajt Bonus Rendszer Javítva
+- **Feltételes Bonus** - Csak aktív játék állapotban működik
+- **Debug Logging** - Részletes logolás a bonus működéséről
+- **Pontos Pixel Számítás** - 15mp × 2px/mp = 30px bonus per klikk
+- **Game Over Protection** - Bonus nem adható game over után
+
+### 🔧 Technikai Stabilizálás
+- **Game Active Flag** - Központosított játék állapot kezelés
+- **Timer Leállítás** - Energia elfogyásakor a timer is leáll
+- **Glow Duplikáció Megelőzése** - Bean data flag alapú ellenőrzés
+- **Performance Optimalizálás** - Csak aktív állapotban frissít
+
+---
+
+## [4.7.0] - 2025-10-11 - **ENERGY SYSTEM REFINEMENT**
+
+### 🎮 Játékmechanika Finomhangolás
+- **KURZOR KÖVETŐ ENERGIA CSÍK** - 120px széles, 12px magas energia csík
+  - Egérkurzor felett 30px-re követi a mozgást
+  - Pixel alapú fogyás: 2px/mp (60 másodperc alatt merül le)
+  - Vizuális energia csík színváltással (zöld → narancs → piros)
+
+### 🎯 Sajt Evés Logika Javítva
+- **Pontos idő bonus** - Minden sajt klikk +15 másodperc
+- **Fázis korlátozás** - Csak az első 4 fázis ad időt (utolsó fázis nem)
+- **Maximális bonus** - 4 fázis × 15mp = 60 másodperc per sajt
+- **Stratégiai mélység** - 5 sajt × 60mp = 300 másodperc extra idő
+
+### 🔧 Technikai Optimalizálás
+- **Pixel alapú energia rendszer** - Pontosabb vizuális visszajelzés
+- **Egérkövetés** - Real-time pozíció frissítés pointermove eseménnyel
+- **Performance javítás** - Optimizált frissítési ciklusok
+- **UIConstants bővítés** - cursorOffset és consumptionRate konstansok
+
+### 🎨 Vizuális Fejlesztések
+- **Dinamikus energia csík** - Valós idejű fogyás vizualizációja
+- **Szín alapú visszajelzés** - Piros (<10s), narancs (10-30s), zöld (>30s)
+- **Zöld bonus effekt** - Vizuális visszajelzés sajt evéskor
+- **Kurzor integráció** - Energia csík követi az egeret
+
+---
+
+## [4.6.0] - 2025-10-11 - **ENERGY SYSTEM IMPLEMENTATION**
+
+### 🎮 Új Játékmechanika
+- **ENERGIA RENDSZER** - Teljesen új energia rendszer implementálva
+  - Energia csökkenése idővel (60 másodperc kezdőérték)
+  - Sajt evés bonus (+15 másodperc minden sajt evésnél)
+  - Energia UI kijelző bal felső sarokban
+  - Színváltozás energia szint alapján (zöld → narancs → piros)
+  - Game over amikor energia elfogy
+
+### 🎨 UI/UX Javítások
+- **Energia kijelző** - Új UI elem a bal felső sarokban
+- **Szín visszajelzés** - Energia szint alapján dinamikus színváltás
+- **Bonus effekt** - Zöld felvillanás sajt evéskor
+- **Responsive design** - Energia UI skálázása minden képernyőmérethez
+
+### 🔧 Technikai Implementáció
+- **Eseménykezelés** - Sajt evés események (`cheese-eaten`) implementálva
+- **Timer rendszer** - Energia timer másodpercenkénti frissítéssel
+- **Performance optimalizálás** - Időzített frissítések optimalizálva
+- **UIConstants bővítés** - Energie konstansok hozzáadva
+
+### 📊 Játékmenet Változások
+- **Stratégiai mélység** - Sajt evés most energiát ad, ami új stratégiákat tesz lehetővé
+- **Időgazdálkodás** - Játékosoknak balance-elniük kell a bab gyűjtés és sajt evés között
+- **Kockázat/Jutalom** - Több idő bab gyűjtésre vs gyors sajt evés energiáért
+
+---
+
 ## [4.5.0] - 2025-10-11 - **CODE QUALITY & UX IMPROVEMENTS**
 
 ### 🔧 Kód Minőség Javítások

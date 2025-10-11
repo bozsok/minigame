@@ -6,7 +6,8 @@ export default class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-
+    // Google Font betöltés - WebFont Loader használatával
+    this.loadGoogleFonts();
     
     // Háttér betöltése
     this.load.image('pantry-bg', 'assets/images/pantry-bg.jpg');
@@ -68,5 +69,42 @@ export default class PreloadScene extends Phaser.Scene {
 
   create(): void {
     // Üres
+  }
+
+  /**
+   * Google Fonts dinamikus betöltése
+   */
+  private loadGoogleFonts(): void {
+    // BBH Sans Hegarty font betöltése
+    const fontFamily = 'BBH+Sans+Hegarty';
+    
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily}&display=swap`;
+    document.head.appendChild(link);
+
+    console.log('🔤 BBH Sans Hegarty Google Font betöltve');
+    
+    // Font elérhetőség tesztelése és dummy timer elem létrehozása
+    this.preloadTimerFont();
+  }
+
+  /**
+   * Timer font előbetöltése - dummy elem a font kikényszerítéséhez
+   */
+  private preloadTimerFont(): void {
+    // Láthatatlan dummy szöveg elem a BBH Sans Hegarty betöltéséhez
+    const dummyTimer = this.add.text(-1000, -1000, '05:00', {
+      fontSize: '42px',
+      fontFamily: '"BBH Sans Hegarty", Arial, sans-serif'
+    });
+    
+    // 1 másodperc múlva törölni (a font már be van töltve)
+    setTimeout(() => {
+      dummyTimer.destroy();
+      console.log('🔤 BBH Sans Hegarty font előbetöltés kész - dummy elem törölve');
+    }, 1000);
+    
+    console.log('🔤 Dummy timer elem létrehozva BBH Sans Hegarty font betöltéséhez');
   }
 }

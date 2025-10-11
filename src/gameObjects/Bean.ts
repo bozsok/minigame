@@ -83,16 +83,26 @@ export class Bean extends Phaser.GameObjects.Sprite {
       }
     });
 
-    // Hover glow effektek
+    // Hover glow effektek + cursor
     this.on('pointerover', () => {
       if (this.isCollectable && !this.glowFX) {
         this.showGlow();
+      }
+      // Pointer cursor babok hover-jén
+      const canvas = this.scene.game.canvas;
+      if (canvas && this.isCollectable) {
+        canvas.style.cursor = 'pointer';
       }
     });
 
     this.on('pointerout', () => {
       if (this.glowFX) {
         this.hideGlow();
+      }
+      // Vissza default cursor-ra
+      const canvas = this.scene.game.canvas;
+      if (canvas) {
+        canvas.style.cursor = 'default';
       }
     });
   }

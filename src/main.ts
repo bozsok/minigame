@@ -25,6 +25,15 @@ console.log('Phaser játék elindítva!');
       if (menuScene) {
         console.log('MenuScene → GameScene átváltás...');
         menuScene.scene.start('GameScene');
+        
+        // 2. GameScene startGame() metódusának meghívása
+        setTimeout(() => {
+          const gameScene = game.scene.getScene('GameScene') as GameScene;
+          if (gameScene && gameScene.startGame) {
+            console.log('GameScene startGame() meghívása...');
+            gameScene.startGame();
+          }
+        }, 100); // Rövid késés hogy a scene létrejöjjön
       }
       
       // 2. Kis késleltetés majd teljesképernyős mód

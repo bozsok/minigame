@@ -166,6 +166,25 @@ export class Jar extends Phaser.GameObjects.Container {
 
     // Drag & drop beállítása
     this.scene.input.setDraggable(this);
+
+    // Cursor kezelés hover-re
+    this.on('pointerover', () => {
+      if (this.isDragEnabled && !this.isDragging) {
+        const canvas = this.scene.game.canvas;
+        if (canvas) {
+          canvas.style.cursor = 'grab';
+        }
+      }
+    });
+
+    this.on('pointerout', () => {
+      if (!this.isDragging) {
+        const canvas = this.scene.game.canvas;
+        if (canvas) {
+          canvas.style.cursor = 'default';
+        }
+      }
+    });
     
     this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
       this.setPosition(dragX, dragY);
@@ -217,6 +236,12 @@ export class Jar extends Phaser.GameObjects.Container {
       this.setAlpha(0.8);
       this.setDepth(1000); // Drag közben legfelülre
       
+      // Grabbing cursor drag közben
+      const canvas = this.scene.game.canvas;
+      if (canvas) {
+        canvas.style.cursor = 'grabbing';
+      }
+      
       // Pitcher glow bekapcsolása, hogy jelezzük hová kell húzni
       const gameScene = this.scene as any;
       if (gameScene.pitcher) {
@@ -233,6 +258,12 @@ export class Jar extends Phaser.GameObjects.Container {
       this.isDragging = false; // Drag állapot kikapcsolása
       this.setAlpha(1);
       this.setDepth(500); // Visszaállítás eredeti depth-re
+      
+      // Vissza default cursor-ra (dragend után)
+      const canvas = this.scene.game.canvas;
+      if (canvas) {
+        canvas.style.cursor = 'default';
+      }
       
       // Pitcher glow kikapcsolása
       const gameScene = this.scene as any;

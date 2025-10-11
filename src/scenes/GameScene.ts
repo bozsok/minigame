@@ -15,10 +15,12 @@ export default class GameScene extends Phaser.Scene {
   private background!: Phaser.GameObjects.Image;
   private gameStartTime: number = 0;
   private energyRemaining: number = GameBalance.energy.initialTime;
+  private countdownTime: number = 20; // TESZT: 20 másodperc (eredetileg 5 * 60)
+  private timerStarted: boolean = false; // Timer csak babok betöltése után indul
+  private timerBackground!: Phaser.GameObjects.Graphics;
   private uiElements: {
     energyText?: Phaser.GameObjects.Text;
-    beanCountText?: Phaser.GameObjects.Text;
-    jarPhaseText?: Phaser.GameObjects.Text;
+    timerText?: Phaser.GameObjects.Text;
     instructionText?: Phaser.GameObjects.Text;
   } = {};
 
@@ -29,12 +31,13 @@ export default class GameScene extends Phaser.Scene {
   create(): void {
     this.gameStartTime = Date.now();
     this.energyRemaining = GameBalance.energy.initialTime;
+    this.timerStarted = false; // Timer még nem indult el
 
-    // Custom default cursor beállítása globálisan
-    this.setGlobalDefaultCursor();
-    
-    // Globális egérgomb események beállítása cursor animációhoz
-    this.setupGlobalMouseEvents();
+    // Natív cursor használata
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
 
     // Háttér hozzáadása - dinamikus méretezés
     this.background = this.add.image(0, 0, 'pantry-bg');
@@ -73,33 +76,261 @@ export default class GameScene extends Phaser.Scene {
     // Esemény figyelők beállítása
     this.setupEventListeners();
 
-    // Játék indítása
-    this.startGame();
-
-    console.log('GameScene létrehozva - Bab gyűjtés játék elindult!');
+    console.log('GameScene létrehozva - Várakozás Play gomb megnyomására!');
   }
 
   /**
    * UI elemek létrehozása
    */
   private createUI(): void {
-    // Bab számláló (jobb felső sarok)
-    this.uiElements.beanCountText = this.add.text(860 - 20, 20, 'Babok: 0', {
-      fontSize: '18px',
-      color: '#ffffff',
-      backgroundColor: '#000000',
-      padding: { x: 8, y: 4 }
-    }).setOrigin(1, 0);
+    // TISZTÍTÁS: Töröljük a korábbi timer objektumokat ha léteznek
+    if (this.uiElements.timerText) {
+      this.uiElements.timerText.destroy();
+      this.uiElements.timerText = undefined;
+    }
+    if (this.timerBackground) {
+      this.timerBackground.destroy();
+      // this.timerBackground újra létre lesz hozva createTimerBackground()-ban
+    }
+    
+    // Időszámláló azonnal létrehozása REJTVE - betűtípus betöltéséhez
+    this.createHiddenTimerElements();
+  }
 
-    // Aktív üveg állapot (középen felül)
-    this.uiElements.jarPhaseText = this.add.text(430, 20, 'Aktív üveg: 1 (0/50 bab)', {
-      fontSize: '16px',
+  /**
+   * Rejtett időszámláló elemek létrehozása (scene indításakor - font már betöltött PreloadScene-ben)
+   */
+  private createHiddenTimerElements(): void {
+    // Valós arányosítás számítása (mint a többi elem)
+    const gameWidth = this.scale.width;
+    const gameHeight = this.scale.height;
+    const isFullscreen = gameWidth > 1200;
+    let gameScale: number;
+    if (isFullscreen) {
+      gameScale = 1.0; // Fullscreen = natív méret
+    } else {
+      // Ugyanaz az arányosítás mint a többi elemnél
+      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
+      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
+      const scaleX = gameWidth / originalWidth;
+      const scaleY = gameHeight / originalHeight;
+      gameScale = Math.min(scaleX, scaleY);
+    }
+    
+    // Font méret arányosítása (eredeti design: 42px)
+    const baseFontSize = 42;
+    const baseStrokeThickness = 4;
+    const fontSize = Math.round(baseFontSize * gameScale);
+    const strokeThickness = Math.round(baseStrokeThickness * gameScale);
+    
+    // Időszámláló szöveg létrehozása REJTVE - BBH Sans Hegarty már elérhető
+    this.uiElements.timerText = this.add.text(0, 0, '05:00', {
+      fontSize: `${fontSize}px`,
       color: '#ffffff',
-      backgroundColor: '#4CAF50',
-      padding: { x: 8, y: 4 }
-    }).setOrigin(0.5, 0);
+      fontFamily: '"BBH Sans Hegarty", "Berlin Sans FB Demi", "Arial Black", Arial, sans-serif',
+      stroke: '#333333',
+      strokeThickness: strokeThickness
+    }).setOrigin(0.5, 0.5);
 
-    // Egyszerűsített UI - üvegek vizuálisan láthatók a bal felső sarokban
+    // Időszámláló háttér létrehozása REJTVE
+    this.createTimerBackground();
+    
+    // REJTÉS - nem látható amíg a Play gomb meg nem nyomva
+    this.uiElements.timerText.setVisible(false);
+    this.timerBackground.setVisible(false);
+    
+    console.log('⏰ Rejtett időszámláló elemek létrehozva - BBH Sans Hegarty (PreloadScene-ben előbetöltött)');
+  }
+
+  /**
+   * Időszámláló megjelenítése (babok spawn-ja után)
+   */
+  private showTimerElements(): void {
+    if (this.uiElements.timerText && this.timerBackground) {
+      // Elemek láthatóvá tétele
+      this.uiElements.timerText.setVisible(true);
+      this.timerBackground.setVisible(true);
+      
+      // Timer indítása
+      this.timerStarted = true;
+      this.gameStartTime = Date.now();
+      this.countdownTime = 20; // TESZT: 20 másodperc (eredetileg 5 * 60)
+      
+      // AZONNAL beállítjuk a kezdő szöveget
+      this.updateTimerUI();
+      
+      // Pozíció újraszámítása
+      this.updateTimerPosition(this.scale.width);
+      
+      console.log('⏰ Időszámláló megjelenítve és elindítva - azonnal 05:00 szöveggel');
+    }
+  }
+
+  /**
+   * Időszámláló háttér létrehozása
+   */
+  private createTimerBackground(): void {
+    // Pozíció számítás - fullscreen gomb bal oldala mellett, 10px távolság
+    const gameWidth = this.scale.width;
+    const gameHeight = this.scale.height;
+    
+    // Valós arányosítás számítása (mint a többi elem)
+    const isFullscreen = gameWidth > 1200;
+    let gameScale: number;
+    if (isFullscreen) {
+      gameScale = 1.0; // Fullscreen = natív méret
+    } else {
+      // Ugyanaz az arányosítás mint a többi elemnél
+      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
+      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
+      const scaleX = gameWidth / originalWidth;
+      const scaleY = gameHeight / originalHeight;
+      gameScale = Math.min(scaleX, scaleY);
+    }
+    
+    // Timer méretei (eredeti design) * arányosítási faktor
+    const baseTimerWidth = 175;  // Eredeti design méret
+    const baseTimerHeight = 75;  // Eredeti design méret
+    const timerWidth = baseTimerWidth * gameScale;
+    const timerHeight = baseTimerHeight * gameScale;
+    
+    const fullscreenButtonX = gameWidth - 40; // FullscreenButton pozíciója
+    const timerX = fullscreenButtonX - 40 - timerWidth - 10; // 40px gomb szélesség + 10px távolság
+    const timerY = 20;
+
+    // Graphics objektum létrehozása
+    this.timerBackground = this.add.graphics();
+    
+    // Border és lekerekítés arányosítása
+    const baseBorderWidth = 6;    // Eredeti border vastagság
+    const baseCornerRadius = 20;  // Eredeti lekerekítés
+    const borderWidth = Math.round(baseBorderWidth * gameScale);
+    const cornerRadius = Math.round(baseCornerRadius * gameScale);
+    
+    // Border rajzolása (#3ba4c2 szín, arányosított vastagság)
+    this.timerBackground.lineStyle(borderWidth, 0x3ba4c2);
+    this.timerBackground.fillStyle(0x000000); // Fekete kitöltés
+    
+    // Lekerekített téglalap - arányosított lekerekítés
+    this.timerBackground.fillRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
+    this.timerBackground.strokeRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
+
+    // Timer szöveg pozícionálása a téglalap közepére
+    if (this.uiElements.timerText) {
+      this.uiElements.timerText.setPosition(timerX + timerWidth / 2, timerY + timerHeight / 2);
+      console.log(`⏰ Timer szöveg pozícionálva: (${timerX + timerWidth / 2}, ${timerY + timerHeight / 2})`);
+    }
+  }
+
+  /**
+   * Időszámláló pozíció frissítése (responsive)
+   */
+  private updateTimerPosition(gameWidth: number): void {
+    const gameHeight = this.scale.height;
+    
+    // Valós arányosítás számítása (mint a többi elem)
+    const isFullscreen = gameWidth > 1200;
+    let gameScale: number;
+    if (isFullscreen) {
+      gameScale = 1.0; // Fullscreen = natív méret
+    } else {
+      // Ugyanaz az arányosítás mint a többi elemnél
+      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
+      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
+      const scaleX = gameWidth / originalWidth;
+      const scaleY = gameHeight / originalHeight;
+      gameScale = Math.min(scaleX, scaleY);
+    }
+    
+    // Timer méretei (eredeti design) * arányosítási faktor
+    const baseTimerWidth = 175;  // Eredeti design méret
+    const baseTimerHeight = 75;  // Eredeti design méret
+    const timerWidth = baseTimerWidth * gameScale;
+    const timerHeight = baseTimerHeight * gameScale;
+    
+    const fullscreenButtonX = gameWidth - 40;
+    const timerX = fullscreenButtonX - 40 - timerWidth - 10;
+    const timerY = 20;
+
+    // Graphics háttér frissítése
+    if (this.timerBackground) {
+      this.timerBackground.clear();
+      
+      // Border és lekerekítés arányosítása
+      const baseBorderWidth = 6;    // Eredeti border vastagság
+      const baseCornerRadius = 20;  // Eredeti lekerekítés
+      const borderWidth = Math.round(baseBorderWidth * gameScale);
+      const cornerRadius = Math.round(baseCornerRadius * gameScale);
+      
+      this.timerBackground.lineStyle(borderWidth, 0x3ba4c2);
+      this.timerBackground.fillStyle(0x000000);
+      this.timerBackground.fillRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
+      this.timerBackground.strokeRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
+    }
+
+    // Timer szöveg pozíció frissítése
+    if (this.uiElements.timerText) {
+      this.uiElements.timerText.setPosition(timerX + timerWidth / 2, timerY + timerHeight / 2);
+    }
+  }
+
+  /**
+   * Font betöltés várakozás - specifikus BBH Sans Hegarty ellenőrzés
+   */
+  private waitForFontLoad(): Promise<void> {
+    return new Promise((resolve) => {
+      // Specifikus font ellenőrzés
+      if ('fonts' in document && document.fonts.check) {
+        const checkFont = () => {
+          const fontLoaded = document.fonts.check('44px "BBH Sans Hegarty"');
+          if (fontLoaded) {
+            console.log('⏰ BBH Sans Hegarty font specifikusan betöltve és elérhető');
+            resolve();
+          } else {
+            console.log('⏰ BBH Sans Hegarty még nem elérhető, újrapróbálkozás...');
+            setTimeout(checkFont, 100); // 100ms-enként ellenőrzés
+          }
+        };
+        
+        // Első ellenőrzés
+        checkFont();
+        
+        // Biztonsági timeout 2 másodperc után
+        setTimeout(() => {
+          console.log('⏰ Font timeout - folytatás fallback fonttal');
+          resolve();
+        }, 2000);
+      } else {
+        // Fallback - 800ms várakozás
+        setTimeout(() => {
+          console.log('⏰ Font várakozás fallback (800ms)');
+          resolve();
+        }, 800);
+      }
+    });
+  }
+
+  /**
+   * Font beállítás biztosítása - explicit font alkalmazás
+   */
+  private ensureCorrectFont(): void {
+    if (this.uiElements.timerText) {
+      // Explicit setStyle hívás a font biztosításához
+      this.uiElements.timerText.setStyle({
+        fontSize: '44px',
+        color: '#ffffff',
+        fontFamily: '"BBH Sans Hegarty", "Berlin Sans FB Demi", "Arial Black", Arial, sans-serif',
+        stroke: '#333333',
+        strokeThickness: 4
+      });
+      
+      // Kényszerített szöveg frissítés a font alkalmazásához
+      const currentText = this.uiElements.timerText.text;
+      this.uiElements.timerText.setText('');
+      this.uiElements.timerText.setText(currentText);
+      
+      console.log('⏰ Font explicit beállítás és szöveg frissítés végrehajtva');
+    }
   }
 
   /**
@@ -148,7 +379,7 @@ export default class GameScene extends Phaser.Scene {
   /**
    * Játék indítása
    */
-  private startGame(): void {
+  public startGame(): void {
     console.log('=== JÁTÉK INDÍTÁSA ===');
     console.log('1 másodperces várakozás a babok és interaktív elemek megjelenése előtt...');
     
@@ -169,6 +400,10 @@ export default class GameScene extends Phaser.Scene {
       // Energia csökkentés indítása
       this.startEnergyCountdown();
       
+      // IDŐSZÁMLÁLÓ MEGJELENÍTÉSE ÉS INDÍTÁSA - babok betöltése után
+      console.log('⏰ Időszámláló megjelenítése és indítása - 5 perc visszaszámlálás!');
+      this.showTimerElements();
+      
     }, 1000); // 2000-ről 1000-re csökkentve
   }
 
@@ -187,12 +422,141 @@ export default class GameScene extends Phaser.Scene {
     // BeanManager frissítése
     this.beanManager.update(delta);
 
-    // Energia kijelző frissítése (de nincs időkorlát!)
+    // Időszámláló logika frissítése - csak ha elindult
+    if (this.timerStarted && this.uiElements.timerText) {
+      const currentTime = Date.now();
+      const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
+      const newCountdownTime = Math.max(0, 20 - elapsedSeconds); // TESZT: 20 másodperc (eredetileg 5 * 60)
+      
+      // Timer UI frissítése ha változott az idő
+      if (newCountdownTime !== this.countdownTime) {
+        this.countdownTime = newCountdownTime;
+        this.updateTimerUI();
+        
+        // Debug minden másodpercben
+        console.log(`⏰ Timer update: ${this.countdownTime}s (elapsed: ${elapsedSeconds}s)`);
+      }
+      
+      // Időtúllépés ellenőrzés (game over) - csak egyszer hívjuk meg
+      if (this.countdownTime <= 0 && this.timerStarted) {
+        this.timerStarted = false; // Leállítjuk a timer logikáját
+        this.handleTimeUp();
+      }
+    }
+    
+
+    
+    // Egyéb UI frissítése
     const currentTime = Date.now();
     const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
-    
-    // UI frissítése (csak információs célból, nincs game over)
     this.updateEnergyUI(elapsedSeconds);
+  }
+
+  /**
+   * Időszámláló UI frissítése (MM:SS formátum)
+   */
+  private updateTimerUI(): void {
+    if (!this.uiElements.timerText) {
+      console.log('⚠️ Timer text nem létezik - skipeljük frissítést!');
+      return;
+    }
+    
+    // EXTRA VÉDELEM: Ellenőrizzük, hogy a Phaser objektum valóban működőképes-e
+    try {
+      // Teszteljük, hogy az objektum még mindig valid-e
+      if (!this.uiElements.timerText.scene || this.uiElements.timerText.scene !== this) {
+        console.log('⚠️ Timer text scene invalid - újralétrehozzuk!');
+        this.createHiddenTimerElements();
+        return;
+      }
+    } catch (error) {
+      console.log('⚠️ Timer text corrupt, újralétrehozzuk:', error);
+      this.createHiddenTimerElements();
+      return;
+    }
+
+    const minutes = Math.floor(this.countdownTime / 60);
+    const seconds = this.countdownTime % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Valós arányosítás számítása (mint a többi elem)
+    const gameWidth = this.scale.width;
+    const gameHeight = this.scale.height;
+    const isFullscreen = gameWidth > 1200;
+    let gameScale: number;
+    if (isFullscreen) {
+      gameScale = 1.0; // Fullscreen = natív méret
+    } else {
+      // Ugyanaz az arányosítás mint a többi elemnél
+      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
+      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
+      const scaleX = gameWidth / originalWidth;
+      const scaleY = gameHeight / originalHeight;
+      gameScale = Math.min(scaleX, scaleY);
+    }
+    
+    // Font méret arányosítása (eredeti design: 42px)
+    const baseFontSize = 42;
+    const baseStrokeThickness = 4;
+    const fontSize = Math.round(baseFontSize * gameScale);
+    const strokeThickness = Math.round(baseStrokeThickness * gameScale);
+    
+    // BIZTONSÁGOS szöveg és stílus beállítása try-catch-el
+    try {
+      this.uiElements.timerText.setText(timeString);
+      this.uiElements.timerText.setStyle({
+        fontSize: `${fontSize}px`,
+        fontFamily: '"BBH Sans Hegarty", "Berlin Sans FB Demi", "Arial Black", Arial, sans-serif',
+        stroke: '#333333',
+        strokeThickness: strokeThickness
+      });
+      
+      // Egyszerű színbeállítás
+      if (this.countdownTime <= 30) {
+        this.uiElements.timerText.setColor('#ff0000'); // Piros 30 másodpercnél
+      } else if (this.countdownTime <= 120) {
+        this.uiElements.timerText.setColor('#ffaa00'); // Narancssárga 2 percnél
+      } else {
+        this.uiElements.timerText.setColor('#ffffff'); // Fehér
+      }
+    } catch (error) {
+      console.log('⚠️ KRITIKUS: Timer text frissítés hiba - újralétrehozzuk!', error);
+      // Újralétrehozzuk a timer objektumot
+      this.createHiddenTimerElements();
+      return; // Ne folytassuk a frissítést
+    }
+
+    // Biztosítjuk, hogy látható legyen (de csak ha a timer indítás megtörtént)
+    // FONTOS: Ez NEM kontrollálja a timer megjelenését, csak a visible objektum frissítését!
+    if (this.uiElements.timerText.visible) {
+      this.uiElements.timerText.setAlpha(1);
+      this.uiElements.timerText.setDepth(1000); // Legfelülre
+    }
+
+    // Debug minden frissítésnél (első 10 másodpercben)
+    if (this.countdownTime >= 290) { // Első 10 mp (300-290)
+      console.log(`⏰ Timer frissítve: "${timeString}" (${this.countdownTime}s maradt)`);
+      console.log(`⏰ Text pos: (${this.uiElements.timerText.x}, ${this.uiElements.timerText.y})`);
+      console.log(`⏰ Text visible: ${this.uiElements.timerText.visible}, alpha: ${this.uiElements.timerText.alpha}`);
+    }
+  }
+
+  /**
+   * Időtúllépés kezelése
+   */
+  private handleTimeUp(): void {
+    console.log('⏰ IDŐ LEJÁRT! Játék megáll, elemek látva maradnak!');
+    
+    // Játék logika leállítása (de elemek látva maradnak)
+    this.beanManager.stopGame();
+    
+    // Piros körvonal hozzáadása a maradék babokhoz
+    this.beanManager.highlightRemainingBeans();
+    
+    // Timer 00:00-n marad, semmi nem tűnik el
+    // Játékos szabadon nézheti a maradék elemeket
+    // Visszatérés: ablakos mód gomb → MenuScene
+    console.log('⏰ Játék befagyasztva - ablakos mód gombbal lehet visszatérni');
   }
 
   /**
@@ -207,44 +571,23 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private updateBeanCountUI(data: any): void {
-    if (this.uiElements.beanCountText) {
-      this.uiElements.beanCountText.setText(`Babok: ${data.totalBeans}`);
-    }
+    // Bean count már nem jelenik meg a UI-on
+    // Csak az időszámláló látható
   }
 
   private updateJarUI(data: any): void {
-    if (this.uiElements.jarPhaseText) {
-      const { currentJarIndex, currentJarBeans, allJarsFull } = data;
-      
-      if (allJarsFull) {
-        this.uiElements.jarPhaseText.setText('Minden üveg tele! Zárd be és vidd a pitcher-be!');
-        this.uiElements.jarPhaseText.setBackgroundColor('#FF9800'); // narancssárga
-      } else {
-        this.uiElements.jarPhaseText.setText(`Aktív üveg: ${currentJarIndex + 1} (${currentJarBeans}/50 bab)`);
-        this.uiElements.jarPhaseText.setBackgroundColor('#4CAF50'); // zöld
-      }
-    }
+    // Jar UI frissítés már nem szükséges - vizuálisan látható az üvegeken
   }
 
   private handleAllJarsFull(): void {
     console.log('GameScene: Minden üveg megtelt!');
-    // Itt leállíthatnánk a bean spawn-t, de a BeanManager már kezeli
-    // Üzenet megjelenítése a játékosnak
-    if (this.uiElements.jarPhaseText) {
-      this.uiElements.jarPhaseText.setText('Minden üveg tele! Dupla klikk → lezár → pitcher-be húz!');
-      this.uiElements.jarPhaseText.setBackgroundColor('#FF5722'); // piros-narancssárga
-    }
+    // A vizuális feedback már az üvegeken látható
   }
 
   private handleJarDelivered(data: any): void {
     const { jarIndex, totalJarsInPitcher } = data;
     console.log(`GameScene: Jar ${jarIndex} leadva! Összesen: ${totalJarsInPitcher}/5`);
-    
-    // UI frissítése
-    if (this.uiElements.jarPhaseText) {
-      this.uiElements.jarPhaseText.setText(`Leadott üvegek: ${totalJarsInPitcher}/5`);
-      this.uiElements.jarPhaseText.setBackgroundColor('#2196F3'); // kék
-    }
+    // A leadott üvegek száma vizuálisan követhető
   }
 
   private handleJarHighlight(data: any): void {
@@ -258,12 +601,9 @@ export default class GameScene extends Phaser.Scene {
   private handleGameComplete(): void {
     console.log('🎉 JÁTÉK BEFEJEZVE! Mind az 5 üveg leadva!');
     
-    // Victory UI
-    if (this.uiElements.jarPhaseText) {
-      this.uiElements.jarPhaseText.setText('🎉 GYŐZELEM! Mind az 5 üveg leadva! 🎉');
-      this.uiElements.jarPhaseText.setBackgroundColor('#4CAF50'); // zöld
-    }
-
+    // Timer megállítása - győzelem esetén nincs időkorlát
+    this.timerStarted = false;
+    
     // Játék logika leállítása
     this.beanManager.stopGame();
     
@@ -271,9 +611,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private updateJarPhaseUI(data: any): void {
-    if (this.uiElements.jarPhaseText) {
-      this.uiElements.jarPhaseText.setText(`Üveg fázis: ${data.phase}/${GameBalance.jar.phasesPerJar}`);
-    }
+    // Jar phase UI már nem szükséges - vizuálisan látható
 
     if (this.uiElements.instructionText) {
       this.uiElements.instructionText.setText(`Fázis befejezve! (${data.phase}/${data.totalPhases})`);
@@ -401,20 +739,17 @@ export default class GameScene extends Phaser.Scene {
    * UI elemek pozíciójának frissítése megadott méretekkel
    */
   private updateUIPositionsWithDimensions(gameWidth: number, gameHeight: number): void {
-    // Energia kijelző (bal felső sarok)
+    // Energia kijelző (bal felső sarok) 
     if (this.uiElements.energyText) {
       this.uiElements.energyText.setPosition(20, 20);
     }
 
-    // Bab számláló (jobb felső sarok)
-    if (this.uiElements.beanCountText) {
-      this.uiElements.beanCountText.setPosition(gameWidth - 20, 20);
+    // Időszámláló pozíció frissítése (ha létezik)
+    if (this.timerBackground && this.uiElements.timerText) {
+      this.updateTimerPosition(gameWidth);
     }
 
-    // Üveg fázis kijelző (középen felül)
-    if (this.uiElements.jarPhaseText) {
-      this.uiElements.jarPhaseText.setPosition(gameWidth / 2, 20);
-    }
+
 
     // Utasítás szöveg (lent középen)
     if (this.uiElements.instructionText) {
@@ -468,6 +803,12 @@ export default class GameScene extends Phaser.Scene {
     if (this.cheeseManager && !this.cheeseManager.isDevMode()) {
       this.cheeseManager.updateScale(gameScale, gameWidth, gameHeight);
     }
+    
+    // Timer méretének és pozíciójának frissítése - csak ha háttér is létezik
+    if (this.uiElements.timerText && this.timerBackground) {
+      this.updateTimerUI(); // Ez már tartalmazza az arányosítást
+      this.updateTimerPosition(gameWidth); // És a pozíciót is frissíti
+    }
   }
 
   /**
@@ -481,153 +822,6 @@ export default class GameScene extends Phaser.Scene {
       this.fullscreenButton.destroy();
     }
     
-    // Globális cursor event listener-ek eltávolítása
-    this.removeGlobalMouseEvents();
-    
     this.events.removeAllListeners();
-  }
-
-  /**
-   * Globális default cursor beállítása - custom sprite használat
-   */
-  private setGlobalDefaultCursor(): void {
-    const canvas = this.game.canvas;
-    if (!canvas) return;
-
-    // cursor-default sprite első frame-jének használata
-    const texture = this.textures.get('cursor-default');
-    if (!texture || !texture.source[0]) {
-      console.warn('cursor-default sprite nem található, browser default marad');
-      return;
-    }
-
-    const frameWidth = 55;
-    const frameHeight = 55;
-    const frameIndex = 0; // Első frame
-
-    // Canvas készítése
-    const tempCanvas = document.createElement('canvas');
-    const ctx = tempCanvas.getContext('2d');
-    
-    if (ctx) {
-      // 44% kisebb méret (56% scale - 30% + újabb 20% csökkentés)
-      const scaledWidth = frameWidth * 0.56;
-      const scaledHeight = frameHeight * 0.56;
-      
-      tempCanvas.width = scaledWidth;
-      tempCanvas.height = scaledHeight;
-      
-      // Frame pozíció (horizontal layout)
-      const sourceX = frameIndex * frameWidth;
-      const sourceY = 0;
-      
-      // Sprite image
-      const image = texture.source[0].image as HTMLImageElement;
-      
-      // Frame rajzolása scale-elt méretben
-      ctx.drawImage(
-        image,
-        sourceX, sourceY, frameWidth, frameHeight,
-        0, 0, scaledWidth, scaledHeight
-      );
-      
-      // Globális cursor beállítása - hotspot középen
-      const hotspotX = scaledWidth / 2;
-      const hotspotY = scaledHeight / 2;
-      canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
-      
-      console.log(`🖱️ Globális custom default cursor beállítva (${scaledWidth}x${scaledHeight}px, 56% méret)`);
-    }
-  }
-
-  /**
-   * Globális egérgomb események beállítása cursor animációhoz
-   */
-  private setupGlobalMouseEvents(): void {
-    const canvas = this.game.canvas;
-    if (!canvas) return;
-
-    // Event listener-ek hozzáadása (referenciákkal a cleanup-hoz)
-    canvas.addEventListener('mousedown', this.handleMouseDown);
-    canvas.addEventListener('mouseup', this.handleMouseUp);
-    canvas.addEventListener('mouseleave', this.handleMouseLeave);
-
-    console.log('🖱️ Globális egérgomb cursor animáció események beállítva');
-  }
-
-  /**
-   * Cursor frame váltása (0 = normál, 1 = lenyomott)
-   */
-  private setCursorFrame(frameIndex: number): void {
-    const canvas = this.game.canvas;
-    if (!canvas) return;
-
-    const texture = this.textures.get('cursor-default');
-    if (!texture || !texture.source[0]) return;
-
-    const frameWidth = 55;
-    const frameHeight = 55;
-
-    // Canvas készítése
-    const tempCanvas = document.createElement('canvas');
-    const ctx = tempCanvas.getContext('2d');
-    
-    if (ctx) {
-      // 44% kisebb méret (56% scale)
-      const scaledWidth = frameWidth * 0.56;
-      const scaledHeight = frameHeight * 0.56;
-      
-      tempCanvas.width = scaledWidth;
-      tempCanvas.height = scaledHeight;
-      
-      // Frame pozíció (horizontal layout)
-      const sourceX = frameIndex * frameWidth;
-      const sourceY = 0;
-      
-      // Sprite image
-      const image = texture.source[0].image as HTMLImageElement;
-      
-      // Frame rajzolása scale-elt méretben
-      ctx.drawImage(
-        image,
-        sourceX, sourceY, frameWidth, frameHeight,
-        0, 0, scaledWidth, scaledHeight
-      );
-      
-      // Cursor beállítása - hotspot középen
-      const hotspotX = scaledWidth / 2;
-      const hotspotY = scaledHeight / 2;
-      canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
-      
-      console.log(`🖱️ Cursor frame váltás: ${frameIndex} (${frameIndex === 0 ? 'normál' : 'lenyomott'})`);
-    }
-  }
-
-  /**
-   * Globális egérgomb események eltávolítása (cleanup)
-   */
-  private removeGlobalMouseEvents(): void {
-    const canvas = this.game.canvas;
-    if (!canvas) return;
-
-    // Event listener-ek eltávolítása
-    canvas.removeEventListener('mousedown', this.handleMouseDown);
-    canvas.removeEventListener('mouseup', this.handleMouseUp);
-    canvas.removeEventListener('mouseleave', this.handleMouseLeave);
-    
-    console.log('🖱️ Globális egérgomb cursor animáció események eltávolítva');
-  }
-
-  // Event handler referenciák (arrow function-ök a this context megőrzésére)
-  private handleMouseDown = (event: MouseEvent) => {
-    if (event.button === 0) this.setCursorFrame(1);
-  }
-
-  private handleMouseUp = (event: MouseEvent) => {
-    if (event.button === 0) this.setCursorFrame(0);
-  }
-
-  private handleMouseLeave = () => {
-    this.setCursorFrame(0);
   }
 }

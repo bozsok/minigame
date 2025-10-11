@@ -719,6 +719,21 @@ export class BeanManager {
   }
 
   /**
+   * Maradék babok kiemelése piros körvonalas glow-val (időtúllépéskor)
+   */
+  public highlightRemainingBeans(): void {
+    console.log(`🔴 Maradék babok kiemelése: ${this.beans.size} db`);
+    
+    this.beans.forEach((bean) => {
+      if (bean.visible) {
+        // Piros körvonal glow effekt
+        bean.preFX?.addGlow(0xff0000, 4, 0, false, 0.8, 8); // Piros, 4px outer, 8px inner
+        console.log(`Bean ${bean.getData('id')} piros glow hozzáadva`);
+      }
+    });
+  }
+
+  /**
    * Rendszer leállítása és cleanup
    */
   public cleanup(): void {

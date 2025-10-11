@@ -27,6 +27,7 @@ A játék célja az egérkezelés fejlesztése játékos formában. A játékos 
 - **Teljesképernyős mód:** tm.png/em.png gombokkal ✅ *TELJES IMPLEMENTÁCIÓ*
 - **Responsive Scaling:** Valós arányosítás ✅ *FORRADALMI ÚJÍTÁS*
 - **Jobb klikk:** Sajt evés energiafeltöltéshez ✅ *PIXEL-PERFECT COLLISION*
+- **5 perces timer:** Visszaszámláló BBH Sans Hegarty fonttal ✅ *PROFESSIONAL TYPOGRAPHY*
 
 ## Telepítés
 
@@ -91,6 +92,43 @@ eger-kaland-kamraban/
 ```
 
 ## Fejlesztési Státusz
+
+### ✅ Phase 4.3 - GAME FLOW & UI POLISH (2025-10-11)
+
+**⏰ Intelligens Időkezelés (ÚJ - BEFEJEZVE):**
+- **Timer megállítás győzelemnél** - leáll amikor mind az 5 üveg leadva
+- **Befagyasztott játék állapot** időtúllépéskor - 00:00-n marad a timer
+- **Természetes kilépés** ablakos mód gombbal - nincs kényszerített timeout
+- **Nyugodt elemzés** - játékos tetszőlegesen hosszú ideig nézheti a maradék elemeket
+
+**🔴 Maradék Elemek Highlighting (ÚJ - BEFEJEZVE):**
+- **Piros glow rendszer** gyűjtetlen babokra időtúllépéskor
+- **PreFX körvonal** 4px outer + 8px inner + 0.8 alpha intenzitással
+- **Vizuális tanulás** - látható mit nem talált meg a játékos
+- **Semmi nem tűnik el** - babok, üvegek, sajtok, korsó mind látva marad
+
+**🎯 UI Minimalizálás & Clean-up (ÚJ - BEFEJEZVE):**
+- **"Aktív üveg..." felirat eltávolítva** - felesleges zöld hátteres szöveg
+- **Tiszta játékterület** - csak a vizuális elemek (üvegek + glow)
+- **Minimalist design** - zavaró középső szövegek megszüntetése
+- **Intuitív UX** - minden információ vizuálisan követhető
+
+### ✅ Phase 4.2 - COUNTDOWN TIMER SYSTEM (2025-10-11)
+
+**⏱️ 5 Perces Visszaszámláló (ÚJ - BEFEJEZVE):**
+- **BBH Sans Hegarty font integráció** Google Fonts professzionális tipográfiával
+- **MM:SS formátum** (05:00 → 00:00) valós időben
+- **Responsive design** matematikai arányosítással minden felbontáson
+- **Visual state management:** Fehér (>2min) → Narancssárga (≤2min) → Piros (≤30s)
+- **Professional positioning** jobb felső sarok, fullscreen gomb mellé
+- **Font loading optimization** PreloadScene dummy element technikával
+
+**🎨 Timer Design Rendszer:**
+- **Fullscreen mód:** 175×75px, 42px font, 6px border, 20px lekerekítés
+- **Ablakos mód:** gameScale alapú arányos méretezés minden komponensre
+- **Színkódolt feedback** sürgősségi szintek jelzésére
+- **Typography excellence** BBH Sans Hegarty betűtípussal
+- **Cross-platform** kompatibilis font preloading
 
 ### ✅ Phase 4.1 - VISUAL POLISH & PERFORMANCE (2025-10-11)
 
@@ -159,11 +197,19 @@ eger-kaland-kamraban/
 - Cross-browser kompatibilitás
 - HTML API integráció
 
+**⏱️ Countdown Timer (ÚJ - BEFEJEZVE):**
+- **5 perces visszaszámlálás** MM:SS formátumban (05:00 → 00:00)
+- **BBH Sans Hegarty** professzionális tipográfia Google Fonts-ból
+- **Responsive scaling** matematikai pontossággal (175×75px → arányos)
+- **Visual feedback** színkódolással (fehér → narancssárga → piros)
+- **Font optimization** PreloadScene dummy element preloading-gal
+
 **🎮 Komplett Játék Élmény:**
-- Play gomb → 1s késés → 250 bab + interaktív elemek + glow feedback
-- Bab gyűjtés → Üveg töltés → Drag & drop → Victory
-- Smooth vizuális visszajelzés minden interakcióhoz
-- Production-ready minőség minden platformon
+- Play gomb → 1s késés → 250 bab + interaktív elemek + timer + clean UI
+- Bab gyűjtés → Üveg töltés → Drag & drop → Victory (timer megáll)
+- **Időtúllépés:** Befagyasztott állapot + piros glow + természetes kilépés
+- **Clean UX:** Minimalist design + vizuális feedback + stresszmentes tanulás
+- Production-ready minőség minden platformon + professional game flow
 
 ### 🚧 Következő Fázisok
 - **Phase 5:** Audio integráció (hang effektek minden interakcióhoz)

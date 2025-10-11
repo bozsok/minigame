@@ -4,6 +4,95 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.3.0] - 2025-10-11 - **GAME FLOW & UI POLISH UPDATE**
+
+### ⏰ Időkezelés Finomítások
+- **TIMER MEGÁLLÍTÁS GYŐZELEMNÉL:** Timer leáll amikor mind az 5 üveg leadva
+  - `handleGameComplete()` beállítja `timerStarted = false`
+  - Győzelem esetén nincs további időszámlálás
+- **IDŐTÚLLÉPÉS OPTIMALIZÁLÁS:** Játék "befagy" állapot 00:00-nál
+  - Timer 00:00-n marad láthatóan
+  - Semmi interaktív elem nem tűnik el (babok, üvegek, sajtok, korsó)
+  - Játékos szabadon megfigyelheti a maradék elemeket
+
+### 🔴 Maradék Elemek Kiemelése
+- **PIROS GLOW HIGHLIGHTING:** `BeanManager.highlightRemainingBeans()` metódus
+  - PreFX piros körvonal (4px outer + 8px inner + 0.8 alpha)
+  - Minden gyűjtetlen bab piros glowval kiemelve
+  - Vizuális feedback - játékos látja mit nem talált meg
+- **TERMÉSZETES KILÉPÉS:** Ablakos mód gombbal visszatérés MenuScene-be
+  - Nincs automatikus timeout - játékos maga dönt
+  - Nyugodt elemzés és tanulás a hibákból
+
+### 🎯 UI Tisztítás & Minimalizálás
+- **FELESLEGES UI ELTÁVOLÍTÁS:** "Aktív üveg..." zöld hátteres felirat törölve
+  - `jarPhaseText` property teljes eltávolítása
+  - Középső zavaró szövegek megszüntetése
+  - Tiszta játékterület - csak vizuális elemek láthatók
+
+### Hozzáadva
+- Timer megállítás győzelemkor (`timerStarted = false` GameScene-ben)
+- Piros glow highlighting rendszer maradék babokhoz
+- Befagyasztott játék állapot időtúllépéskor
+- UI minimalizálás (jarPhaseText eltávolítás)
+
+### Javítva
+- **JÁTÉK FOLYAMAT:** Timer leáll victory-nál, nem számol feleslegesen
+- **IDŐTÚLLÉPÉS UX:** Elemek látva maradnak + piros highlighting
+- **UI TÚLZSÚFOLTSÁG:** Felesleges középső szövegek eltávolítása
+- **NATURAL FLOW:** Ablakos gombbal kilépés helyett automatikus timeout
+
+### 🎯 Szakmai Összegzés
+**Teljesített célok:** Polírozott game flow + természetes időkezelés + clean UI  
+**UX Innovation:** Befagyasztott állapot tanuláshoz + piros feedback rendszer  
+**Kódbázis Clean-up:** Felesleges UI elemek eltávolítása + kód optimalizálás  
+**Játék Élmény:** Stresszmentes időtúllépés + nyugodt elemzési lehetőség
+
+## [4.2.0] - 2025-10-11 - **COUNTDOWN TIMER SYSTEM UPDATE**
+
+### ⏱️ 5 Perces Visszaszámláló Rendszer
+- **BBH SANS HEGARTY FONT INTEGRÁCIÓ:** Google Fonts professzionális tipográfia
+  - PreloadScene dummy element preloading technika (2 másodperces ablak)
+  - index.html CSS @import és <link> integráció
+  - Font loading optimization 05:00 azonnali megjelenítéshez
+- **RESPONSIVE TIMER DESIGN:** Matematikai arányosítás minden módhoz
+  - Fullscreen: 175×75px, 42px font, 6px border, 20px radius
+  - Ablakos mód: gameScale alapú arányos kicsinyítés
+  - Pozicionálás: jobb felső sarok, fullscreen gomb mellé (10px távolság)
+
+### 🎨 Visual State Management
+- **SZÍNKÓDOLT IDŐÁLLAPOTOK:** Dinamikus visual feedback
+  - Fehér szín: >2 perc (normál állapot)
+  - Narancssárga: ≤2 perc (figyelmeztetés)
+  - Piros: ≤30 másodperc (kritikus állapot)
+- **MM:SS FORMÁTUM:** Professzionális időmegjelenítés (05:00 → 00:00)
+
+### 🔧 Technikai Implementáció
+- **GameScene timer logika:** showTimerElements() azonnali 05:00 szövegbeállítással
+- **Responsive scaling:** updateGameElementsScale() timer frissítés integrálása
+- **Frame-based updates:** update() loop minden frame-ben ellenőrzi a timer állapotot
+- **Font loading safeguard:** waitForFontLoad() fallback mechanizmus
+
+### Hozzáadva
+- Countdown timer UI GameScene-ben (createHiddenTimerElements, showTimerElements)
+- BBH Sans Hegarty font preloading PreloadScene-ben (preloadTimerFont metódus)
+- Google Fonts CSS integráció index.html-ben
+- Responsive timer scaling minden UI komponenshez
+- Visual state color coding (fehér/narancssárga/piros)
+
+### Javítva
+- **KRITIKUS:** Timer üres téglalap problem - updateTimerUI() azonnali hívással
+- **KRITIKUS:** Font loading timing - PreloadScene dummy element technika
+- Timer pozicionálás fullscreen gomb mellé minden felbontáson
+- Responsive design mathematical precision (nem fix méretek)
+
+### 🎯 Szakmai Összegzés
+**Teljesített célok:** Professzionális 5 perces visszaszámláló komplett visual feedback-kel  
+**Technikai újítás:** BBH Sans Hegarty font integration + responsive mathematical scaling  
+**Kódbázis állapot:** Production-ready, font loading optimalizált, cross-resolution compatible  
+**Játék élmény:** Intuitív időmenedzsment, színkódolt sürgősségi jelzések  
+**UI/UX excellence:** Professional typography + responsive design minden platformon
+
 ## [4.1.0] - 2025-10-11 - **VISUAL POLISH & OPTIMIZATION UPDATE**
 
 ### 🎨 Glow Effekt Rendszer

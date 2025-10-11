@@ -20,6 +20,8 @@ Ez az architektúra úgy lett tervezve, hogy támogassa a játékterv dokumentum
 | 2025-10-10 | 3.2 | Responsive Scaling System - Valós arányosítás minden elemre | Maya |
 | 2025-10-11 | 4.0 | **PHASE 4 COMPLETE CHEESE SYSTEM** - Pixel-perfect sajt evés rendszer | Maya |
 | 2025-10-11 | 4.1 | **VISUAL POLISH & OPTIMIZATION** - Glow effektek, custom cursor, teljesítmény javítás | Maya |
+| 2025-10-11 | 4.2 | **COUNTDOWN TIMER SYSTEM** - 5 perces visszaszámláló BBH Sans Hegarty fonttal | Maya |
+| 2025-10-11 | 4.3 | **GAME FLOW & UI POLISH** - Intelligens időkezelés + UI tisztítás | Maya |
 
 ## Technikai Áttekintés
 
@@ -289,21 +291,31 @@ eger-kaland-kamraban/
 - `src/systems/AudioManager.ts`
 - `src/config/AudioConfig.ts`
 
-### UI Rendszer
+### UI Rendszer ✅ **BEFEJEZVE**
 
 **UI Komponensek:**
+- ✅ **5 perces countdown timer** - BBH Sans Hegarty fonttal, MM:SS formátumban
+- ✅ **Responsive timer design** - 175×75px fullscreen, arányosított ablakos módban
+- ✅ **Timer visual states** - Fehér (>2min) → Narancssárga (≤2min) → Piros (≤30s)
+- ✅ **Professional positioning** - Jobb felső sarok, fullscreen gomb mellé
 - Energia csík megjelenítés
-- Hátralévő idő számláló
 - Üveg töltés indikátorok
 - Siker/sikertelenség üzenetek
 
 **Megvalósítási Követelmények:**
+- ✅ **Google Fonts integráció** - BBH Sans Hegarty preloading PreloadScene-ben
+- ✅ **Responsive scaling** - Valós arányosítás (mint többi elem)
+- ✅ **Visual feedback** - Színkódolt időállapotok (fehér/narancssárga/piros)
+- ✅ **Font loading optimization** - Dummy element technika 2 másodperces ablakban
 - Reszponzív layout rendszer
 - Érintés-barát interfész
 - Billentyűzet navigáció támogatás
 - Animáció és átmenetek
 
-**Létrehozandó Fájlok:**
+**Megvalósított Fájlok:**
+- ✅ `src/scenes/GameScene.ts` - Timer UI és logika
+- ✅ `src/scenes/PreloadScene.ts` - BBH Sans Hegarty font preloading
+- ✅ `index.html` - Google Fonts CSS linkek
 - `src/systems/UIManager.ts`
 - `src/gameObjects/UI/`
 - `src/types/UITypes.ts`
@@ -547,10 +559,20 @@ export const GameBalance = {
 - ✅ **Valós arányosítás** - Huszárvágás (0.25) helyett matematikai pontosság
 - ✅ **Canvas méret tárolás** - Eredeti spawn méretek megőrzése
 - ✅ **Dinamic positioning** - Pozíciók arányos átskálázása
-- ✅ **Universal scaling** - Babok, üvegek, korsó egységes kezelése
+- ✅ **Universal scaling** - Babok, üvegek, korsó, timer egységes kezelése
 - ✅ **Fullscreen ↔ Ablakos** - Zökkenőmentes váltás minden elemmel
 - ✅ **Precision collision** - Téglalap alapú ütközésdetektálás
 - ✅ **Child-friendly UX** - Nagy toleranciájú interakciók
+
+**⏱️ Countdown Timer Rendszer (ÚJ - TELJES):**
+- ✅ **BBH Sans Hegarty integráció** - Google Fonts preloading + dummy element technika
+- ✅ **5 perces visszaszámlálás** - MM:SS formátum (05:00 → 00:00)
+- ✅ **Responsive design** - 175×75px base → arányos scaling gameScale-lel
+- ✅ **Visual state management** - Fehér → Narancssárga (≤2min) → Piros (≤30s)
+- ✅ **Professional positioning** - Jobb felső sarok, fullscreen gomb mellé
+- ✅ **Typography scaling** - 42px font + 4px stroke → arányos minden módban
+- ✅ **Border & corner scaling** - 6px border + 20px radius → matematikai arányosítás
+- ✅ **Font loading optimization** - PreloadScene 2 másodperces előbetöltés
 
 **🧀 Sajt Rendszer (ÚJ - TELJES):**
 - ✅ `src/gameObjects/Cheese.ts` - Komplett pixel-perfect collision sajt objektum
@@ -613,6 +635,52 @@ export const GameBalance = {
 - [x] "Pitcher Drop Zone Coordinate Fix & Full Area" - **BEFEJEZVE**
 - [x] "Console Output Optimization & Developer Experience" - **BEFEJEZVE**
 
+### 4.3 Fázis: Game Flow & UI Polish (1 nap) - **BEFEJEZVE** ✅
+
+#### Intelligens Időkezelés & Játékfolyamat Optimalizálás
+- [x] **Timer megállítás győzelemnél** - **BEFEJEZVE** (timerStarted = false)
+- [x] **Befagyasztott játék állapot** - **BEFEJEZVE** (időtúllépéskor 00:00-n marad)
+- [x] **Maradék elemek highlighting** - **BEFEJEZVE** (piros glow rendszer)
+- [x] **UI minimalizálás** - **BEFEJEZVE** (jarPhaseText eltávolítás)
+- [x] **Természetes kilépés flow** - **BEFEJEZVE** (ablakos mód gomb)
+
+#### Implementált Funkciók
+- **Victory timer stop:** Győzelem esetén timer leállítás és nem számol tovább
+- **Time-up freeze state:** 00:00-n marad + elemek látva + piros glow highlighting
+- **BeanManager.highlightRemainingBeans():** PreFX piros körvonal maradék babokra
+- **UI clean-up:** "Aktív üveg..." felesleges szöveg teljes eltávolítása
+- **Natural exit flow:** Ablakos gomb használat automatikus timeout helyett
+- **Stress-free learning:** Nyugodt elemzési lehetőség hibákból tanuláshoz
+
+#### Story Epics
+- [x] "Intelligent Timer Management System" - **BEFEJEZVE**
+- [x] "Frozen Game State for Learning" - **BEFEJEZVE**
+- [x] "Red Glow Highlighting for Remaining Elements" - **BEFEJEZVE**
+- [x] "UI Minimalization & Clean Design" - **BEFEJEZVE**
+
+### 4.2 Fázis: Countdown Timer System (1 nap) - **BEFEJEZVE** ✅
+
+#### 5 Perces Visszaszámláló Implementáció
+- [x] **BBH Sans Hegarty font integráció** - **BEFEJEZVE** (Google Fonts + PreloadScene)
+- [x] **Responsive timer design** - **BEFEJEZVE** (arányos méretezés minden módban)
+- [x] **Visual state management** - **BEFEJEZVE** (fehér/narancssárga/piros színkódok)
+- [x] **Professional positioning** - **BEFEJEZVE** (jobb felső sarok, fullscreen gomb mellé)
+- [x] **Font loading optimization** - **BEFEJEZVE** (dummy element preloading technika)
+
+#### Implementált Funkciók
+- **5:00 → 0:00 visszaszámlálás:** MM:SS formátum valós időben
+- **Responsive design:** 175×75px fullscreen → arányos kicsinyítés ablakos módban
+- **Színkódolt állapotok:** Fehér (normál) → Narancssárga (≤2min) → Piros (≤30s)
+- **Professional typography:** BBH Sans Hegarty 42px → arányosan skálázott
+- **Border & corner scaling:** 6px border + 20px radius → arányos méretezés
+- **Font preloading:** PreloadScene dummy element 2 másodperces előbetöltés
+
+#### Story Epics
+- [x] "5-Minute Countdown Timer Implementation" - **BEFEJEZVE**
+- [x] "BBH Sans Hegarty Font Integration & Loading" - **BEFEJEZVE**
+- [x] "Responsive Timer Design System" - **BEFEJEZVE**
+- [x] "Visual State Color Coding System" - **BEFEJEZVE**
+
 ### 5. Fázis: Audio Integration & Final Polish (2 hét)
 
 #### Tartalom Rendszerek
@@ -637,14 +705,17 @@ export const GameBalance = {
 ## Siker Kritériumok
 
 ### Technikai Metrikák ✅ **TELJES MÉRTÉKBEN ELÉRVE**
-- ✅ **Minden rendszer implementálva** - Bab, Üveg, Pitcher, Sajt + Visual Polish komplett
-- ✅ **Teljesítmény célok túlteljesítve** - 60 FPS pixel-perfect collision + PreFX glow-val
+- ✅ **Minden rendszer implementálva** - Bab, Üveg, Pitcher, Sajt + Visual Polish + Timer komplett
+- ✅ **Teljesítmény célok túlteljesítve** - 60 FPS pixel-perfect collision + PreFX glow + arányos timer
 - ✅ **Nulla kritikus bug** - Production-ready állapot + console optimalizálás
 - ✅ **Platform kompatibilitás** - Fullscreen + responsive design + cross-browser
 - ✅ **Pixel-perfect collision** - Forradalmi click-through technológia
-- ✅ **Visual feedback excellence** - Univerzális PreFX glow + custom cursor rendszer
+- ✅ **Visual feedback excellence** - Univerzális PreFX glow + custom cursor + színkódolt timer
+- ✅ **Typography integration** - BBH Sans Hegarty font professional loading + scaling
 - ✅ **Developer experience** - Tiszta console output + dev positioning tools
-- ✅ **Professional UX** - Smooth animációk + intuitív interakciók minden szinten
+- ✅ **Game Flow Excellence** - Intelligens időkezelés + befagyasztott tanulási állapot
+- ✅ **UI Minimalism** - Clean design + felesleges elemek eltávolítása
+- ✅ **Professional UX** - Smooth animációk + intuitív interakciók + stresszmentes időmenedzsment minden szinten
 
 ### Kód Minőség
 - 90%+ teszt lefedettség játék logikán

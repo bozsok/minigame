@@ -3,6 +3,8 @@
 ## CÉL
 Idő lejárta után minden interakció tiltása (sajt evés, jar dobás) biztonságos, centralizált módszerrel.
 
+**FONTOS:** Jelenleg 20 másodperces timer van tesztelés céljából, véglegesen 5 perces lesz!
+
 ## FŐBB ELVEK
 - ✅ Meglévő kód NEM változhat (csak bővítés)
 - ✅ Centralizált vezérlés GameScene-ből
@@ -15,18 +17,53 @@ Idő lejárta után minden interakció tiltása (sajt evés, jar dobás) biztons
 ## IMPLEMENTÁCIÓS LÉPÉSEK
 
 ### 1. ELŐKÉSZÍTÉS ÉS ELEMZÉS
-- [ ] 1.1. CheeseManager jelenlegi sajt evés logika feltérképezése
-- [ ] 1.2. JarManager/Pitcher jelenlegi drag&drop logika feltérképezése
-- [ ] 1.3. Meglévő enable/disable mechanizmusok keresése
-- [ ] 1.4. GameScene → Manager kommunikáció elemzése
+- [ ] 1.1. CheeseManager teljes feltérképezés:
+  - [ ] 1.1.1. Sajt kattintás event handler-ek azonosítása (onPointerDown/onClick)
+  - [ ] 1.1.2. Cursor management módszer (CSS vs Phaser cursor)
+  - [ ] 1.1.3. Animáció logika (eating animation, frame changes)
+  - [ ] 1.1.4. State management (sajt állapotok, spawn logika)
+- [ ] 1.2. JarManager/Pitcher teljes feltérképezés:
+  - [ ] 1.2.1. Drag lifecycle eseményei (dragstart, dragupdate, dragend)
+  - [ ] 1.2.2. Drop zone collision detection mechanizmus
+  - [ ] 1.2.3. Jar state management (üres/teli/pozíció)
+  - [ ] 1.2.4. Pitcher acceptance logika (mikor fogadja el a jar-t)
+- [ ] 1.3. Meglévő enable/disable mechanizmusok:
+  - [ ] 1.3.1. Phaser setInteractive() használat keresése
+  - [ ] 1.3.2. Event listener remove/add mintázatok
+  - [ ] 1.3.3. Visual state change mechanizmusok
+- [ ] 1.4. GameScene → Manager kommunikáció:
+  - [ ] 1.4.1. Konstruktor paraméterek elemzése
+  - [ ] 1.4.2. Public metódus interface-ek listázása
+  - [ ] 1.4.3. Event emission/listening mintázatok
+  - [ ] 1.4.4. Reference tárolás módszerei
 
 ### 2. CHEESEMANAGER BŐVÍTÉSE
-- [ ] 2.1. `gameActive` private flag hozzáadása (default: true)
-- [ ] 2.2. `setGameActive(boolean)` public metódus létrehozása
-- [ ] 2.3. Sajt kattintás események elejére gameActive ellenőrzés
-- [ ] 2.4. Cursor viselkedés módosítása inactive állapotban
-- [ ] 2.5. TESZT: Sajt evés tiltás működése
-- [ ] 2.6. TESZT: Normál működés változatlan maradása
+- [ ] 2.1. Alapvető flag rendszer:
+  - [ ] 2.1.1. `gameActive: boolean = true` private field hozzáadás
+  - [ ] 2.1.2. TypeScript type safety ellenőrzés
+  - [ ] 2.1.3. Default értékek tesztelése
+- [ ] 2.2. Public interface létrehozás:
+  - [ ] 2.2.1. `setGameActive(active: boolean): void` metódus
+  - [ ] 2.2.2. `isGameActive(): boolean` getter metódus (debug célra)
+  - [ ] 2.2.3. JSDoc dokumentáció hozzáadása
+- [ ] 2.3. Event handler módosítások:
+  - [ ] 2.3.1. Minden sajt click handler elejére gameActive check
+  - [ ] 2.3.2. Early return implementáció inactive állapotban
+  - [ ] 2.3.3. Console.log debug üzenetek hozzáadása
+- [ ] 2.4. Cursor és visual feedback:
+  - [ ] 2.4.1. Hover események tiltása inactive állapotban
+  - [ ] 2.4.2. CSS cursor override ('not-allowed' vagy default)
+  - [ ] 2.4.3. Opcionális: sajt objektumok alpha/tint változtatása
+- [ ] 2.5. Animáció kezelés:
+  - [ ] 2.5.1. Folyamatban lévő eating animációk befejezésének engedése
+  - [ ] 2.5.2. Új animációk indításának tiltása
+  - [ ] 2.5.3. Frame változások blokkolása inactive állapotban
+- [ ] 2.6. TESZTELÉSI MATRIX:
+  - [ ] 2.6.1. Normál sajt evés (gameActive=true) → működik
+  - [ ] 2.6.2. Tiltott sajt evés (gameActive=false) → nem működik  
+  - [ ] 2.6.3. State váltás közben eating → graceful handling
+  - [ ] 2.6.4. Cursor változás teszt minden sajtfajára
+  - [ ] 2.6.5. Multiple cheese click teszt inactive állapotban
 
 ### 3. JARMANAGER BŐVÍTÉSE  
 - [ ] 3.1. `gameActive` private flag hozzáadása (default: true)
@@ -54,19 +91,56 @@ Idő lejárta után minden interakció tiltása (sajt evés, jar dobás) biztons
 - [ ] 6.2. Egységes visual feedback minden objektumnál
 - [ ] 6.3. Opcionális: grayed out / faded megjelenés
 
-### 7. RACE CONDITION KEZELÉS
-- [ ] 7.1. Folyamatban lévő interakciók graceful befejezése
-- [ ] 7.2. Timer lejárta közbeni események kezelése
-- [ ] 7.3. Timing problémák ellenőrzése
+### 7. RACE CONDITION ÉS EDGE CASE KEZELÉS
+- [ ] 7.1. Folyamatban lévő interakciók:
+  - [ ] 7.1.1. Sajt evés animáció közben timer lejár → befejezi animációt, nem ad pontot
+  - [ ] 7.1.2. Jar drag közben timer lejár → befejezi mozgást, drop tiltva
+  - [ ] 7.1.3. Pitcher drop animáció közben timer lejár → animation completion check
+- [ ] 7.2. Timer lejárta közbeni események:
+  - [ ] 7.2.1. handleTimeUp() atomikus végrehajtása
+  - [ ] 7.2.2. Multiple handleTimeUp() hívás védelem
+  - [ ] 7.2.3. Event listener cleanup sorrend optimalizálás
+- [ ] 7.3. Browser és environment edge case-ek:
+  - [ ] 7.3.1. Tab switch során aktív interakciók kezelése
+  - [ ] 7.3.2. Fullscreen váltás közbeni state management
+  - [ ] 7.3.3. Browser focus loss/gain események
+  - [ ] 7.3.4. Memory leak prevention event listener-eknél
+- [ ] 7.4. Scene lifecycle problémák:
+  - [ ] 7.4.1. Scene restart közben aktív timer kezelése
+  - [ ] 7.4.2. GameScene → MenuScene váltás közben cleanup
+  - [ ] 7.4.3. Multiple scene instance protection
 
-### 8. TELJES RENDSZER TESZT
-- [ ] 8.1. Normál játékmenet tesztelése (semmi nem változott)
-- [ ] 8.2. Idő lejárta utáni sajt kattintás → tiltva
-- [ ] 8.3. Idő lejárta utáni jar húzás → tiltva  
-- [ ] 8.4. Idő lejárta utáni jar dobás → tiltva
-- [ ] 8.5. Visual feedback ellenőrzése
-- [ ] 8.6. Race condition scenariók tesztelése
-- [ ] 8.7. Újrajátszás működésének ellenőrzése
+### 8. TELJES RENDSZER TESZT (COMPREHENSIVE)
+- [ ] 8.1. Baseline funcionality (semmi sem változott):
+  - [ ] 8.1.1. Normál játékmenet tesztidőn alatt (jelenleg 20mp, később 5 perc)
+  - [ ] 8.1.2. Bab gyűjtés → jar töltés → pitcher delivery
+  - [ ] 8.1.3. Sajt evés minden fajtából (cheese-1 to cheese-5)
+  - [ ] 8.1.4. Timer visszaszámlálás és UI frissítés
+  - [ ] 8.1.5. Fullscreen/windowed mode váltás
+- [ ] 8.2. Idő lejárta scenariók (tesztidő lejárta után - jelenleg 20mp):
+  - [ ] 8.2.1. Sajt kattintás minden fajtára → 100% tiltva
+  - [ ] 8.2.2. Jar drag attempt → 100% tiltva
+  - [ ] 8.2.3. Pitcher drop attempt → 100% tiltva
+  - [ ] 8.2.4. Bab collection → már tiltva volt
+  - [ ] 8.2.5. Timer megáll 00:00-nál
+- [ ] 8.3. Visual és UX feedback:
+  - [ ] 8.3.1. Cursor nem változik hover-nél (sajt, jar)
+  - [ ] 8.3.2. Maradék babok piros glow megjelenése
+  - [ ] 8.3.3. UI elemek konzisztens állapota
+  - [ ] 8.3.4. Nincs konfusing visual state
+- [ ] 8.4. Race condition stress test:
+  - [ ] 8.4.1. Rapid click test timer lejárta előtt/közben/után
+  - [ ] 8.4.2. Simultaneous drag attempt timer lejártakor
+  - [ ] 8.4.3. Multiple object interaction timer boundary-n
+- [ ] 8.5. Cross-browser és performance teszt:
+  - [ ] 8.5.1. Chrome, Firefox, Edge compatibility
+  - [ ] 8.5.2. Performance impact mérés (FPS, memory)
+  - [ ] 8.5.3. Mobile touch event compatibility
+- [ ] 8.6. Újrajátszás lifecycle teszt:
+  - [ ] 8.6.1. Game over → MenuScene → új játék indítás
+  - [ ] 8.6.2. Timer reset és újra aktiválás
+  - [ ] 8.6.3. Minden interakció visszaállítása működő állapotba
+  - [ ] 8.6.4. Memory cleanup ellenőrzés scene váltásnál
 
 ### 9. KÓDMINŐSÉG ELLENŐRZÉS
 - [ ] 9.1. TypeScript hibák ellenőrzése

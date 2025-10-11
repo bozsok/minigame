@@ -10,6 +10,8 @@ export class Jar extends Phaser.GameObjects.Container {
   private isOpen: boolean = false;
   private isFull: boolean = false;
   private isDragEnabled: boolean = false;
+  private originalX: number = 0; // Eredeti X pozíció
+  private originalY: number = 0; // Eredeti Y pozíció
   
   // Pozíciók - fedő pozíciói
   private lidClosedY: number = -57; // Fedő pozíciója zárt állapotban (üveg tetején)
@@ -20,12 +22,16 @@ export class Jar extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, jarIndex: number) {
     super(scene, x, y);
     this.jarIndex = jarIndex;
+    
+    // Eredeti pozíció mentése
+    this.originalX = x;
+    this.originalY = y;
 
     this.createJarComponents();
     this.setupInteraction();
     
-    // Z-index beállítása - üvegek előtérben legyenek
-    this.setDepth(20); // Magasabb depth - előtérben
+    // Z-index beállítása - üvegek babok felett legyenek
+    this.setDepth(500); // Magas depth - babok felett
     
     scene.add.existing(this);
   }
@@ -198,13 +204,23 @@ export class Jar extends Phaser.GameObjects.Container {
 
     this.on('dragstart', () => {
       this.setAlpha(0.8);
-      this.setDepth(50); // Drag közben legfelülre
-      console.log(`Jar ${this.jarIndex} drag kezdődött`);
+      this.setDepth(1000); // Drag közben legfelülre
+      
+      // Pitcher glow bekapcsolása, hogy jelezzük hová kell húzni
+      const gameScene = this.scene as any;
+      if (gameScene.pitcher) {
+        gameScene.pitcher.showGlow();
+      }
+      
+      // Eredeti pozíció mentése a visszatéréshez
+      this.saveOriginalPosition();
+      
+      console.log(`Jar ${this.jarIndex} drag kezdődött - pitcher glow bekapcsolva`);
     });
 
     this.on('dragend', () => {
       this.setAlpha(1);
-      this.setDepth(20); // Visszaállítás eredeti depth-re
+      this.setDepth(500); // Visszaállítás eredeti depth-re
       
       // Pitcher glow kikapcsolása
       const gameScene = this.scene as any;
@@ -212,12 +228,17 @@ export class Jar extends Phaser.GameObjects.Container {
         gameScene.pitcher.hideGlow();
       }
       
-      // Itt ellenőrizzük, hogy a pitcher fölött van-e
-      this.checkPitcherDrop();
+      // Ellenőrizzük, hogy a pitcher fölött van-e
+      const pitcherDropSuccess = this.checkPitcherDrop();
+      
+      // Ha nem került be a pitcher-be, visszatérés eredeti pozícióba
+      if (!pitcherDropSuccess) {
+        this.returnToOriginalPosition();
+      }
     });
   }
 
-  private checkPitcherDrop(): void {
+  private checkPitcherDrop(): boolean {
     console.log(`Jar ${this.jarIndex} drag befejezve - pitcher drop ellenőrzés`);
     
     // Pitcher pozíció lekérése a GameScene-től
@@ -226,67 +247,68 @@ export class Jar extends Phaser.GameObjects.Container {
     
     if (!pitcher) {
       console.log('Pitcher nem található');
-      return;
+      return false;
     }
     
-    // Ugyanaz az ellenőrzés, mint a proximity-nél
-    // Teljes korsó befogadó terület (nagyobb és engedékenyebb)
-    const pitcherTopX = pitcher.x - pitcher.width * 0.6; // Szélesebb befogadás
-    const pitcherTopWidth = pitcher.width * 1.2; // Még szélesebb
-    const pitcherTopY = pitcher.y - pitcher.height; // Teljes korsó teteje
-    const pitcherTopHeight = pitcher.height * 0.5; // Fél korsó magasság
+    // TELJES KORSÓ BEFOGADÓ TERÜLET - bármelyik része érinti az üveg alját
+    const pitcherX = pitcher.x - pitcher.width * 0.6; // Szélesebb befogadás (bal oldal)
+    const pitcherWidth = pitcher.width * 1.2; // Még szélesebb (jobb oldal)
+    const pitcherY = pitcher.y - pitcher.height; // Korsó teteje
+    const pitcherHeight = pitcher.height; // TELJES korsó magasság (0.5 helyett 1.0)
     
     // Üveg alsó részének koordinátái (üveg alja)
     const jarBottomY = this.y + this.jarBody.height * 0.4; // Üveg alja
     
-    const jarBottomInPitcherTop = (
-      this.x >= pitcherTopX && 
-      this.x <= pitcherTopX + pitcherTopWidth &&
-      jarBottomY >= pitcherTopY && 
-      jarBottomY <= pitcherTopY + pitcherTopHeight
+    const jarBottomInPitcher = (
+      this.x >= pitcherX && 
+      this.x <= pitcherX + pitcherWidth &&
+      jarBottomY >= pitcherY && 
+      jarBottomY <= pitcherY + pitcherHeight
     );
     
-    console.log(`Drop ellenőrzés - üveg alja érinti a korsót: ${jarBottomInPitcherTop}`);
+    console.log(`Drop ellenőrzés - üveg alja érinti a korsót: ${jarBottomInPitcher}`);
     
-    if (jarBottomInPitcherTop) {
+    if (jarBottomInPitcher) {
       console.log('✅ Bedobás sikeres - üveg alja érinti a korsót!');
       pitcher.handleJarDrop(this);
+      return true;
     } else {
       console.log('❌ Bedobás sikertelen - üveg alja nem érinti a korsót');
+      return false;
     }
   }
 
   private checkPitcherProximity(): void {
-    // Ellenőrizzük, hogy az üveg alja érinti-e a korsó felső részét
+    // Ellenőrizzük, hogy az üveg alja érinti-e a teljes korsót
     const gameScene = this.scene as any;
     const pitcher = gameScene.pitcher;
     
     if (!pitcher) return;
     
-    // Teljes korsó befogadó terület (nagyobb és engedékenyebb)
-    const pitcherTopX = pitcher.x - pitcher.width * 0.6; // Szélesebb befogadás
-    const pitcherTopWidth = pitcher.width * 1.2; // Még szélesebb
-    const pitcherTopY = pitcher.y - pitcher.height; // Teljes korsó teteje
-    const pitcherTopHeight = pitcher.height * 0.5; // Fél korsó magasság
+    // TELJES KORSÓ BEFOGADÓ TERÜLET - konzisztens a drop zone-nal
+    const pitcherX = pitcher.x - pitcher.width * 0.6; // Szélesebb befogadás (bal oldal)
+    const pitcherWidth = pitcher.width * 1.2; // Még szélesebb (jobb oldal)
+    const pitcherY = pitcher.y - pitcher.height; // Korsó teteje
+    const pitcherHeight = pitcher.height; // TELJES korsó magasság
     
     // Üveg alsó részének koordinátái (üveg alja)
     const jarBottomY = this.y + this.jarBody.height * 0.4; // Üveg alja
     
-    // Üveg alja érinti-e a korsó felső területét
-    const jarBottomInPitcherTop = (
-      this.x >= pitcherTopX && 
-      this.x <= pitcherTopX + pitcherTopWidth &&
-      jarBottomY >= pitcherTopY && 
-      jarBottomY <= pitcherTopY + pitcherTopHeight
+    // Üveg alja érinti-e a teljes korsót
+    const jarBottomInPitcher = (
+      this.x >= pitcherX && 
+      this.x <= pitcherX + pitcherWidth &&
+      jarBottomY >= pitcherY && 
+      jarBottomY <= pitcherY + pitcherHeight
     );
     
     console.log(`Jar pozíció: (${this.x.toFixed(1)}, ${this.y.toFixed(1)}), jar bottom: ${jarBottomY.toFixed(1)}`);
-    console.log(`Pitcher area: x(${pitcherTopX.toFixed(1)}-${(pitcherTopX + pitcherTopWidth).toFixed(1)}), y(${pitcherTopY.toFixed(1)}-${(pitcherTopY + pitcherTopHeight).toFixed(1)})`);
-    console.log(`Jar bottom in pitcher: ${jarBottomInPitcherTop}`);
+    console.log(`Pitcher area: x(${pitcherX.toFixed(1)}-${(pitcherX + pitcherWidth).toFixed(1)}), y(${pitcherY.toFixed(1)}-${(pitcherY + pitcherHeight).toFixed(1)})`);
+    console.log(`Jar bottom in pitcher: ${jarBottomInPitcher}`);
     
-    if (jarBottomInPitcherTop) {
+    if (jarBottomInPitcher) {
       pitcher.showGlow();
-      console.log('Glow bekapcsolva - üveg alja érinti a korsót');
+      console.log('Glow bekapcsolva - üveg alja érinti a teljes korsót');
     } else {
       pitcher.hideGlow();
     }
@@ -349,6 +371,25 @@ export class Jar extends Phaser.GameObjects.Container {
 
   public getIsDragEnabled(): boolean {
     return this.isDragEnabled;
+  }
+
+  private saveOriginalPosition(): void {
+    // Aktuális pozíció mentése (ha mozgatták már drag nélkül)
+    this.originalX = this.x;
+    this.originalY = this.y;
+  }
+
+  private returnToOriginalPosition(): void {
+    // Smooth animáció vissza az eredeti pozícióhoz
+    this.scene.tweens.add({
+      targets: this,
+      x: this.originalX,
+      y: this.originalY,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+    
+    console.log(`Jar ${this.jarIndex} visszatér eredeti pozícióba: (${this.originalX}, ${this.originalY})`);
   }
 
   /**

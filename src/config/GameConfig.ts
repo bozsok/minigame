@@ -1,4 +1,4 @@
-export const GameConfig: Phaser.Types.Core.GameConfig = {
+export const GameConfig: Phaser.Types.Core.GameConfig & { fx?: any } = {
   type: Phaser.AUTO,
   width: 860,
   height: 484,
@@ -15,4 +15,10 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     },
   },
   backgroundColor: 'transparent',
+  fx: {
+    glow: {
+      distance: 10,
+      quality: 0.1
+    }
+  }
 };

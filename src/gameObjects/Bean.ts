@@ -11,6 +11,7 @@ export class Bean extends Phaser.GameObjects.Sprite {
   private animationState: BeanAnimationState;
   private isCollectable: boolean;
   private spawnAnimation?: Phaser.Tweens.Tween;
+  private glowFX: any = null; // PreFX Glow effect referencia
 
   constructor(
     scene: Phaser.Scene,
@@ -49,8 +50,19 @@ export class Bean extends Phaser.GameObjects.Sprite {
     this.isCollectable = true;
 
     this.setupPhysics();
+    this.setupPreFXGlow();
     this.setupInteraction();
     this.playSpawnAnimation();
+  }
+
+  /**
+   * PreFX Glow setup
+   */
+  private setupPreFXGlow(): void {
+    // PreFX padding beállítása a glow effekt számára
+    if (this.preFX) {
+      this.preFX.setPadding(16); // Kisebb padding a baboknak
+    }
   }
 
   /**
@@ -77,7 +89,18 @@ export class Bean extends Phaser.GameObjects.Sprite {
       }
     });
 
-    // Hover effektek eltávolítva - csak kéz kurzor marad
+    // Hover glow effektek
+    this.on('pointerover', () => {
+      if (this.isCollectable && !this.glowFX) {
+        this.showGlow();
+      }
+    });
+
+    this.on('pointerout', () => {
+      if (this.glowFX) {
+        this.hideGlow();
+      }
+    });
   }
 
   /**
@@ -189,9 +212,59 @@ export class Bean extends Phaser.GameObjects.Sprite {
   }
 
   /**
+   * Glow effekt megjelenítése
+   */
+  private showGlow(): void {
+    if (this.preFX && !this.glowFX) {
+      this.glowFX = this.preFX.addGlow();
+      
+      // KRITIKUS: Kezdeti strength 0-ra állítása a felvillanás elkerülésére
+      this.glowFX.outerStrength = 0;
+      
+      // Smooth fade-in animáció 0-ról 2-re
+      this.scene.tweens.add({
+        targets: this.glowFX,
+        outerStrength: 2, // Finomabb mint a sajtok/korsó
+        duration: 200,
+        ease: 'sine.out'
+      });
+      
+      console.log(`Bean glow bekapcsolva - felvillanás nélkül`);
+    }
+  }
+
+  /**
+   * Glow effekt elrejtése
+   */
+  private hideGlow(): void {
+    if (this.glowFX) {
+      this.scene.tweens.add({
+        targets: this.glowFX,
+        outerStrength: 0,
+        duration: 150,
+        ease: 'sine.in',
+        onComplete: () => {
+          if (this.preFX && this.glowFX) {
+            this.preFX.remove(this.glowFX);
+            this.glowFX = null;
+          }
+        }
+      });
+      
+      console.log(`Bean glow kikapcsolva`);
+    }
+  }
+
+  /**
    * Cleanup az objektum megsemmisítésekor
    */
   public destroy(): void {
+    // Glow effekt cleanup
+    if (this.glowFX && this.preFX) {
+      this.preFX.remove(this.glowFX);
+      this.glowFX = null;
+    }
+    
     if (this.spawnAnimation) {
       this.spawnAnimation.destroy();
     }

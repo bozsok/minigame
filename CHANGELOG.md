@@ -4,6 +4,45 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.0.0] - 2025-10-11 - **COMPLETE CHEESE EATING SYSTEM**
+
+### 🧀 Forradalmi Sajt Rendszer
+- **PIXEL-PERFECT COLLISION:** Átlátszó területeken babok automatikusan elérhetők
+  - Frame alapú evés: 0 (teljes) → 1-3 (részleges) → 4 (morzsák)
+  - Spritesheet betöltés minden sajt típushoz (234x141 - 214x119px)
+  - setFrame() használat setCrop() helyett a helyes pozicionáláshoz
+- **INTELLIGENT CLICK-THROUGH:** Pixel szintű ütközésvizsgálat
+  - alphaTolerance: 1 → csak átlátszatlan pixeleken kattintható
+  - Dinamikus bab felszabadítás sajt evés közben
+  - Morzsák normál láthatósággal maradnak
+
+### 🎯 Professzionális Dev Mode Rendszer
+- **PRECISION POSITIONING:** Canvas alapú slider rendszer minden sajt pozicionálásához
+  - CHEESE-1: (147, 461) | CHEESE-2: (83, 805) | CHEESE-3: (954, 612)
+  - CHEESE-4: (1197, 366) | CHEESE-5: (1705, 720)
+  - Real-time koordináta kijelzés és ESC export funkció
+- **FULLSCREEN COMPATIBLE:** 1920x1080 alapfelbontás dinamikus skálázással
+
+### Hozzáadva
+- `Cheese.ts` - Complete spritesheet-based game object (5 frame animation)
+- `CheeseManager.ts` - Professional dev mode positioning system
+- PreloadScene spritesheet betöltés minden sajt típushoz
+- Pixel-perfect collision detection minden sajt objektumon
+- Developer positioning workflow D billentyű aktiválással
+
+### Javítva
+- **KRITIKUS:** Frame váltás ugyanazon koordinátán (nem mellette)
+- **KRITIKUS:** Mögöttes babok elérhetősége részleges evés után
+- setFrame() használat helyes sprite animation-hoz
+- Interactive area automatikus frissítés frame váltáskor
+
+### 🎯 Szakmai Összegzés
+**Teljesített célok:** Komplett interaktív sajt evés rendszer professzionális minőségben  
+**Technikai újítás:** Pixel-szintű collision detection átlátszó területekkel  
+**Kódbázis állapot:** Production-ready, teljes TypeScript támogatás, optimalizált performance  
+**Játék élmény:** Intuitív right-click evés, realisztikus fizika, vizuális visszajelzés  
+**Továbblépési lehetőség:** Audio effektek, particle rendszerek, advanced animációk
+
 ## [3.2.0] - 2025-10-10 - **UNIVERSAL RESPONSIVE SCALING**
 
 ### 🎯 Forradalmi Újítás

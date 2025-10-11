@@ -52,14 +52,14 @@ export class BeanManager {
     this.loadCollisionMap();
     this.setupEventListeners();
     
-    console.log(`BeanManager inicializálva: ${this.spawnPoints.length} spawn pont`);
+    // BeanManager inicializálva
   }
 
   /**
    * Collision map betöltése a háttér alapján
    */
   private loadCollisionMap(): void {
-    console.log('Collision map betöltése indítva...');
+    // Collision map betöltése
     
     // A pantry-collision.jpg képet rendereljük egy láthatatlan canvas-ra
     this.collisionMap = this.scene.add.image(0, 0, 'pantry-collision').setVisible(false);
@@ -101,7 +101,7 @@ export class BeanManager {
     // Pixel adatok kinyerése
     this.collisionData = context.getImageData(0, 0, canvas.width, canvas.height);
     
-    console.log(`Collision map feldolgozva: ${canvas.width}x${canvas.height} pixelek`);
+    // Collision map feldolgozva
     
     // Érvényes területek generálása a pixel adatok alapján
     this.generateValidAreasFromPixels();
@@ -158,7 +158,7 @@ export class BeanManager {
     const collisionWidth = this.collisionData.width;
     const collisionHeight = this.collisionData.height;
 
-    console.log(`Spawn generálás: Játék ${gameWidth}x${gameHeight}, Collision ${collisionWidth}x${collisionHeight}`);
+    // Spawn generálás
 
     // Kisebb grid hogy több spawn pont legyen 250 babhoz
     const gridSize = 25; // Még sűrűbb grid
@@ -189,7 +189,7 @@ export class BeanManager {
       }
     }
 
-    console.log(`${validPoints} érvényes spawn pont generálva (grid: ${gridSize}px, ${pointsX}×${pointsY})`);
+    // Spawn pontok generálva
   }
 
   /**
@@ -286,7 +286,7 @@ export class BeanManager {
     // Spawn pont frissítése
     spawnPoint.lastSpawnTime = Date.now();
     
-    console.log(`Bab spawn-olva: ${spawnPoint.x}, ${spawnPoint.y}`);
+    // Bab spawn-olva
     return bean;
   }
 
@@ -295,18 +295,18 @@ export class BeanManager {
    * Klaszter-alapú természetes eloszlással, üres zónák hagyásával
    */
   public spawnAllBeans(): void {
-    console.log('=== 250 BAB TERMÉSZETES KLASZTER SPAWN INDUL ===');
+    // 250 BAB TERMÉSZETES KLASZTER SPAWN
     
     // Aktuális képernyő méret lekérése
     const gameWidth = this.scene.scale.width;
     const gameHeight = this.scene.scale.height;
     
-    console.log(`Aktuális játék méret: ${gameWidth}x${gameHeight}`);
+    // Aktuális játék méret
     
     // Eredeti canvas méret tárolása (spawn-kori méret)
     this.originalCanvasWidth = gameWidth;
     this.originalCanvasHeight = gameHeight;
-    console.log(`Eredeti canvas méret tárolva: ${gameWidth}x${gameHeight}`);
+    // Eredeti canvas méret tárolva
     
     // Collision map újragenerálása aktuális méretek alapján
     this.regenerateSpawnPointsForCurrentSize();
@@ -315,7 +315,7 @@ export class BeanManager {
     let beansSpawned = 0;
     const spawnedPositions: { x: number, y: number }[] = [];
     
-    console.log(`${this.spawnPoints.length} érvényes terület áll rendelkezésre`);
+    // Spawn pontok rendelkezésre állnak
     
     // Klaszter-alapú spawn algoritmus
     const clusters = this.generateBeanClusters(totalBeansNeeded, gameWidth, gameHeight);
@@ -328,7 +328,7 @@ export class BeanManager {
         if (this.isPositionOnCollisionMap(position.x, position.y, gameWidth, gameHeight)) {
           // Bab létrehozása növekvő depth-tel és megfelelő skálával
           const bean = new Bean(this.scene, position.x, position.y);
-          bean.setDepth(1000 + beansSpawned); // Depth növelése
+          bean.setDepth(10 + beansSpawned); // Alacsonyabb depth - üvegek alatt
           bean.setScale(this.getCurrentScale()); // Automatikus skálázás
           
           this.beans.set(bean.getBeanData().id, bean);
@@ -339,15 +339,14 @@ export class BeanManager {
           beansSpawned++;
           
           if (beansSpawned % 50 === 0) {
-            console.log(`${beansSpawned}/${totalBeansNeeded} bab spawn-olva (${clusters.length} klaszterben)...`);
+            // Spawn progress
           }
         }
       }
       if (beansSpawned >= totalBeansNeeded) break;
     }
     
-    console.log(`=== ${beansSpawned} BAB TERMÉSZETES SPAWN BEFEJEZVE ===`);
-    console.log(`${clusters.length} klaszterben eloszlatva, természetes megjelenés`);
+    // Spawn befejezve
   }
 
   /**
@@ -359,7 +358,7 @@ export class BeanManager {
     const minDistance = 80; // Minimum 80px távolság babok között
     const maxAttempts = 1000;
     
-    console.log(`${totalBeans} bab generálása minimum ${minDistance}px távolsággal egér gyakorláshoz`);
+    // Bab generálás egér gyakorláshoz
     
     for (let i = 0; i < totalBeans; i++) {
       let attempts = 0;
@@ -477,7 +476,7 @@ export class BeanManager {
    * Spawn pontok újragenerálása aktuális képernyő mérethez
    */
   private regenerateSpawnPointsForCurrentSize(): void {
-    console.log('Spawn pontok újragenerálása aktuális mérethez...');
+    // Spawn pontok újragenerálása
     
     // Korábbi spawn pontok törlése
     this.spawnPoints = [];
@@ -489,7 +488,7 @@ export class BeanManager {
       this.generateValidAreas();
     }
     
-    console.log(`${this.spawnPoints.length} spawn pont újragenerálva`);
+    // Spawn pontok újragenerálva
   }
 
   /**
@@ -499,22 +498,21 @@ export class BeanManager {
     const bean = this.beans.get(event.beanId);
     if (!bean) return;
     
-    console.log('=== BEAN COLLECTION DEBUG ===');
-    console.log('Bean ID:', event.beanId);
+    // Bean collection debug
     
     // Közvetlenül kérjük meg a JarManager-től, hogy fogadja el a babot
     const gameScene = this.scene as any; // GameScene típus cast
     
     if (!gameScene.jarManager) {
-      console.log('ERROR: JarManager nem található!');
+      // ERROR: JarManager nem található
       return;
     }
     
     const jarAccepted = gameScene.jarManager.tryCollectBean();
-    console.log('Jar elfogadta a babot:', jarAccepted);
+    // Jar elfogadta a babot
     
     if (!jarAccepted) {
-      console.log('Bab nem lett elfogadva - üveg zárt vagy tele - BAB MEGMARAD');
+      // Bab nem lett elfogadva - üveg zárt vagy tele
       return; // Bab megmarad
     }
     
@@ -704,6 +702,26 @@ export class BeanManager {
     });
     
     console.log(`🫘 BeanManager: ${this.beans.size} bab átskálázva (${isFullscreen ? 'nagy' : 'kicsi'} méret)`);
+  }
+
+  /**
+   * Összes bab elrejtése (dev mode-hoz)
+   */
+  public hideAllBeans(): void {
+    this.beans.forEach((bean) => {
+      bean.setVisible(false);
+    });
+    console.log(`🫘 ${this.beans.size} bab elrejtve (dev mode)`);
+  }
+
+  /**
+   * Összes bab megjelenítése (dev mode kikapcsolásához)
+   */
+  public showAllBeans(): void {
+    this.beans.forEach((bean) => {
+      bean.setVisible(true);
+    });
+    console.log(`🫘 ${this.beans.size} bab megjelenítve`);
   }
 
   /**

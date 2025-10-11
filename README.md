@@ -26,7 +26,7 @@ A játék célja az egérkezelés fejlesztése játékos formában. A játékos 
 - **Húzás:** Üveg szállítás a kancsóhoz ✅ *TELJES IMPLEMENTÁCIÓ* (drag & drop)
 - **Teljesképernyős mód:** tm.png/em.png gombokkal ✅ *TELJES IMPLEMENTÁCIÓ*
 - **Responsive Scaling:** Valós arányosítás ✅ *FORRADALMI ÚJÍTÁS*
-- **Jobb klikk:** Sajt evés energiafeltöltéshez ⏳ *TERVEZETT*
+- **Jobb klikk:** Sajt evés energiafeltöltéshez ✅ *PIXEL-PERFECT COLLISION*
 
 ## Telepítés
 
@@ -72,10 +72,12 @@ eger-kaland-kamraban/
 │   │   ├── Bean.ts      # Bab objektum klikk kezeléssel
 │   │   ├── Jar.ts       # Interaktív üveg dupla-klikk + drag & drop
 │   │   ├── Pitcher.ts   # Drop zone korsó glow effektekkel
+│   │   ├── Cheese.ts    # Sajt objektum pixel-perfect right-click evés
 │   │   └── FullscreenButton.ts # Teljesképernyős vezérlő
 │   ├── systems/         # Játék rendszerek
 │   │   ├── BeanManager.ts   # 250 bab spawn + gyűjtés + responsive scaling
-│   │   └── JarManager.ts    # 5 üveg koordináció + progression
+│   │   ├── JarManager.ts    # 5 üveg koordináció + progression
+│   │   └── CheeseManager.ts # 5 sajt pozicionálás + dev mode slider
 │   ├── utils/           # Segéd eszközök (ObjectPool)
 │   ├── config/          # Konfigurációk (GameBalance, GameConfig)
 │   ├── types/           # TypeScript típusok (BeanTypes, GameData)
@@ -90,7 +92,7 @@ eger-kaland-kamraban/
 
 ## Fejlesztési Státusz
 
-### ✅ Phase 2-3 - TELJES IMPLEMENTÁCIÓ (2025-10-10)
+### ✅ Phase 4 - KOMPLETT JÁTÉK IMPLEMENTÁCIÓ (2025-10-11)
 
 **🫘 Bab Gyűjtés Rendszer (BEFEJEZVE):**
 - 250 bab természetes klaszter eloszlással
@@ -112,6 +114,14 @@ eger-kaland-kamraban/
 - Precision collision detection (téglalap alapú)
 - Jar validáció (csak teli és zárt üvegeket fogad)
 - Victory detection (5 üveg leadása)
+
+**🧀 Sajt Evés Rendszer (ÚJ - BEFEJEZVE):**
+- 5 sajt típus precíz pozicionálással 
+- Pixel-perfect collision detection
+- Frame alapú evés (0-4): teljes → részleges → morzsák
+- Spritesheet animáció setFrame() használattal
+- Intelligent click-through (átlátszó területeken babok elérhetők)
+- Professional dev mode (D billentyű + slider pozicionálás)
 
 **🎯 Responsive Scaling (FORRADALMI ÚJÍTÁS):**
 - **Valós arányosítás** huszárvágás helyett

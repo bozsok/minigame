@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { BeanManager } from '../systems/BeanManager';
 import { JarManager } from '../systems/JarManager';
+import { CheeseManager } from '../systems/CheeseManager';
 import { Pitcher } from '../gameObjects/Pitcher';
 import { GameBalance } from '../config/GameBalance';
 import { FullscreenButton } from '../gameObjects/FullscreenButton';
@@ -8,6 +9,7 @@ import { FullscreenButton } from '../gameObjects/FullscreenButton';
 export default class GameScene extends Phaser.Scene {
   private beanManager!: BeanManager;
   private jarManager!: JarManager;
+  private cheeseManager!: CheeseManager;
   private pitcher!: Pitcher;
   private fullscreenButton!: FullscreenButton;
   private background!: Phaser.GameObjects.Image;
@@ -44,6 +46,9 @@ export default class GameScene extends Phaser.Scene {
     // JarManager inicializálása (5 üveg bal felső sarokban) - kezdetben láthatatlan
     this.jarManager = new JarManager(this);
     this.jarManager.setVisible(false); // Kezdetben láthatatlan
+
+    // CheeseManager inicializálása (5 sajt különböző pozíciókban) - kezdetben láthatatlan
+    this.cheeseManager = new CheeseManager(this);
 
     // Pitcher létrehozása (jobb alsó sarok) - kezdetben láthatatlan
     // Inicializáláskor alapértelmezett pozíció, később frissítjük
@@ -95,6 +100,9 @@ export default class GameScene extends Phaser.Scene {
    * Esemény figyelők beállítása
    */
   private setupEventListeners(): void {
+    // Context menu letiltása (jobb egérgomb funkciókhoz)
+    this.input.mouse?.disableContextMenu();
+    
     // Bab számláló frissítése (BeanManager-től)
     this.events.on('bean-count-updated', (data: any) => {
       this.updateBeanCountUI(data);
@@ -143,10 +151,14 @@ export default class GameScene extends Phaser.Scene {
       console.log('250 bab spawn-ja indul...');
       this.beanManager.spawnAllBeans();
       
-      // Interaktív elemek megjelenítése (üvegek és korsó)
+      // Interaktív elemek megjelenítése (üvegek, korsó, sajtok)
       console.log('Interaktív elemek megjelenítése...');
       this.jarManager.setVisible(true);
       this.pitcher.setVisible(true);
+      
+      // Sajtok spawn-ja (5 sajt különböző pozíciókban)
+      console.log('5 sajt spawn-ja...');
+      this.cheeseManager.spawnCheeses();
       
       // Energia csökkentés indítása
       this.startEnergyCountdown();
@@ -462,6 +474,11 @@ export default class GameScene extends Phaser.Scene {
     // Babok skálázása
     if (this.beanManager) {
       this.beanManager.updateScale(gameScale, gameWidth, gameHeight);
+    }
+
+    // Sajtok skálázása és pozicionálása (kivéve dev mode-ban)
+    if (this.cheeseManager && !this.cheeseManager.isDevMode()) {
+      this.cheeseManager.updateScale(gameScale, gameWidth, gameHeight);
     }
   }
 

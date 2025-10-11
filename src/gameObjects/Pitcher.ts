@@ -3,13 +3,13 @@ import * as Phaser from 'phaser';
 export class Pitcher extends Phaser.GameObjects.Image {
   private dropZone!: Phaser.GameObjects.Zone;
   private jarCount: number = 0; // Hány üveg került bele
-  private glowEffect!: Phaser.GameObjects.Graphics;
+  private glowFX: any = null; // PreFX Glow effect referencia
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'pitcher');
     
     this.setupPitcher();
-    this.createGlowEffect();
+    this.setupPreFXGlow();
     this.createDropZone();
     
     scene.add.existing(this);
@@ -25,54 +25,67 @@ export class Pitcher extends Phaser.GameObjects.Image {
     console.log('Pitcher létrehozva pozíción:', this.x, this.y);
   }
 
-  private createGlowEffect(): void {
-    // Glow effect kör a pitcher körül
-    this.glowEffect = this.scene.add.graphics();
-    this.glowEffect.setDepth(5); // Pitcher alatt, de háttér felett
-    this.glowEffect.setVisible(false); // Kezdetben láthatatlan
-    
-    // Animált glow rajzolása
-    this.updateGlowEffect();
-  }
-
-  private updateGlowEffect(): void {
-    this.glowEffect.clear();
-    
-    // Sárga-arany glow színek
-    this.glowEffect.lineStyle(8, 0xFFD700, 0.8); // Arany szín, átlátszó
-    this.glowEffect.strokeCircle(this.x - this.width/2, this.y - this.height/2, this.width * 0.6);
-    
-    this.glowEffect.lineStyle(4, 0xFFF700, 0.6); // Világosabb sárga
-    this.glowEffect.strokeCircle(this.x - this.width/2, this.y - this.height/2, this.width * 0.7);
+  private setupPreFXGlow(): void {
+    // PreFX padding beállítása a glow effekt számára
+    if (this.preFX) {
+      this.preFX.setPadding(32);
+    }
   }
 
   public showGlow(): void {
-    if (this.glowEffect.visible) return; // Már be van kapcsolva
+    if (this.glowFX) return; // Már be van kapcsolva
     
-    this.glowEffect.setVisible(true);
-    this.glowEffect.setAlpha(1);
+    // PreFX glow hozzáadása
+    if (this.preFX) {
+      this.glowFX = this.preFX.addGlow();
+      
+      // KRITIKUS: Kezdeti strength 0-ra állítása a felvillanás elkerülésére
+      this.glowFX.outerStrength = 0;
+      
+      // Smooth fade-in animáció 0-ról 4-re
+      this.scene.tweens.add({
+        targets: this.glowFX,
+        outerStrength: 4,
+        duration: 300,
+        ease: 'sine.out',
+        onComplete: () => {
+          // Folyamatos pulzálás
+          this.scene.tweens.add({
+            targets: this.glowFX,
+            outerStrength: 2,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'sine.inout'
+          });
+        }
+      });
+    }
     
-    // Pulzáló animáció
-    this.scene.tweens.add({
-      targets: this.glowEffect,
-      alpha: 0.3,
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-    
-    console.log('Pitcher glow effect bekapcsolva');
+    console.log('Pitcher PreFX glow effect bekapcsolva');
   }
 
   public hideGlow(): void {
-    if (!this.glowEffect.visible) return; // Már ki van kapcsolva
+    if (!this.glowFX) return; // Már ki van kapcsolva
     
-    this.glowEffect.setVisible(false);
-    this.scene.tweens.killTweensOf(this.glowEffect);
-    this.glowEffect.setAlpha(1);
+    // Összes tween leállítása
+    this.scene.tweens.killTweensOf(this.glowFX);
     
-    console.log('Pitcher glow effect kikapcsolva');
+    // Smooth fade out
+    this.scene.tweens.add({
+      targets: this.glowFX,
+      outerStrength: 0,
+      duration: 200,
+      ease: 'sine.in',
+      onComplete: () => {
+        if (this.preFX && this.glowFX) {
+          this.preFX.remove(this.glowFX);
+          this.glowFX = null;
+        }
+      }
+    });
+    
+    console.log('Pitcher PreFX glow effect kikapcsolva');
   }
 
   private createDropZone(): void {
@@ -189,8 +202,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
     this.setPosition(x, y);
     this.dropZone.setPosition(x - this.width / 2, y - this.height / 2);
     
-    // Glow effect pozíció frissítése
-    this.updateGlowEffect();
+    // PreFX automatikusan követi a sprite pozíciót
   }
 
   /**
@@ -221,8 +233,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
     this.setPosition(newX, newY);
     this.dropZone.setPosition(newX - this.width / 2, newY - this.height / 2);
     
-    // Glow effect frissítése
-    this.updateGlowEffect();
+    // PreFX automatikusan követi a sprite pozíciót és skálázást
     
     console.log(`🍺 Pitcher: ${isFullscreen ? 'nagy' : 'arányos'} méret, pozíció (${newX.toFixed(1)}, ${newY.toFixed(1)})`);
   }

@@ -553,10 +553,32 @@ export default class GameScene extends Phaser.Scene {
     // Piros körvonal hozzáadása a maradék babokhoz
     this.beanManager.highlightRemainingBeans();
     
+    // MINDEN INTERAKCIÓ LETILTÁSA
+    this.disableAllInteractions();
+    
     // Timer 00:00-n marad, semmi nem tűnik el
     // Játékos szabadon nézheti a maradék elemeket
     // Visszatérés: ablakos mód gomb → MenuScene
     console.log('⏰ Játék befagyasztva - ablakos mód gombbal lehet visszatérni');
+  }
+
+  /**
+   * Minden interakció letiltása (idő lejárt vagy játék befejezve)
+   */
+  private disableAllInteractions(): void {
+    console.log('🚫 Minden interakció letiltása - játék vége');
+    
+    // CheeseManager letiltása
+    if (this.cheeseManager) {
+      this.cheeseManager.setGameActive(false);
+    }
+    
+    // JarManager letiltása  
+    if (this.jarManager) {
+      this.jarManager.setGameActive(false);
+    }
+    
+    console.log('🚫 Minden interakció letiltva - sajt evés és jar műveletek tiltva');
   }
 
   /**

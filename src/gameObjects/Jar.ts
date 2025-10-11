@@ -13,6 +13,7 @@ export class Jar extends Phaser.GameObjects.Container {
   private originalX: number = 0; // Eredeti X pozíció
   private originalY: number = 0; // Eredeti Y pozíció
   private isDragging: boolean = false; // Drag állapot figyelése
+  private gameActive: boolean = true; // Játék interakció állapot
   
   // Pozíciók - fedő pozíciói
   private lidClosedY: number = -57; // Fedő pozíciója zárt állapotban (üveg tetején)
@@ -72,6 +73,17 @@ export class Jar extends Phaser.GameObjects.Container {
           clickCount = 0;
         });
       } else if (clickCount === 2) {
+        // GAME ACTIVE ELLENŐRZÉS - dupla klikk előtt
+        if (!this.gameActive) {
+          console.log(`🚫 Jar ${this.jarIndex} dupla-klikk TILTVA - játék inaktív`);
+          clickCount = 0;
+          if (clickTimer) {
+            clickTimer.destroy();
+            clickTimer = null;
+          }
+          return;
+        }
+
         // Dupla klikk detektálva
         if (clickTimer) {
           clickTimer.destroy();
@@ -169,7 +181,7 @@ export class Jar extends Phaser.GameObjects.Container {
 
     // Cursor kezelés hover-re
     this.on('pointerover', () => {
-      if (this.isDragEnabled && !this.isDragging) {
+      if (this.isDragEnabled && !this.isDragging && this.gameActive) {
         const canvas = this.scene.game.canvas;
         if (canvas) {
           canvas.style.cursor = 'grab';
@@ -232,6 +244,12 @@ export class Jar extends Phaser.GameObjects.Container {
     });
 
     this.on('dragstart', () => {
+      // GAME ACTIVE ELLENŐRZÉS - drag kezdés előtt
+      if (!this.gameActive) {
+        console.log(`🚫 Jar ${this.jarIndex} drag TILTVA - játék inaktív`);
+        return;
+      }
+
       this.isDragging = true; // Drag állapot bekapcsolása
       this.setAlpha(0.8);
       this.setDepth(1000); // Drag közben legfelülre
@@ -493,5 +511,19 @@ export class Jar extends Phaser.GameObjects.Container {
     
     // Drag & drop letiltása
     this.scene.input.setDraggable(this, false);
+  }
+
+  /**
+   * Játék interakció állapot beállítása
+   */
+  public setGameActive(active: boolean): void {
+    this.gameActive = active;
+  }
+
+  /**
+   * Játék interakció állapot lekérdezése
+   */
+  public isGameActive(): boolean {
+    return this.gameActive;
   }
 }

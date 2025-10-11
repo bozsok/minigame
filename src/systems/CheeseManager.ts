@@ -5,6 +5,7 @@ export class CheeseManager {
   private cheeses: Map<number, Cheese> = new Map();
   private devMode: boolean = false;
   private originalPositions: Map<number, {x: number, y: number}> = new Map();
+  private gameActive: boolean = true; // Játék interakció állapot
   
   // Responsive scaling támogatás
   private originalCanvasWidth: number = 1920;
@@ -365,5 +366,19 @@ export class CheeseManager {
 
   public getOriginalCanvasHeight(): number {
     return this.originalCanvasHeight;
+  }
+
+  /**
+   * Játék interakció állapot beállítása
+   */
+  public setGameActive(active: boolean): void {
+    this.gameActive = active;
+  }
+
+  /**
+   * Játék interakció állapot lekérdezése
+   */
+  public isGameActive(): boolean {
+    return this.gameActive;
   }
 }

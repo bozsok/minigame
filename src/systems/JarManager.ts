@@ -5,6 +5,7 @@ export class JarManager {
   private scene: Phaser.Scene;
   private jars: Jar[] = [];
   private currentActiveJarIndex: number = 0; // Melyik üvegbe gyűjtjük jelenleg
+  private gameActive: boolean = true; // Játék interakció állapot
   
   // UI pozíciók
   private startX: number = 80;  // Bal felső sarok X koordináta (távolabb a széltől)
@@ -276,5 +277,24 @@ export class JarManager {
     ).join(' | ');
 
     return `Aktív üveg: ${activeJar ? activeJar.getJarIndex() : 'nincs'} | ${jarsStatus}`;
+  }
+
+  /**
+   * Játék interakció állapot beállítása
+   */
+  public setGameActive(active: boolean): void {
+    this.gameActive = active;
+    
+    // Minden jar-ra alkalmazzuk a tiltást
+    this.jars.forEach(jar => {
+      jar.setGameActive(active);
+    });
+  }
+
+  /**
+   * Játék interakció állapot lekérdezése  
+   */
+  public isGameActive(): boolean {
+    return this.gameActive;
   }
 }

@@ -63,6 +63,13 @@ export class Cheese extends Phaser.GameObjects.Image {
 
     // Right-click kezelése (csak pointerdown)
     this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // GAME ACTIVE ELLENŐRZÉS - első prioritás
+      const gameScene = this.scene as any;
+      if (gameScene.cheeseManager && !gameScene.cheeseManager.isGameActive()) {
+        console.log(`🚫 Sajt ${this.cheeseType} evés TILTVA - játék inaktív`);
+        return;
+      }
+
       if (pointer.rightButtonDown()) {
         console.log(`Right-click sajt ${this.cheeseType}-ra (frame: ${this.currentFrame}) - pixel-perfect hit!`);
         this.eatCheese();
@@ -71,6 +78,12 @@ export class Cheese extends Phaser.GameObjects.Image {
 
     // Hover effect - Custom cursor + Glow
     this.on('pointerover', () => {
+      // GAME ACTIVE ELLENŐRZÉS - cursor és glow tiltása
+      const gameScene = this.scene as any;
+      if (gameScene.cheeseManager && !gameScene.cheeseManager.isGameActive()) {
+        return; // Nem változtatjuk a cursort ha játék inaktív
+      }
+
       // Csak akkor változtassuk a cursort és glow-t, ha a sajt még ehető
       if (!this.isCompletelyEaten()) {
         // Custom egérke száj cursor - 60% méret (20%-kal kisebb mint az eredeti 80%)

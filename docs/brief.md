@@ -104,6 +104,14 @@ Mobil verzió, több nyelv, integráció iskolai rendszerekbe.
 - **Service Architecture:** Egyoldalas játék.
 - **Integration Requirements:** Nincs.
 - **Security/Compliance:** Gyerekbarát, adatvédelem.
+- **Game Control System:** GameActive flag architektúra biztonságos játék befejezéshez.
+
+### 🚫 GameActive Interakció Kontroll Rendszer (v4.4)
+- **Biztonság:** Minden interakció (sajt evés, jar műveletek) automatikusan tiltva időkorlát lejárta után
+- **Központosított Vezérlés:** Egyetlen metódus hívással minden user input letiltható
+- **Oktatási Érték:** Gyerekek megtanulják, hogy a játéknak van határozott vége (5 perc)
+- **Technikai Kiválóság:** Event handler szintű védelem, race condition protection
+- **Karbantarthatóság:** Additive approach - meglévő kód érintetlen, könnyen rollback-elhető
 
 ## Constraints & Assumptions
 

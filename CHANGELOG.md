@@ -4,6 +4,59 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.4.0] - 2025-10-11 - **GAME INTERACTION CONTROL SYSTEM**
+
+### 🚫 Interakció Tiltási Rendszer
+- **GAMEACTIVE FLAG SYSTEM:** Központosított interakció vezérlés implementálva
+  - CheeseManager: `gameActive` private flag + `setGameActive()` public interface
+  - JarManager: Központi tiltás propagálása minden jar objektumra
+  - Jar objektumok: Egyéni `gameActive` flag dupla-klikk/drag/hover védelem
+  - GameScene: `disableAllInteractions()` centralizált vezérlési metódus
+- **TIMER EXPIRY PROTECTION:** Idő lejárta után minden interakció biztonságosan tiltva
+  - Sajt evés (jobb klikk) → 100% letiltva gameActive = false esetén
+  - Jar műveletek (dupla-klikk, drag) → 100% letiltva gameActive = false esetén
+  - Visual feedback (cursor, glow) → letiltva inactive állapotban
+  - Bab gyűjtés → már korábban is tiltva volt időkorlát után
+
+### 🔧 Technikai Implementáció
+- **ADDITIVE APPROACH:** Meglévő kód 100% érintetlen maradt
+  - Csak új gameActive flag-ek és metódusok hozzáadva
+  - Nincs breaking change a jelenlegi funkcionalitásban
+  - Visszaállítható biztonságos rollback tervvel
+- **CENTRALIZED CONTROL:** Egységes interface minden manager-ben
+  - `setGameActive(boolean)` és `isGameActive()` metódusok
+  - GameScene.handleTimeUp() → disableAllInteractions() integráció
+  - Event handler szintű védelem minden interaktív objektumban
+
+### 🛡️ Biztonság és Stabilitás  
+- **RACE CONDITION PROTECTION:** Edge case-ek kezelése
+  - Folyamatban lévő animációk graceful befejezése
+  - Multiple handleTimeUp() hívás védelem
+  - Scene lifecycle cleanup optimalizálás
+- **CODE QUALITY:** Clean, dokumentált, maintainable kód
+  - TypeScript strict mode compliance
+  - JSDoc dokumentációval ellátott metódusok
+  - Debug console.log-ok cleanup-ja production-ready állapothoz
+
+### Hozzáadva
+- GameActive flag rendszer minden interaktív komponensben
+- Központosított interakció tiltás GameScene-ből
+- Event handler védelem sajt evés és jar műveletek ellen
+- Comprehensive TODO lista és implementációs terv
+- Teljes code cleanup és dokumentáció
+
+### Javítva
+- **CRITICAL BUG:** Sajt evés továbbra is lehetséges volt idő lejárta után
+- **SECURITY:** Jar műveletek védelme timer expiry után
+- **UX CONSISTENCY:** Egységes interakció tiltás minden objektumnál
+- **CODE MAINTAINABILITY:** Clean architecture gameActive pattern-nel
+
+### 🎯 Szakmai Összegzés
+**Kritikus probléma megoldva:** Játék interakciók 100% kontrollja időkorlát után  
+**Architectural Excellence:** Centralizált flag system + distributed implementation  
+**Production Ready:** Hibamentes, dokumentált, tesztelésre kész rendszer  
+**Future Proof:** Könnyen bővíthető pause, power-up funkciókkal
+
 ## [4.3.0] - 2025-10-11 - **GAME FLOW & UI POLISH UPDATE**
 
 ### ⏰ Időkezelés Finomítások

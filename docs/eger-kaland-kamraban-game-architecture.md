@@ -19,6 +19,7 @@ Ez az architektúra úgy lett tervezve, hogy támogassa a játékterv dokumentum
 | 2025-10-10 | 3.1 | Jar Management System - Dupla klikk, drag & drop, pitcher integrációval | Maya |
 | 2025-10-10 | 3.2 | Responsive Scaling System - Valós arányosítás minden elemre | Maya |
 | 2025-10-11 | 4.0 | **PHASE 4 COMPLETE CHEESE SYSTEM** - Pixel-perfect sajt evés rendszer | Maya |
+| 2025-10-11 | 4.1 | **VISUAL POLISH & OPTIMIZATION** - Glow effektek, custom cursor, teljesítmény javítás | Maya |
 
 ## Technikai Áttekintés
 
@@ -590,7 +591,29 @@ export const GameBalance = {
 - [x] "Professional Dev Mode Positioning" - **BEFEJEZVE** 
 - [x] "Spritesheet Animation Implementation" - **BEFEJEZVE**
 
-### 5. Fázis: Tartalom és Fényezés (2 hét)
+### 4.1 Fázis: Visual Polish & Optimization (1 nap) - **BEFEJEZVE** ✅
+
+#### Glow Effekt & Visual Feedback Rendszer
+- [x] **PreFX Glow implementáció** - **BEFEJEZVE** (minden interaktív elemhez)
+- [x] **Custom Cursor rendszer** - **BEFEJEZVE** (sprite-alapú frame animációk)
+- [x] **Drop Zone tökéletesítés** - **BEFEJEZVE** (koordináta javítás + teljes terület)
+- [x] **Console optimalizálás** - **BEFEJEZVE** (spam eltávolítás + tiszta output)
+- [x] **Drag glow védelem** - **BEFEJEZVE** (isDragging state management)
+
+#### Implementált Újítások
+- **Univerzális PreFX glow:** Sajtok (3), Babok (2), Korsó (4) erősségekkel
+- **Sprite cursor system:** cursor-default.png 56%, cursor-eat.png 80% scaling
+- **Pitcher drop zone:** 1.2× szélesebb + Zone középpont koordináta javítás
+- **Performance cleanup:** 60+ console.log eltávolítás resize/spawn/scaling eseményekből
+- **Visual consistency:** outerStrength: 0 inicializálás felvillanás elkerülésére
+
+#### Story Epics
+- [x] "Universal PreFX Glow System Implementation" - **BEFEJEZVE**
+- [x] "Custom Sprite Cursor with Frame Animation" - **BEFEJEZVE**
+- [x] "Pitcher Drop Zone Coordinate Fix & Full Area" - **BEFEJEZVE**
+- [x] "Console Output Optimization & Developer Experience" - **BEFEJEZVE**
+
+### 5. Fázis: Audio Integration & Final Polish (2 hét)
 
 #### Tartalom Rendszerek
 - Audio effektek sajt evéshez
@@ -613,12 +636,15 @@ export const GameBalance = {
 
 ## Siker Kritériumok
 
-### Technikai Metrikák ✅ **ELÉRVE**
-- ✅ **Minden rendszer implementálva** - Bab, Üveg, Pitcher, Sajt komplett
-- ✅ **Teljesítmény célok elérve** - 60 FPS pixel-perfect collision-nel
-- ✅ **Nulla kritikus bug** - Stable production-ready állapot
-- ✅ **Platform kompatibilitás** - Fullscreen + responsive design
+### Technikai Metrikák ✅ **TELJES MÉRTÉKBEN ELÉRVE**
+- ✅ **Minden rendszer implementálva** - Bab, Üveg, Pitcher, Sajt + Visual Polish komplett
+- ✅ **Teljesítmény célok túlteljesítve** - 60 FPS pixel-perfect collision + PreFX glow-val
+- ✅ **Nulla kritikus bug** - Production-ready állapot + console optimalizálás
+- ✅ **Platform kompatibilitás** - Fullscreen + responsive design + cross-browser
 - ✅ **Pixel-perfect collision** - Forradalmi click-through technológia
+- ✅ **Visual feedback excellence** - Univerzális PreFX glow + custom cursor rendszer
+- ✅ **Developer experience** - Tiszta console output + dev positioning tools
+- ✅ **Professional UX** - Smooth animációk + intuitív interakciók minden szinten
 
 ### Kód Minőség
 - 90%+ teszt lefedettség játék logikán

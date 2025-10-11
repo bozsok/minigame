@@ -243,7 +243,6 @@ export class JarManager {
    */
   public updateScale(gameScale: number, gameWidth: number, gameHeight: number): void {
     const isFullscreen = gameScale >= 1.0;
-    console.log(`🏺 JarManager ${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'} skálázás: ${gameScale.toFixed(3)}`);
     
     this.jars.forEach((jar, index) => {
       if (isFullscreen) {
@@ -265,8 +264,6 @@ export class JarManager {
         jar.setPosition(newX, newY);
       }
     });
-    
-    console.log(`🏺 JarManager: ${this.jars.length} üveg újrapozícionálva (${isFullscreen ? 'nagy' : 'arányos'} méret)`);
   }
 
   /**

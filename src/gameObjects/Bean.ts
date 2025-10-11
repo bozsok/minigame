@@ -30,12 +30,6 @@ export class Bean extends Phaser.GameObjects.Sprite {
     // Bab méret 30%-kal kisebb (70% scale)
     this.setScale(0.7);
 
-    // Debug információk
-    console.log(`Bean létrehozva: (${x}, ${y}) textúra: ${texture}, frame: ${randomFrame}, scale: 70%`);
-    console.log(`Bean méret: ${this.width}x${this.height} (70% scale)`);
-    console.log(`Bean látható: ${this.visible}, alpha: ${this.alpha}`);
-    console.log(`Bean depth: ${this.depth}, scale: ${this.scaleX}x${this.scaleY}`);
-
     // Inicializáljuk a bab adatait
     this.beanData = {
       id: `bean_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -81,7 +75,7 @@ export class Bean extends Phaser.GameObjects.Sprite {
    * Interakció beállítása (klikk kezelés)
    */
   private setupInteraction(): void {
-    this.setInteractive({ useHandCursor: true });
+    this.setInteractive({ useHandCursor: false }); // Custom cursor-t nem írja felül
     
     this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown() && this.isCollectable) {
@@ -132,8 +126,6 @@ export class Bean extends Phaser.GameObjects.Sprite {
       return;
     }
 
-    console.log(`Bean ${this.beanData.id} klikkelve - esemény küldése BeanManager-nek`);
-
     // Esemény küldése a BeanManager-nek - BeanManager dönti el, hogy elfogadja-e
     this.scene.events.emit('bean-collected', {
       beanId: this.beanData.id,
@@ -150,8 +142,6 @@ export class Bean extends Phaser.GameObjects.Sprite {
     if (!this.isCollectable || this.beanState === BeanState.COLLECTED) {
       return;
     }
-
-    console.log(`Bean ${this.beanData.id} tényleges gyűjtése`);
 
     this.isCollectable = false;
     this.beanState = BeanState.COLLECTED;
@@ -228,8 +218,6 @@ export class Bean extends Phaser.GameObjects.Sprite {
         duration: 200,
         ease: 'sine.out'
       });
-      
-      console.log(`Bean glow bekapcsolva - felvillanás nélkül`);
     }
   }
 
@@ -250,8 +238,6 @@ export class Bean extends Phaser.GameObjects.Sprite {
           }
         }
       });
-      
-      console.log(`Bean glow kikapcsolva`);
     }
   }
 

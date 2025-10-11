@@ -4,6 +4,54 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.1.0] - 2025-10-11 - **VISUAL POLISH & OPTIMIZATION UPDATE**
+
+### 🎨 Glow Effekt Rendszer
+- **UNIVERZÁLIS PREFX GLOW:** Minden interaktív elemre egységes vizuális visszajelzés
+  - Sajtok: 3-as erősség pulzáló arany glow hover-on
+  - Babok: 2-es erősség finomabb glow klikkeléshez
+  - Korsó: 4-es erősség drop zone jelzéshez drag közben
+  - KRITIKUS javítás: felvillanás elkerülése outerStrength: 0 inicializálással
+- **TELJESÍTMÉNY OPTIMALIZÁLÁS:** Smooth fade-in/out animációk minden glow esetén
+
+### 🖱️ Custom Cursor Rendszer
+- **SPRITE-ALAPÚ CURSOR:** cursor-default.png frame animációk (0=normál, 1=pressed)
+  - Globális GameScene kezelés 56%-os mérettel
+  - Mouse down/up események automatikus frame váltással
+- **KONTEXTUÁLIS CURSOR:** cursor-eat.png sajtok hover-jén 80%-os mérettel
+- **PHASER CURSOR KIKAPCSOLÁS:** useHandCursor: false minden objektumra
+
+### 🎯 Drop Zone Tökéletesítés
+- **KORSÓ TELJES BEFOGADÁSI TERÜLET:** 1.2× szélesebb, teljes magasság
+- **KOORDINÁTA JAVÍTÁS:** Zone középpont számítás pitcher origin (1,1) figyelembevételével
+- **EGYSÉGES LOGIKA:** Phaser Zone és kézi proximity check szinkronizálása
+- **DRAG GLOW VÉDELEM:** isDragging flag védi a pitcher glow-t proximity check interferenciától
+
+### 🔇 Console Log Tisztítás
+- **SPAM ELTÁVOLÍTÁS:** Bean, BeanManager, resize események csendesítése
+- **FEJLESZTŐI ÉLMÉNY:** Tiszta konzol, csak kritikus események logolása
+- **TELJESÍTMÉNY JAVULÁS:** 60+ log üzenet eltávolítása fullscreen váltásonként
+
+### Hozzáadva
+- PreFX glow rendszer minden interaktív elemhez
+- Custom cursor sprite kezelés Canvas API-val
+- Pitcher drop zone debug vizualizáció (eltávolítható)
+- Drag állapot követés üvegek glow védelméhez
+
+### Javítva
+- **KRITIKUS:** Pitcher bal oldal érzéketlen drop zone hiba
+- **KRITIKUS:** PreFX glow felvillanás inicializáláskor
+- **KRITIKUS:** GameScene resize gameHeight = newWidth bug
+- Console spam eltávolítás (Bean létrehozás, scaling, proximity checks)
+- Drop zone koordináta számítás Zone középpont alapú pozicionálással
+
+### 🎯 Szakmai Összegzés
+**Teljesített célok:** Professzionális vizuális feedback rendszer minden interakcióhoz  
+**Technikai újítás:** PreFX glow + custom sprite cursor kombináció  
+**Kódbázis állapot:** Production-ready, optimalizált console output, clean UX  
+**Játék élmény:** Smooth vizuális visszajelzés, intuitív cursor változások  
+**Következő lépés:** Audio effektek és particle rendszerek integrálása
+
 ## [4.0.0] - 2025-10-11 - **COMPLETE CHEESE EATING SYSTEM**
 
 ### 🧀 Forradalmi Sajt Rendszer

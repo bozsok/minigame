@@ -73,10 +73,10 @@ export class Cheese extends Phaser.GameObjects.Image {
     this.on('pointerover', () => {
       // Csak akkor változtassuk a cursort, ha a sajt még ehető
       if (!this.isCompletelyEaten()) {
-        // Cursor változtatás
+        // Cursor változtatás - 80% méret (20% kisebb)
         const canvas = this.scene.game.canvas;
         if (canvas) {
-          canvas.style.cursor = 'url("assets/images/cursor-eat.png"), auto';
+          this.setScaledCursor(canvas, 'cursor-eat.png', 0.8);
         }
         
         // Glow effekt hozzáadása
@@ -102,10 +102,10 @@ export class Cheese extends Phaser.GameObjects.Image {
     });
 
     this.on('pointerout', () => {
-      // Cursor visszaállítás
+      // Cursor visszaállítás custom sprite-ra
       const canvas = this.scene.game.canvas;
       if (canvas) {
-        canvas.style.cursor = 'default';
+        this.setDefaultCustomCursor(canvas);
       }
       
       // Glow effekt eltávolítása smooth animációval
@@ -186,6 +186,106 @@ export class Cheese extends Phaser.GameObjects.Image {
   // Interakció újra beállítása (dev mode használja)
   public resetInteraction(): void {
     this.setupInteraction();
+  }
+
+  /**
+   * Méretezett cursor beállítása
+   */
+  private setScaledCursor(canvas: HTMLCanvasElement, cursorFileName: string, scale: number): void {
+    // Dinamikus canvas cursor készítése a megadott mérettel
+    const img = new Image();
+    img.onload = () => {
+      const tempCanvas = document.createElement('canvas');
+      const ctx = tempCanvas.getContext('2d');
+      
+      if (ctx) {
+        // Canvas méret beállítása a scale-elt méretre
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        tempCanvas.width = scaledWidth;
+        tempCanvas.height = scaledHeight;
+        
+        // Kép rajzolása scale-elt méretben
+        ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+        
+        // Cursor beállítása a scale-elt képpel
+        const hotspotX = scaledWidth / 2;  // Középpont X
+        const hotspotY = scaledHeight / 2; // Középpont Y
+        canvas.style.cursor = `url(${tempCanvas.toDataURL()}), auto`;
+        
+        console.log(`🖱️ Cursor méretezve ${scale * 100}%-ra: ${scaledWidth}x${scaledHeight}`);
+      }
+    };
+    
+    img.src = `assets/images/${cursorFileName}`;
+  }
+
+  /**
+   * Default custom cursor beállítása (cursor-default.png sprite első frame)
+   */
+  private setDefaultCustomCursor(canvas: HTMLCanvasElement): void {
+    // GameScene setCursorFrame használata (0 = normál állapot)
+    const gameScene = this.scene as any;
+    if (gameScene.setCursorFrame) {
+      gameScene.setCursorFrame(0);
+    } else {
+      // Fallback - közvetlen sprite cursor beállítás
+      this.setSpriteFrameCursor(canvas, 'cursor-default', 0, 55, 55, 0.56);
+    }
+  }
+
+  /**
+   * Sprite frame-ből cursor készítése
+   */
+  private setSpriteFrameCursor(
+    canvas: HTMLCanvasElement, 
+    spriteKey: string, 
+    frameIndex: number, 
+    frameWidth: number, 
+    frameHeight: number,
+    scale: number = 1.0
+  ): void {
+    // Teljes sprite texture lekérése a scene-ből
+    const texture = this.scene.textures.get(spriteKey);
+    if (!texture || !texture.source[0]) {
+      console.error(`Cursor sprite nem található: ${spriteKey}`);
+      canvas.style.cursor = 'auto'; // Fallback browser default-ra
+      return;
+    }
+
+    // Canvas készítése a frame méretére
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    
+    if (ctx) {
+      // Scale-elt méret kiszámítása
+      const scaledWidth = frameWidth * scale;
+      const scaledHeight = frameHeight * scale;
+      
+      tempCanvas.width = scaledWidth;
+      tempCanvas.height = scaledHeight;
+      
+      // Frame pozíció kiszámítása (horizontal sprite layout feltételezve)
+      const sourceX = frameIndex * frameWidth;
+      const sourceY = 0;
+      
+      // Sprite image lekérése
+      const image = texture.source[0].image as HTMLImageElement;
+      
+      // Adott frame rajzolása scale-elt méretben
+      ctx.drawImage(
+        image,
+        sourceX, sourceY, frameWidth, frameHeight,  // Source rect
+        0, 0, scaledWidth, scaledHeight             // Dest rect (scaled)
+      );
+      
+      // Cursor beállítása - hotspot középen
+      const hotspotX = scaledWidth / 2;
+      const hotspotY = scaledHeight / 2;
+      canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
+      
+      console.log(`🖱️ Custom sprite cursor beállítva: ${spriteKey} frame ${frameIndex} (${scaledWidth}x${scaledHeight}px, ${Math.round(scale*100)}% méret)`);
+    }
   }
 
 

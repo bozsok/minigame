@@ -96,8 +96,8 @@ export class BeanPool extends ObjectPool<any> {
     bean.setVisible(true);
     bean.setActive(true);
     
-    // Interakció beállítása
-    bean.setInteractive({ useHandCursor: true });
+    // Interakció beállítása - custom cursor megtartása
+    bean.setInteractive({ useHandCursor: false });
     
     return bean;
   }

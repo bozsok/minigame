@@ -397,7 +397,6 @@ export class BeanManager {
         const fallbackPosition = this.getRandomValidPosition(gameWidth, gameHeight);
         if (fallbackPosition) {
           positions.push(fallbackPosition);
-          console.warn(`${i+1}. bab: Minimum távolság nem tartható, fallback pozíció használva`);
         }
       }
     }
@@ -668,7 +667,6 @@ export class BeanManager {
    */
   public updateScale(gameScale: number, gameWidth: number, gameHeight: number): void {
     const isFullscreen = gameScale >= 1.0;
-    console.log(`🫘 BeanManager ${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'} skálázás: ${gameScale}`);
     
     // Minden aktív bab skálázása ÉS pozíció arányosítása
     this.beans.forEach((bean) => {
@@ -700,8 +698,6 @@ export class BeanManager {
         bean.setPosition(scaledX, scaledY);
       }
     });
-    
-    console.log(`🫘 BeanManager: ${this.beans.size} bab átskálázva (${isFullscreen ? 'nagy' : 'kicsi'} méret)`);
   }
 
   /**
@@ -711,7 +707,6 @@ export class BeanManager {
     this.beans.forEach((bean) => {
       bean.setVisible(false);
     });
-    console.log(`🫘 ${this.beans.size} bab elrejtve (dev mode)`);
   }
 
   /**
@@ -721,7 +716,6 @@ export class BeanManager {
     this.beans.forEach((bean) => {
       bean.setVisible(true);
     });
-    console.log(`🫘 ${this.beans.size} bab megjelenítve`);
   }
 
   /**

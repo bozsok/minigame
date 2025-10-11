@@ -92,59 +92,83 @@ eger-kaland-kamraban/
 
 ## Fejlesztési Státusz
 
-### ✅ Phase 4 - KOMPLETT JÁTÉK IMPLEMENTÁCIÓ (2025-10-11)
+### ✅ Phase 4.1 - VISUAL POLISH & PERFORMANCE (2025-10-11)
 
-**🫘 Bab Gyűjtés Rendszer (BEFEJEZVE):**
+**🎨 Glow Effekt Rendszer (ÚJ - BEFEJEZVE):**
+- **Univerzális PreFX glow** minden interaktív elemhez
+- Sajtok: 3-as erősség arany glow hover-on
+- Babok: 2-es erősség finomabb feedback
+- Korsó: 4-es erősség drop zone jelzés drag közben
+- Felvillanás elkerülése outerStrength: 0 inicializálással
+
+**🖱️ Custom Cursor Rendszer (ÚJ - BEFEJEZVE):**
+- **Sprite-alapú cursor** frame animációkkal (0=normál, 1=pressed)
+- Globális GameScene kezelés 56%-os optimális mérettel
+- Kontextuális cursor-eat.png sajtokhoz 80%-os mérettel
+- useHandCursor kikapcsolás minden objektumra
+
+**🎯 Drop Zone Tökéletesítés (JAVÍTVA):**
+- **Teljes korsó befogadási terület** 1.2× szélesebb + teljes magasság
+- Koordináta javítás Zone középpont számítással
+- Pitcher bal oldal érzéketlen hiba megoldva
+- Drag glow védelem isDragging flag-gel
+
+**🔇 Teljesítmény & Tisztaság (OPTIMALIZÁLVA):**
+- Console spam eltávolítás (60+ log üzenet/fullscreen váltás)
+- Bean létrehozás, scaling, resize események csendesítve
+- Fejlesztői élmény javítás tiszta konzol outputtal
+
+**🫘 Bab Gyűjtés Rendszer (STABIL):**
 - 250 bab természetes klaszter eloszlással
 - Collision map alapú spawning (pantry-collision.jpg)
-- Bal klikk gyűjtés animációkkal
+- Bal klikk gyűjtés smooth animációkkal
 - Egér gyakorlás optimalizálás (80px minimum távolság)
 - Valós idejű UI frissítés (bab számláló + üveg fázis)
 
-**🏺 Interaktív Üveg Rendszer (ÚJ - BEFEJEZVE):**
+**🏺 Interaktív Üveg Rendszer (STABIL):**
 - 5 üveg bal felső sarokban (50px spacing)
 - Dupla-klikk nyitás/zárás (300ms időzítés)
 - Kétfázisú fedő animáció (tetejére ↔ oldalra)
 - Bean growth vizualizáció (68x92px, 5 fázis)
 - Automatikus jar váltás és highlighting
 
-**🍺 Pitcher Drop Rendszer (ÚJ - BEFEJEZVE):**
-- Drag & Drop mechanika teli üvegekkel
-- Glow effekt közelség érzékeléssel
-- Precision collision detection (téglalap alapú)
+**🍺 Pitcher Drop Rendszer (TÖKÉLETESÍTETT):**
+- Drag & Drop mechanika vizuális feedback-kel
+- Precision glow effekt közelség érzékeléssel
+- Egységes collision detection (Phaser Zone + proximity)
 - Jar validáció (csak teli és zárt üvegeket fogad)
 - Victory detection (5 üveg leadása)
 
-**🧀 Sajt Evés Rendszer (ÚJ - BEFEJEZVE):**
-- 5 sajt típus precíz pozicionálással 
+**🧀 Sajt Evés Rendszer (POLÍROZOTT):**
+- 5 sajt típus precíz pozicionálással + glow hover
 - Pixel-perfect collision detection
 - Frame alapú evés (0-4): teljes → részleges → morzsák
 - Spritesheet animáció setFrame() használattal
 - Intelligent click-through (átlátszó területeken babok elérhetők)
 - Professional dev mode (D billentyű + slider pozicionálás)
 
-**🎯 Responsive Scaling (FORRADALMI ÚJÍTÁS):**
-- **Valós arányosítás** huszárvágás helyett
-- Matematikai pontosság (pl. 860/1920 = 0.448)
+**🎯 Responsive Scaling (ÉRETT TECHNOLÓGIA):**
+- **Valós arányosítás** matematikai pontossággal
 - Fullscreen ↔ Ablakos zökkenőmentes váltás
 - Pozíciók és méretek egységes kezelése
-- Child-friendly nagy tolerancia
+- Child-friendly nagy tolerancia minden interakcióhoz
 
-**📱 Teljesképernyős Rendszer:**
+**📱 Teljesképernyős Rendszer (STABIL):**
 - tm.png/em.png gombokkal mód váltás
 - Dinamikus háttér skálázás (cover mode)
 - Cross-browser kompatibilitás
 - HTML API integráció
 
-**🎮 Komplett Játékmenet:**
-- Play gomb → 1s késés → 250 bab + interaktív elemek
+**🎮 Komplett Játék Élmény:**
+- Play gomb → 1s késés → 250 bab + interaktív elemek + glow feedback
 - Bab gyűjtés → Üveg töltés → Drag & drop → Victory
-- Responsive minden eszközön
+- Smooth vizuális visszajelzés minden interakcióhoz
+- Production-ready minőség minden platformon
 
 ### 🚧 Következő Fázisok
-- **Phase 4:** Sajt evés rendszer (jobb-klikk mechanika)
-- **Phase 5:** Audio integráció és fényezés
-- **Phase 6:** Teljesítmény optimalizálás és tesztelés
+- **Phase 5:** Audio integráció (hang effektek minden interakcióhoz)
+- **Phase 6:** Particle rendszerek (vizuális feedback továbbfejlesztés)
+- **Phase 7:** Teljesítmény tesztelés és végleges optimalizálás
 
 ## Licenc
 

@@ -30,6 +30,12 @@ export default class GameScene extends Phaser.Scene {
     this.gameStartTime = Date.now();
     this.energyRemaining = GameBalance.energy.initialTime;
 
+    // Custom default cursor beállítása globálisan
+    this.setGlobalDefaultCursor();
+    
+    // Globális egérgomb események beállítása cursor animációhoz
+    this.setupGlobalMouseEvents();
+
     // Háttér hozzáadása - dinamikus méretezés
     this.background = this.add.image(0, 0, 'pantry-bg');
     this.updateBackgroundSize(this.background);
@@ -327,20 +333,14 @@ export default class GameScene extends Phaser.Scene {
    * Háttér méretének frissítése megadott méretekkel
    */
   private updateBackgroundSizeWithDimensions(background: Phaser.GameObjects.Image, gameWidth: number, gameHeight: number): void {
-    console.log(`Háttér frissítés: ${gameWidth}x${gameHeight}`);
-    
     // Eredeti kép méret lekérése
     const originalWidth = background.texture.source[0].width;
     const originalHeight = background.texture.source[0].height;
-    
-    console.log(`Eredeti háttér méret: ${originalWidth}x${originalHeight}`);
     
     // Háttér skálázása hogy fedje a teljes játékterületet (cover mode)
     const scaleX = gameWidth / originalWidth;
     const scaleY = gameHeight / originalHeight;
     const scale = Math.max(scaleX, scaleY);
-    
-    console.log(`Háttér skála: ${scale} (scaleX: ${scaleX}, scaleY: ${scaleY})`);
     
     background.setScale(scale);
     background.setPosition(gameWidth / 2, gameHeight / 2);
@@ -354,26 +354,18 @@ export default class GameScene extends Phaser.Scene {
    * Phaser scale manager resize kezelése
    */
   public handleResize(newWidth?: number, newHeight?: number): void {
-    console.log(`=== GAMESCENE HANDLERESIZE ELINDULT ===`);
-    console.log(`Paraméterek: newWidth=${newWidth}, newHeight=${newHeight}`);
-    
     const gameWidth = newWidth || this.scale.width;
     const gameHeight = newHeight || this.scale.height;
     
-    console.log(`Phaser resize handler: ${gameWidth}x${gameHeight} (scale: ${this.scale.width}x${this.scale.height})`);
-    
     // Háttér újra méretezése a megadott méretekkel
     if (this.background) {
-      console.log('Háttér frissítés kezdése...');
       this.updateBackgroundSizeWithDimensions(this.background, gameWidth, gameHeight);
-      console.log('Háttér frissítés befejezve.');
     } else {
       console.log('HIBA: Háttér objektum nem található!');
     }
     
     // UI elemek pozíciójának frissítése
     this.updateUIPositionsWithDimensions(gameWidth, gameHeight);
-    console.log(`=== GAMESCENE HANDLERESIZE BEFEJEZVE ===`);
   }
 
   /**
@@ -409,8 +401,6 @@ export default class GameScene extends Phaser.Scene {
    * UI elemek pozíciójának frissítése megadott méretekkel
    */
   private updateUIPositionsWithDimensions(gameWidth: number, gameHeight: number): void {
-    console.log(`UI pozíciók frissítése: ${gameWidth}x${gameHeight}`);
-
     // Energia kijelző (bal felső sarok)
     if (this.uiElements.energyText) {
       this.uiElements.energyText.setPosition(20, 20);
@@ -459,8 +449,6 @@ export default class GameScene extends Phaser.Scene {
       gameScale = Math.min(scaleX, scaleY);
     }
     
-    console.log(`🎯 VALÓS ARÁNYOSÍTÁS - Játék elemek skálázása: ${gameScale.toFixed(3)} (${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'}) - ${gameWidth}x${gameHeight}`);
-
     // JarManager skálázása és újrapozícionálása
     if (this.jarManager) {
       this.jarManager.updateScale(gameScale, gameWidth, gameHeight);
@@ -492,6 +480,154 @@ export default class GameScene extends Phaser.Scene {
     if (this.fullscreenButton) {
       this.fullscreenButton.destroy();
     }
+    
+    // Globális cursor event listener-ek eltávolítása
+    this.removeGlobalMouseEvents();
+    
     this.events.removeAllListeners();
+  }
+
+  /**
+   * Globális default cursor beállítása - custom sprite használat
+   */
+  private setGlobalDefaultCursor(): void {
+    const canvas = this.game.canvas;
+    if (!canvas) return;
+
+    // cursor-default sprite első frame-jének használata
+    const texture = this.textures.get('cursor-default');
+    if (!texture || !texture.source[0]) {
+      console.warn('cursor-default sprite nem található, browser default marad');
+      return;
+    }
+
+    const frameWidth = 55;
+    const frameHeight = 55;
+    const frameIndex = 0; // Első frame
+
+    // Canvas készítése
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    
+    if (ctx) {
+      // 44% kisebb méret (56% scale - 30% + újabb 20% csökkentés)
+      const scaledWidth = frameWidth * 0.56;
+      const scaledHeight = frameHeight * 0.56;
+      
+      tempCanvas.width = scaledWidth;
+      tempCanvas.height = scaledHeight;
+      
+      // Frame pozíció (horizontal layout)
+      const sourceX = frameIndex * frameWidth;
+      const sourceY = 0;
+      
+      // Sprite image
+      const image = texture.source[0].image as HTMLImageElement;
+      
+      // Frame rajzolása scale-elt méretben
+      ctx.drawImage(
+        image,
+        sourceX, sourceY, frameWidth, frameHeight,
+        0, 0, scaledWidth, scaledHeight
+      );
+      
+      // Globális cursor beállítása - hotspot középen
+      const hotspotX = scaledWidth / 2;
+      const hotspotY = scaledHeight / 2;
+      canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
+      
+      console.log(`🖱️ Globális custom default cursor beállítva (${scaledWidth}x${scaledHeight}px, 56% méret)`);
+    }
+  }
+
+  /**
+   * Globális egérgomb események beállítása cursor animációhoz
+   */
+  private setupGlobalMouseEvents(): void {
+    const canvas = this.game.canvas;
+    if (!canvas) return;
+
+    // Event listener-ek hozzáadása (referenciákkal a cleanup-hoz)
+    canvas.addEventListener('mousedown', this.handleMouseDown);
+    canvas.addEventListener('mouseup', this.handleMouseUp);
+    canvas.addEventListener('mouseleave', this.handleMouseLeave);
+
+    console.log('🖱️ Globális egérgomb cursor animáció események beállítva');
+  }
+
+  /**
+   * Cursor frame váltása (0 = normál, 1 = lenyomott)
+   */
+  private setCursorFrame(frameIndex: number): void {
+    const canvas = this.game.canvas;
+    if (!canvas) return;
+
+    const texture = this.textures.get('cursor-default');
+    if (!texture || !texture.source[0]) return;
+
+    const frameWidth = 55;
+    const frameHeight = 55;
+
+    // Canvas készítése
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    
+    if (ctx) {
+      // 44% kisebb méret (56% scale)
+      const scaledWidth = frameWidth * 0.56;
+      const scaledHeight = frameHeight * 0.56;
+      
+      tempCanvas.width = scaledWidth;
+      tempCanvas.height = scaledHeight;
+      
+      // Frame pozíció (horizontal layout)
+      const sourceX = frameIndex * frameWidth;
+      const sourceY = 0;
+      
+      // Sprite image
+      const image = texture.source[0].image as HTMLImageElement;
+      
+      // Frame rajzolása scale-elt méretben
+      ctx.drawImage(
+        image,
+        sourceX, sourceY, frameWidth, frameHeight,
+        0, 0, scaledWidth, scaledHeight
+      );
+      
+      // Cursor beállítása - hotspot középen
+      const hotspotX = scaledWidth / 2;
+      const hotspotY = scaledHeight / 2;
+      canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
+      
+      console.log(`🖱️ Cursor frame váltás: ${frameIndex} (${frameIndex === 0 ? 'normál' : 'lenyomott'})`);
+    }
+  }
+
+  /**
+   * Globális egérgomb események eltávolítása (cleanup)
+   */
+  private removeGlobalMouseEvents(): void {
+    const canvas = this.game.canvas;
+    if (!canvas) return;
+
+    // Event listener-ek eltávolítása
+    canvas.removeEventListener('mousedown', this.handleMouseDown);
+    canvas.removeEventListener('mouseup', this.handleMouseUp);
+    canvas.removeEventListener('mouseleave', this.handleMouseLeave);
+    
+    console.log('🖱️ Globális egérgomb cursor animáció események eltávolítva');
+  }
+
+  // Event handler referenciák (arrow function-ök a this context megőrzésére)
+  private handleMouseDown = (event: MouseEvent) => {
+    if (event.button === 0) this.setCursorFrame(1);
+  }
+
+  private handleMouseUp = (event: MouseEvent) => {
+    if (event.button === 0) this.setCursorFrame(0);
+  }
+
+  private handleMouseLeave = () => {
+    this.setCursorFrame(0);
   }
 }

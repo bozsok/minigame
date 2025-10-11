@@ -12,6 +12,7 @@ export class Jar extends Phaser.GameObjects.Container {
   private isDragEnabled: boolean = false;
   private originalX: number = 0; // Eredeti X pozíció
   private originalY: number = 0; // Eredeti Y pozíció
+  private isDragging: boolean = false; // Drag állapot figyelése
   
   // Pozíciók - fedő pozíciói
   private lidClosedY: number = -57; // Fedő pozíciója zárt állapotban (üveg tetején)
@@ -177,32 +178,42 @@ export class Jar extends Phaser.GameObjects.Container {
         const gameScene = this.scene as any;
         const pitcher = gameScene.pitcher;
         if (pitcher) {
-          // Teljes korsó befogadó terület
-          const pitcherTopX = pitcher.x - pitcher.width * 0.6;
-          const pitcherTopWidth = pitcher.width * 1.2;
-          const pitcherTopY = pitcher.y - pitcher.height;
-          const pitcherTopHeight = pitcher.height * 0.5;
+          // TELJES KORSÓ BEFOGADÓ TERÜLET - KONZISZTENS A ZONE-NAL
+          const dropZoneWidth = pitcher.width * 1.2;  
+          const dropZoneHeight = pitcher.height;      
           
-          // Üveg alsó részének koordinátái
-          const jarBottomY = this.y + this.jarBody.height * 0.4;
+          // Zone középpont számítás - pitcher origin (1,1) jobb alsó sarok!
+          const zoneCenterX = pitcher.x - (pitcher.width / 2); 
+          const zoneCenterY = pitcher.y - (pitcher.height / 2); 
           
-          const jarBottomInPitcherTop = (
-            this.x >= pitcherTopX && 
-            this.x <= pitcherTopX + pitcherTopWidth &&
-            jarBottomY >= pitcherTopY && 
-            jarBottomY <= pitcherTopY + pitcherTopHeight
+          // Zone határok számítása
+          const zoneLeft = zoneCenterX - dropZoneWidth/2;
+          const zoneRight = zoneCenterX + dropZoneWidth/2;
+          const zoneTop = zoneCenterY - dropZoneHeight/2;
+          const zoneBottom = zoneCenterY + dropZoneHeight/2;
+          
+          const jarInZone = (
+            this.x >= zoneLeft && 
+            this.x <= zoneRight &&
+            this.y >= zoneTop && 
+            this.y <= zoneBottom
           );
           
-          if (jarBottomInPitcherTop) {
-            pitcher.showGlow();
-          } else {
-            pitcher.hideGlow();
+          // Csak akkor változtassuk a glow-t, ha NEM drag állapotban vagyunk
+          if (!this.isDragging) {
+            if (jarInZone) {
+              pitcher.showGlow();
+            } else {
+              pitcher.hideGlow();
+            }
           }
+          // Drag közben a glow végig BE marad (dragstart-ban bekapcsolt)
         }
       }
     });
 
     this.on('dragstart', () => {
+      this.isDragging = true; // Drag állapot bekapcsolása
       this.setAlpha(0.8);
       this.setDepth(1000); // Drag közben legfelülre
       
@@ -215,10 +226,11 @@ export class Jar extends Phaser.GameObjects.Container {
       // Eredeti pozíció mentése a visszatéréshez
       this.saveOriginalPosition();
       
-      console.log(`Jar ${this.jarIndex} drag kezdődött - pitcher glow bekapcsolva`);
+      console.log(`Jar ${this.jarIndex} drag kezdődött - pitcher glow bekapcsolva és védve`);
     });
 
     this.on('dragend', () => {
+      this.isDragging = false; // Drag állapot kikapcsolása
       this.setAlpha(1);
       this.setDepth(500); // Visszaállítás eredeti depth-re
       
@@ -250,23 +262,33 @@ export class Jar extends Phaser.GameObjects.Container {
       return false;
     }
     
-    // TELJES KORSÓ BEFOGADÓ TERÜLET - bármelyik része érinti az üveg alját
-    const pitcherX = pitcher.x - pitcher.width * 0.6; // Szélesebb befogadás (bal oldal)
-    const pitcherWidth = pitcher.width * 1.2; // Még szélesebb (jobb oldal)
-    const pitcherY = pitcher.y - pitcher.height; // Korsó teteje
-    const pitcherHeight = pitcher.height; // TELJES korsó magasság (0.5 helyett 1.0)
+    // TELJES KORSÓ BEFOGADÓ TERÜLET - KONZISZTENS A ZONE-NAL
+    const dropZoneWidth = pitcher.width * 1.2;  
+    const dropZoneHeight = pitcher.height;      
     
-    // Üveg alsó részének koordinátái (üveg alja)
-    const jarBottomY = this.y + this.jarBody.height * 0.4; // Üveg alja
+    // Zone középpont számítás - pitcher origin (1,1) jobb alsó sarok!
+    const zoneCenterX = pitcher.x - (pitcher.width / 2); 
+    const zoneCenterY = pitcher.y - (pitcher.height / 2); 
     
+    // Zone határok számítása
+    const zoneLeft = zoneCenterX - dropZoneWidth/2;
+    const zoneRight = zoneCenterX + dropZoneWidth/2;
+    const zoneTop = zoneCenterY - dropZoneHeight/2;
+    const zoneBottom = zoneCenterY + dropZoneHeight/2;
+    
+    // Üveg pozíció ellenőrzése (üveg közepe)
     const jarBottomInPitcher = (
-      this.x >= pitcherX && 
-      this.x <= pitcherX + pitcherWidth &&
-      jarBottomY >= pitcherY && 
-      jarBottomY <= pitcherY + pitcherHeight
+      this.x >= zoneLeft && 
+      this.x <= zoneRight &&
+      this.y >= zoneTop && 
+      this.y <= zoneBottom
     );
     
-    console.log(`Drop ellenőrzés - üveg alja érinti a korsót: ${jarBottomInPitcher}`);
+    console.log(`🎯 Drop ellenőrzés:`);
+    console.log(`  Üveg: (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
+    console.log(`  Zone: left=${zoneLeft.toFixed(1)}, right=${zoneRight.toFixed(1)}, top=${zoneTop.toFixed(1)}, bottom=${zoneBottom.toFixed(1)}`);
+    console.log(`  Pitcher: (${pitcher.x.toFixed(1)}, ${pitcher.y.toFixed(1)}) origin(1,1)`);
+    console.log(`  ÜvegInZone: ${jarBottomInPitcher}`);
     
     if (jarBottomInPitcher) {
       console.log('✅ Bedobás sikeres - üveg alja érinti a korsót!');
@@ -285,30 +307,39 @@ export class Jar extends Phaser.GameObjects.Container {
     
     if (!pitcher) return;
     
-    // TELJES KORSÓ BEFOGADÓ TERÜLET - konzisztens a drop zone-nal
-    const pitcherX = pitcher.x - pitcher.width * 0.6; // Szélesebb befogadás (bal oldal)
-    const pitcherWidth = pitcher.width * 1.2; // Még szélesebb (jobb oldal)
-    const pitcherY = pitcher.y - pitcher.height; // Korsó teteje
-    const pitcherHeight = pitcher.height; // TELJES korsó magasság
+    // Ha éppen drag-elünk, ne változtassuk a pitcher glow-t
+    if (this.isDragging) return;
     
-    // Üveg alsó részének koordinátái (üveg alja)
-    const jarBottomY = this.y + this.jarBody.height * 0.4; // Üveg alja
+    // TELJES KORSÓ BEFOGADÓ TERÜLET - KONZISZTENS A ZONE-NAL  
+    const dropZoneWidth = pitcher.width * 1.2;  
+    const dropZoneHeight = pitcher.height;      
     
-    // Üveg alja érinti-e a teljes korsót
-    const jarBottomInPitcher = (
-      this.x >= pitcherX && 
-      this.x <= pitcherX + pitcherWidth &&
-      jarBottomY >= pitcherY && 
-      jarBottomY <= pitcherY + pitcherHeight
+    // Zone középpont számítás - pitcher origin (1,1) jobb alsó sarok!
+    const zoneCenterX = pitcher.x - (pitcher.width / 2); 
+    const zoneCenterY = pitcher.y - (pitcher.height / 2); 
+    
+    // Zone határok számítása
+    const zoneLeft = zoneCenterX - dropZoneWidth/2;
+    const zoneRight = zoneCenterX + dropZoneWidth/2;
+    const zoneTop = zoneCenterY - dropZoneHeight/2;
+    const zoneBottom = zoneCenterY + dropZoneHeight/2;
+    
+    // Üveg pozíció ellenőrzése (üveg közepe)
+    const jarInZone = (
+      this.x >= zoneLeft && 
+      this.x <= zoneRight &&
+      this.y >= zoneTop && 
+      this.y <= zoneBottom
     );
     
-    console.log(`Jar pozíció: (${this.x.toFixed(1)}, ${this.y.toFixed(1)}), jar bottom: ${jarBottomY.toFixed(1)}`);
-    console.log(`Pitcher area: x(${pitcherX.toFixed(1)}-${(pitcherX + pitcherWidth).toFixed(1)}), y(${pitcherY.toFixed(1)}-${(pitcherY + pitcherHeight).toFixed(1)})`);
-    console.log(`Jar bottom in pitcher: ${jarBottomInPitcher}`);
+    console.log(`🎯 Proximity check:`);
+    console.log(`  Üveg: (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
+    console.log(`  Zone: left=${zoneLeft.toFixed(1)}, right=${zoneRight.toFixed(1)}, top=${zoneTop.toFixed(1)}, bottom=${zoneBottom.toFixed(1)}`);
+    console.log(`  ÜvegInZone: ${jarInZone}`);
     
-    if (jarBottomInPitcher) {
+    if (jarInZone) {
       pitcher.showGlow();
-      console.log('Glow bekapcsolva - üveg alja érinti a teljes korsót');
+      console.log('Glow bekapcsolva - üveg a drop zone-ban');
     } else {
       pitcher.hideGlow();
     }

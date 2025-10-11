@@ -89,20 +89,25 @@ export class Pitcher extends Phaser.GameObjects.Image {
   }
 
   private createDropZone(): void {
-    // Drop zone létrehozása a pitcher körül (kisebb, pontosabb terület)
-    const dropZoneWidth = this.width * 0.8;  // Kisebb, csak a pitcher belseje
-    const dropZoneHeight = this.height * 0.6; // Csak a felső rész (szája)
+    // Drop zone létrehozása a pitcher körül (TELJES KORSÓ BEFOGADÓ TERÜLET)
+    const dropZoneWidth = this.width * 1.2;  // Szélesebb befogadás
+    const dropZoneHeight = this.height;      // TELJES korsó magasság
+    
+    // KRITIKUS: Zone középpont számítás - pitcher origin (1,1) jobb alsó sarok!
+    const zoneCenterX = this.x - (this.width / 2); // Pitcher közepére
+    const zoneCenterY = this.y - (this.height / 2); // Pitcher közepére
     
     this.dropZone = this.scene.add.zone(
-      this.x - this.width / 2, 
-      this.y - this.height / 2, 
+      zoneCenterX, 
+      zoneCenterY, 
       dropZoneWidth, 
       dropZoneHeight
     );
     
     this.dropZone.setRectangleDropZone(dropZoneWidth, dropZoneHeight);
     
-    // Debug vizualizáció eltávolítva - clean UI
+    // Drop zone sikeresen létrehozva - clean UI
+    console.log(`🎯 Drop zone létrehozva: center(${zoneCenterX}, ${zoneCenterY}), size(${dropZoneWidth}x${dropZoneHeight})`);
 
     // Drop zone események
     this.dropZone.on('drop', (pointer: Phaser.Input.Pointer, gameObject: any) => {
@@ -211,7 +216,6 @@ export class Pitcher extends Phaser.GameObjects.Image {
    */
   public updateScaleAndPosition(gameScale: number, gameWidth: number, gameHeight: number): void {
     const isFullscreen = gameScale >= 1.0;
-    console.log(`🍺 Pitcher ${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'} skálázás: ${gameScale.toFixed(3)}`);
     
     // TELJESEN jobb alsó sarok - nincs offset!
     let newX: number;
@@ -234,7 +238,5 @@ export class Pitcher extends Phaser.GameObjects.Image {
     this.dropZone.setPosition(newX - this.width / 2, newY - this.height / 2);
     
     // PreFX automatikusan követi a sprite pozíciót és skálázást
-    
-    console.log(`🍺 Pitcher: ${isFullscreen ? 'nagy' : 'arányos'} méret, pozíció (${newX.toFixed(1)}, ${newY.toFixed(1)})`);
   }
 }

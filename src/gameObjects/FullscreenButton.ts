@@ -26,7 +26,7 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
    * Interakció beállítása
    */
   private setupInteraction(): void {
-    this.setInteractive({ useHandCursor: true });
+    this.setInteractive({ useHandCursor: false }); // Egységes custom cursor
     
     // Hover effekt
     this.on('pointerover', () => {
@@ -175,7 +175,6 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
         }, 100);
       }
 
-      console.log('Fullscreen állapot:', this.isFullscreen ? 'BE' : 'KI');
     } catch (error) {
       console.log('FullscreenButton texture update hiba:', error);
     }
@@ -188,8 +187,6 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     // Teljes képernyő méret lekérése
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-
-    console.log(`Teljesképernyős méret: ${screenWidth}x${screenHeight}`);
 
     // Canvas teljesképernyős méretre állítása
     const canvas = this.scene.scale.canvas;
@@ -209,16 +206,9 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     this.setPosition(screenWidth - 40, 40);
 
     // GameScene handleResize direkt hívása AZONNAL
-    console.log('Teljesképernyős resize trigger...');
-    console.log('Scene típusa:', this.scene.constructor.name);
-    console.log('Scene key:', (this.scene as any).scene?.key);
-    console.log('Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.scene)));
-    
     if ((this.scene as any).handleResize) {
-      console.log('handleResize metódus megtalálva, meghívás...');
       (this.scene as any).handleResize(screenWidth, screenHeight);
     } else {
-      console.log('HIBA: handleResize metódus nem található!');
       // Alternatíva: próbáljuk meg közvetlenül a háttér frissítést
       if ((this.scene as any).background && (this.scene as any).updateBackgroundSizeWithDimensions) {
         console.log('Alternatív háttér frissítés...');
@@ -231,7 +221,6 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
 
     // Még egy próbálkozás 50ms múlva
     setTimeout(() => {
-      console.log('Késleltetett resize trigger...');
       if ((this.scene as any).handleResize) {
         (this.scene as any).handleResize(screenWidth, screenHeight);
       }
@@ -242,8 +231,6 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
    * Játék visszaskálázása eredeti méretre
    */
   private scaleToOriginal(): void {
-    console.log(`Eredeti méret visszaállítása: ${this.gameConfig.width}x${this.gameConfig.height}`);
-
     // Canvas eredeti méretre állítása
     const canvas = this.scene.scale.canvas;
     if (canvas) {
@@ -262,17 +249,11 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     this.setPosition(this.gameConfig.width - 40, 40);
 
     // GameScene handleResize direkt hívása AZONNAL
-    console.log('Eredeti méret resize trigger...');
-    console.log('Scene típusa:', this.scene.constructor.name);
-    
     if ((this.scene as any).handleResize) {
-      console.log('handleResize metódus megtalálva, meghívás eredeti méretre...');
       (this.scene as any).handleResize(this.gameConfig.width, this.gameConfig.height);
     } else {
-      console.log('HIBA: handleResize metódus nem található!');
       // Alternatíva: próbáljuk meg közvetlenül a háttér frissítést
       if ((this.scene as any).background && (this.scene as any).updateBackgroundSizeWithDimensions) {
-        console.log('Alternatív háttér frissítés eredeti méretre...');
         (this.scene as any).updateBackgroundSizeWithDimensions((this.scene as any).background, this.gameConfig.width, this.gameConfig.height);
       }
     }

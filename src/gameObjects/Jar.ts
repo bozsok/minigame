@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { GameBalance } from '../config/GameBalance';
+import { Logger } from '../utils/Logger';
 
 export class Jar extends Phaser.GameObjects.Container {
   private jarBody!: Phaser.GameObjects.Image;
@@ -14,6 +15,7 @@ export class Jar extends Phaser.GameObjects.Container {
   private originalY: number = 0; // Eredeti Y pozíció
   private isDragging: boolean = false; // Drag állapot figyelése
   private gameActive: boolean = true; // Játék interakció állapot
+  private blinkingTween: Phaser.Tweens.Tween | null = null; // Villogó animáció referenciája
   
   // Pozíciók - fedő pozíciói
   private lidClosedY: number = -57; // Fedő pozíciója zárt állapotban (üveg tetején)
@@ -109,6 +111,9 @@ export class Jar extends Phaser.GameObjects.Container {
     if (this.isOpen) return;
 
     this.isOpen = true;
+    
+    // VILLOGÁS LEÁLLÍTÁSA - az üveg kinyitásakor
+    this.stopBlinking();
     
     // Fedő animálása: előbb felfelé eltűnik, majd oldalt megjelenik
     const lid = this.jarLid;
@@ -476,20 +481,32 @@ export class Jar extends Phaser.GameObjects.Container {
    * Üveg villogtatása (figyelem felhívás)
    */
   public startBlinking(): void {
-    // Villogtatás animáció - 3x villog
-    this.scene.tweens.add({
+    // ELŐZŐ VILLOGÁS LEÁLLÍTÁSA - ha már villogott
+    this.stopBlinking();
+    
+    // Villogtatás animáció - folyamatos, amíg le nem állítják
+    this.blinkingTween = this.scene.tweens.add({
       targets: this,
       alpha: 0.3,
       duration: 300,
       yoyo: true,
-      repeat: 5, // 3x villog (6 fázis: le-fel-le-fel-le-fel)
-      ease: 'Power2.easeInOut',
-      onComplete: () => {
-        this.setAlpha(1); // Eredeti átlátszóság visszaállítása
-      }
+      repeat: -1, // Végtelen ismétlés
+      ease: 'Power2.easeInOut'
     });
 
     console.log(`Jar ${this.jarIndex} villogtatás elindítva`);
+  }
+  
+  /**
+   * Üveg villogtatásának leállítása
+   */
+  public stopBlinking(): void {
+    if (this.blinkingTween) {
+      this.blinkingTween.stop();
+      this.blinkingTween = null;
+    }
+    this.setAlpha(1); // Eredeti átlátszóság visszaállítása
+    console.log(`Jar ${this.jarIndex} villogítás leállítva`);
   }
 
   /**
@@ -501,6 +518,9 @@ export class Jar extends Phaser.GameObjects.Container {
     this.isFull = false;
     this.isDragEnabled = false;
     this.beanGrowth.setVisible(false);
+    
+    // VILLOGÁS LEÁLLÍTÁSA reset-nél
+    this.stopBlinking();
     
     // Fedő visszaállítása eredeti pozícióba
     this.jarLid.setPosition(0, this.lidClosedY);

@@ -4,6 +4,8 @@ import BootScene from './scenes/BootScene';
 import PreloadScene from './scenes/PreloadScene';
 import MenuScene from './scenes/MenuScene';
 import GameScene from './scenes/GameScene';
+import { Logger } from './utils/Logger';
+import { UIConstants } from './config/UIConstants';
 
 const config: Phaser.Types.Core.GameConfig = {
   ...GameConfig,
@@ -12,33 +14,33 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const game = new Phaser.Game(config);
 
-console.log('Phaser játék elindítva!');
+Logger.info('Phaser játék elindítva!');
 
 // Globális API a külső HTML gomboknak
 (window as any).EgerKalandAPI = {
   startGame: async () => {
-    console.log('=== KÜLSŐ PLAY GOMB API HÍVÁS ===');
+    Logger.info('=== KÜLSŐ PLAY GOMB API HÍVÁS ===');
     
     try {
       // 1. Átváltás GameScene-re
       const menuScene = game.scene.getScene('MenuScene') as MenuScene;
       if (menuScene) {
-        console.log('MenuScene → GameScene átváltás...');
+        Logger.debug('MenuScene → GameScene átváltás...');
         menuScene.scene.start('GameScene');
         
         // 2. GameScene startGame() metódusának meghívása
         setTimeout(() => {
           const gameScene = game.scene.getScene('GameScene') as GameScene;
           if (gameScene && gameScene.startGame) {
-            console.log('GameScene startGame() meghívása...');
+            Logger.debug('GameScene startGame() meghívása...');
             gameScene.startGame();
           }
-        }, 100); // Rövid késés hogy a scene létrejöjjön
+        }, UIConstants.timings.sceneTransitionDelay);
       }
       
       // 2. Kis késleltetés majd teljesképernyős mód
       setTimeout(async () => {
-        console.log('Automatikus teljesképernyős indítás...');
+        Logger.info('Automatikus teljesképernyős indítás...');
         
         // Teljesképernyős mód aktiválása
         const gameContainer = document.getElementById('game-container');
@@ -54,13 +56,13 @@ console.log('Phaser játék elindítva!');
           await (element as any).msRequestFullscreen();
         }
         
-        console.log('Teljesképernyős mód aktiválva - játék kezdődhet!');
-      }, 500);
+        Logger.info('Teljesképernyős mód aktiválva - játék kezdődhet!');
+      }, UIConstants.timings.fullscreenDelay);
       
     } catch (error) {
-      console.error('Játék indítás hiba:', error);
+      Logger.error('Játék indítás hiba:', error);
     }
   }
 };
 
-console.log('EgerKalandAPI elérhető a window.EgerKalandAPI-n keresztül');
+Logger.info('EgerKalandAPI elérhető a window.EgerKalandAPI-n keresztül');

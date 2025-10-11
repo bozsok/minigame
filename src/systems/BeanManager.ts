@@ -3,6 +3,9 @@ import { BeanConfig, BeanData } from '../types/GameData';
 import { BeanSpawnPoint, BeanCollectionEvent, BeanCluster } from '../types/BeanTypes';
 import { ObjectPool } from '../utils/ObjectPool';
 import { GameBalance } from '../config/GameBalance';
+import { Logger } from '../utils/Logger';
+import { UIConstants } from '../config/UIConstants';
+// import GameScene from '../scenes/GameScene'; // Körkörös függőség miatt kikommentelve
 
 /**
  * BeanManager - A bab gyűjtés rendszer fő kezelője
@@ -74,7 +77,7 @@ export class BeanManager {
   private extractCollisionData(): void {
     const texture = this.scene.textures.get('pantry-collision');
     if (!texture) {
-      console.error('Collision texture nem található!');
+      Logger.error('Collision texture nem található!');
       this.generateValidAreas(); // Fallback
       return;
     }
@@ -84,7 +87,7 @@ export class BeanManager {
     const context = canvas.getContext('2d');
     
     if (!context) {
-      console.error('Canvas context nem elérhető!');
+      Logger.error('Canvas context nem elérhető!');
       this.generateValidAreas(); // Fallback
       return;
     }
@@ -147,7 +150,7 @@ export class BeanManager {
    */
   private generateValidAreasFromPixels(): void {
     if (!this.collisionData) {
-      console.warn('Collision data nem elérhető, fallback használata...');
+      Logger.warn('Collision data nem elérhető, fallback használata...');
       this.generateValidAreas();
       return;
     }
@@ -500,7 +503,7 @@ export class BeanManager {
     // Bean collection debug
     
     // Közvetlenül kérjük meg a JarManager-től, hogy fogadja el a babot
-    const gameScene = this.scene as any; // GameScene típus cast
+    const gameScene = this.scene as any; // TODO: GameScene interfész - körkörös függőség miatt any
     
     if (!gameScene.jarManager) {
       // ERROR: JarManager nem található
@@ -515,7 +518,7 @@ export class BeanManager {
       return; // Bab megmarad
     }
     
-    console.log('Bab elfogadva - tényleges gyűjtés indítása');
+    Logger.debug('Bab elfogadva - tényleges gyűjtés indítása');
     
     // Bean tényleges gyűjtésének elindítása
     bean.performCollection();
@@ -527,7 +530,7 @@ export class BeanManager {
     this.collectedBeansCount++;
     this.beansInCurrentJar++;
     
-    console.log(`Bab összegyűjtve! Összesen: ${this.collectedBeansCount}`);
+    Logger.debug(`Bab összegyűjtve! Összesen: ${this.collectedBeansCount}`);
     
     // Üveg fázis ellenőrzése
     this.checkJarPhaseCompletion();
@@ -550,7 +553,7 @@ export class BeanManager {
       this.currentJarPhase++;
       this.beansInCurrentJar = 0;
       
-      console.log(`Üveg fázis befejezve! Új fázis: ${this.currentJarPhase}`);
+      Logger.debug(`Üveg fázis befejezve! Új fázis: ${this.currentJarPhase}`);
       
       // Esemény küldése az üveg kezelőnek
       this.scene.events.emit('jar-phase-completed', {
@@ -571,7 +574,7 @@ export class BeanManager {
   private completeJar(): void {
     this.currentJarPhase = 0;
     
-    console.log('Üveg befejezve!');
+    Logger.debug('Üveg befejezve!');
     
     // Esemény küldése a játék kezelőnek
     this.scene.events.emit('jar-completed', {
@@ -630,7 +633,7 @@ export class BeanManager {
    * Játék leállítása (victory esetén)
    */
   public stopGame(): void {
-    console.log('BeanManager: Játék leállítva');
+    Logger.debug('BeanManager: Játék leállítva');
     // Minden további bean spawn letiltása
     this.isGameRunning = false;
     
@@ -647,7 +650,7 @@ export class BeanManager {
   private getCurrentScale(): number {
     const gameWidth = this.scene.scale.width;
     const isFullscreen = gameWidth > 1200;
-    return isFullscreen ? 0.7 : 0.175; // 0.7 és 0.7*0.25 = 0.175
+    return isFullscreen ? UIConstants.scaling.beanFullscreenScale : UIConstants.scaling.beanWindowedScale;
   }
 
   /**
@@ -674,17 +677,17 @@ export class BeanManager {
       const originalPos = this.beanOriginalPositions.get(beanId);
       
       if (!originalPos) {
-        console.warn(`Nincs eredeti pozíció tárolva a bab számára: ${beanId}`);
+        Logger.warn(`Nincs eredeti pozíció tárolva a bab számára: ${beanId}`);
         return;
       }
       
       if (isFullscreen) {
         // Fullscreen: 70% méret és eredeti pozíció
-        bean.setScale(0.7);
+        bean.setScale(UIConstants.scaling.beanFullscreenScale);
         bean.setPosition(originalPos.x, originalPos.y);
       } else {
         // Ablakos: 17.5% méret és valós canvas arányosítás
-        bean.setScale(0.175);
+        bean.setScale(UIConstants.scaling.beanWindowedScale);
         
         // Valós arányosítás: fullscreen → ablakos canvas méret szerint
         // originalPos alapja a spawn-kori canvas méret (pl. 1920x1080)
@@ -722,13 +725,13 @@ export class BeanManager {
    * Maradék babok kiemelése piros körvonalas glow-val (időtúllépéskor)
    */
   public highlightRemainingBeans(): void {
-    console.log(`🔴 Maradék babok kiemelése: ${this.beans.size} db`);
+    Logger.debug(`🔴 Maradék babok kiemelése: ${this.beans.size} db`);
     
     this.beans.forEach((bean) => {
       if (bean.visible) {
         // Piros körvonal glow effekt
         bean.preFX?.addGlow(0xff0000, 4, 0, false, 0.8, 8); // Piros, 4px outer, 8px inner
-        console.log(`Bean ${bean.getData('id')} piros glow hozzáadva`);
+        Logger.debug(`Bean ${bean.getData('id')} piros glow hozzáadva`);
       }
     });
   }
@@ -740,6 +743,6 @@ export class BeanManager {
     this.clearAllBeans();
     this.beanOriginalPositions.clear();
     this.scene.events.off('bean-collected');
-    console.log('BeanManager cleanup befejezve');
+    Logger.debug('BeanManager cleanup befejezve');
   }
 }

@@ -5,6 +5,16 @@ import { CheeseManager } from '../systems/CheeseManager';
 import { Pitcher } from '../gameObjects/Pitcher';
 import { GameBalance } from '../config/GameBalance';
 import { FullscreenButton } from '../gameObjects/FullscreenButton';
+import { Logger } from '../utils/Logger';
+import { UIConstants } from '../config/UIConstants';
+import {
+  BeanCountUpdateEvent,
+  JarUIUpdateEvent,
+  JarHighlightEvent,
+  JarDeliveredEvent,
+  ResizeEvent,
+  PhaserResizeEvent
+} from '../types/EventTypes';
 
 export default class GameScene extends Phaser.Scene {
   private beanManager!: BeanManager;
@@ -15,7 +25,7 @@ export default class GameScene extends Phaser.Scene {
   private background!: Phaser.GameObjects.Image;
   private gameStartTime: number = 0;
   private energyRemaining: number = GameBalance.energy.initialTime;
-  private countdownTime: number = 20; // TESZT: 20 másodperc (eredetileg 5 * 60)
+  private countdownTime: number = GameBalance.time.totalTime; // Konfigurációból olvassuk az időt
   private timerStarted: boolean = false; // Timer csak babok betöltése után indul
   private timerBackground!: Phaser.GameObjects.Graphics;
   private uiElements: {
@@ -44,8 +54,8 @@ export default class GameScene extends Phaser.Scene {
     this.updateBackgroundSize(this.background);
 
     // Scale manager eseményeinek figyelése
-    this.scale.on('resize', (gameSize: any, baseSize: any, displaySize: any, resolution: any) => {
-      console.log('Phaser scale resize:', gameSize);
+    this.scale.on('resize', (gameSize: PhaserResizeEvent, baseSize: any, displaySize: any, resolution: any) => {
+      Logger.debug('Phaser scale resize:', gameSize);
       this.handleResize();
     });
 
@@ -68,7 +78,7 @@ export default class GameScene extends Phaser.Scene {
     this.updateGameElementsScale(this.scale.gameSize.width, this.scale.gameSize.height);
 
     // Teljesképernyős gomb létrehozása (jobb felső sarok)
-    this.fullscreenButton = new FullscreenButton(this, 860 - 40, 40);
+    this.fullscreenButton = new FullscreenButton(this, 860 - UIConstants.positions.fullscreenButtonOffset, UIConstants.positions.fullscreenButtonOffset);
 
     // UI elemek létrehozása
     this.createUI();
@@ -76,7 +86,7 @@ export default class GameScene extends Phaser.Scene {
     // Esemény figyelők beállítása
     this.setupEventListeners();
 
-    console.log('GameScene létrehozva - Várakozás Play gomb megnyomására!');
+    Logger.info('GameScene létrehozva - Várakozás Play gomb megnyomására!');
   }
 
   /**
@@ -118,8 +128,8 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Font méret arányosítása (eredeti design: 42px)
-    const baseFontSize = 42;
-    const baseStrokeThickness = 4;
+    const baseFontSize = UIConstants.timer.baseFontSize;
+    const baseStrokeThickness = UIConstants.timer.baseStrokeThickness;
     const fontSize = Math.round(baseFontSize * gameScale);
     const strokeThickness = Math.round(baseStrokeThickness * gameScale);
     
@@ -128,7 +138,7 @@ export default class GameScene extends Phaser.Scene {
       fontSize: `${fontSize}px`,
       color: '#ffffff',
       fontFamily: '"BBH Sans Hegarty", "Berlin Sans FB Demi", "Arial Black", Arial, sans-serif',
-      stroke: '#333333',
+      stroke: UIConstants.colors.timerStroke,
       strokeThickness: strokeThickness
     }).setOrigin(0.5, 0.5);
 
@@ -139,7 +149,7 @@ export default class GameScene extends Phaser.Scene {
     this.uiElements.timerText.setVisible(false);
     this.timerBackground.setVisible(false);
     
-    console.log('⏰ Rejtett időszámláló elemek létrehozva - BBH Sans Hegarty (PreloadScene-ben előbetöltött)');
+    Logger.debug('⏰ Rejtett időszámláló elemek létrehozva - BBH Sans Hegarty (PreloadScene-ben előbetöltött)');
   }
 
   /**
@@ -154,7 +164,7 @@ export default class GameScene extends Phaser.Scene {
       // Timer indítása
       this.timerStarted = true;
       this.gameStartTime = Date.now();
-      this.countdownTime = 20; // TESZT: 20 másodperc (eredetileg 5 * 60)
+      this.countdownTime = GameBalance.time.totalTime; // Konfigurációból olvassuk az időt
       
       // AZONNAL beállítjuk a kezdő szöveget
       this.updateTimerUI();
@@ -162,7 +172,7 @@ export default class GameScene extends Phaser.Scene {
       // Pozíció újraszámítása
       this.updateTimerPosition(this.scale.width);
       
-      console.log('⏰ Időszámláló megjelenítve és elindítva - azonnal 05:00 szöveggel');
+      Logger.debug('⏰ Időszámláló megjelenítve és elindítva - azonnal 05:00 szöveggel');
     }
   }
 
@@ -189,26 +199,26 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Timer méretei (eredeti design) * arányosítási faktor
-    const baseTimerWidth = 175;  // Eredeti design méret
-    const baseTimerHeight = 75;  // Eredeti design méret
+    const baseTimerWidth = UIConstants.timer.baseWidth;
+    const baseTimerHeight = UIConstants.timer.baseHeight;
     const timerWidth = baseTimerWidth * gameScale;
     const timerHeight = baseTimerHeight * gameScale;
     
-    const fullscreenButtonX = gameWidth - 40; // FullscreenButton pozíciója
-    const timerX = fullscreenButtonX - 40 - timerWidth - 10; // 40px gomb szélesség + 10px távolság
-    const timerY = 20;
+    const fullscreenButtonX = gameWidth - UIConstants.positions.fullscreenButtonOffset;
+    const timerX = fullscreenButtonX - UIConstants.positions.fullscreenButtonOffset - timerWidth - UIConstants.positions.timerOffsetFromButton;
+    const timerY = UIConstants.positions.energyOffset;
 
     // Graphics objektum létrehozása
     this.timerBackground = this.add.graphics();
     
     // Border és lekerekítés arányosítása
-    const baseBorderWidth = 6;    // Eredeti border vastagság
-    const baseCornerRadius = 20;  // Eredeti lekerekítés
+    const baseBorderWidth = UIConstants.timer.baseBorderWidth;
+    const baseCornerRadius = UIConstants.timer.baseCornerRadius;
     const borderWidth = Math.round(baseBorderWidth * gameScale);
     const cornerRadius = Math.round(baseCornerRadius * gameScale);
     
     // Border rajzolása (#3ba4c2 szín, arányosított vastagság)
-    this.timerBackground.lineStyle(borderWidth, 0x3ba4c2);
+    this.timerBackground.lineStyle(borderWidth, parseInt(UIConstants.colors.timerBorder.replace('#', '0x')));
     this.timerBackground.fillStyle(0x000000); // Fekete kitöltés
     
     // Lekerekített téglalap - arányosított lekerekítés
@@ -218,7 +228,7 @@ export default class GameScene extends Phaser.Scene {
     // Timer szöveg pozícionálása a téglalap közepére
     if (this.uiElements.timerText) {
       this.uiElements.timerText.setPosition(timerX + timerWidth / 2, timerY + timerHeight / 2);
-      console.log(`⏰ Timer szöveg pozícionálva: (${timerX + timerWidth / 2}, ${timerY + timerHeight / 2})`);
+      Logger.debug(`⏰ Timer szöveg pozícionálva: (${timerX + timerWidth / 2}, ${timerY + timerHeight / 2})`);
     }
   }
 
@@ -243,26 +253,26 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Timer méretei (eredeti design) * arányosítási faktor
-    const baseTimerWidth = 175;  // Eredeti design méret
-    const baseTimerHeight = 75;  // Eredeti design méret
+    const baseTimerWidth = UIConstants.timer.baseWidth;
+    const baseTimerHeight = UIConstants.timer.baseHeight;
     const timerWidth = baseTimerWidth * gameScale;
     const timerHeight = baseTimerHeight * gameScale;
     
-    const fullscreenButtonX = gameWidth - 40;
-    const timerX = fullscreenButtonX - 40 - timerWidth - 10;
-    const timerY = 20;
+    const fullscreenButtonX = gameWidth - UIConstants.positions.fullscreenButtonOffset;
+    const timerX = fullscreenButtonX - UIConstants.positions.fullscreenButtonOffset - timerWidth - UIConstants.positions.timerOffsetFromButton;
+    const timerY = UIConstants.positions.energyOffset;
 
     // Graphics háttér frissítése
     if (this.timerBackground) {
       this.timerBackground.clear();
       
       // Border és lekerekítés arányosítása
-      const baseBorderWidth = 6;    // Eredeti border vastagság
-      const baseCornerRadius = 20;  // Eredeti lekerekítés
+      const baseBorderWidth = UIConstants.timer.baseBorderWidth;
+      const baseCornerRadius = UIConstants.timer.baseCornerRadius;
       const borderWidth = Math.round(baseBorderWidth * gameScale);
       const cornerRadius = Math.round(baseCornerRadius * gameScale);
       
-      this.timerBackground.lineStyle(borderWidth, 0x3ba4c2);
+      this.timerBackground.lineStyle(borderWidth, parseInt(UIConstants.colors.timerBorder.replace('#', '0x')));
       this.timerBackground.fillStyle(0x000000);
       this.timerBackground.fillRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
       this.timerBackground.strokeRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
@@ -284,11 +294,11 @@ export default class GameScene extends Phaser.Scene {
         const checkFont = () => {
           const fontLoaded = document.fonts.check('44px "BBH Sans Hegarty"');
           if (fontLoaded) {
-            console.log('⏰ BBH Sans Hegarty font specifikusan betöltve és elérhető');
+            Logger.debug('⏰ BBH Sans Hegarty font specifikusan betöltve és elérhető');
             resolve();
           } else {
-            console.log('⏰ BBH Sans Hegarty még nem elérhető, újrapróbálkozás...');
-            setTimeout(checkFont, 100); // 100ms-enként ellenőrzés
+            Logger.debug('⏰ BBH Sans Hegarty még nem elérhető, újrapróbálkozás...');
+            setTimeout(checkFont, UIConstants.timings.fontCheckInterval);
           }
         };
         
@@ -297,15 +307,15 @@ export default class GameScene extends Phaser.Scene {
         
         // Biztonsági timeout 2 másodperc után
         setTimeout(() => {
-          console.log('⏰ Font timeout - folytatás fallback fonttal');
+          Logger.warn('⏰ Font timeout - folytatás fallback fonttal');
           resolve();
-        }, 2000);
+        }, UIConstants.timings.fontTimeout);
       } else {
         // Fallback - 800ms várakozás
         setTimeout(() => {
-          console.log('⏰ Font várakozás fallback (800ms)');
+          Logger.debug('⏰ Font várakozás fallback (800ms)');
           resolve();
-        }, 800);
+        }, UIConstants.timings.fontFallbackTimeout);
       }
     });
   }
@@ -320,7 +330,7 @@ export default class GameScene extends Phaser.Scene {
         fontSize: '44px',
         color: '#ffffff',
         fontFamily: '"BBH Sans Hegarty", "Berlin Sans FB Demi", "Arial Black", Arial, sans-serif',
-        stroke: '#333333',
+        stroke: UIConstants.colors.timerStroke,
         strokeThickness: 4
       });
       
@@ -329,7 +339,7 @@ export default class GameScene extends Phaser.Scene {
       this.uiElements.timerText.setText('');
       this.uiElements.timerText.setText(currentText);
       
-      console.log('⏰ Font explicit beállítás és szöveg frissítés végrehajtva');
+      Logger.debug('⏰ Font explicit beállítás és szöveg frissítés végrehajtva');
     }
   }
 
@@ -341,17 +351,17 @@ export default class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     
     // Bab számláló frissítése (BeanManager-től)
-    this.events.on('bean-count-updated', (data: any) => {
+    this.events.on('bean-count-updated', (data: BeanCountUpdateEvent) => {
       this.updateBeanCountUI(data);
     });
 
     // Jar UI frissítés (JarManager-től)
-    this.events.on('jar-ui-update', (data: any) => {
+    this.events.on('jar-ui-update', (data: JarUIUpdateEvent) => {
       this.updateJarUI(data);
     });
 
     // Jar highlight üzenet (villogás + útmutatás)
-    this.events.on('jar-highlight', (data: any) => {
+    this.events.on('jar-highlight', (data: JarHighlightEvent) => {
       this.handleJarHighlight(data);
     });
 
@@ -361,7 +371,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Üveg leadva a pitcher-be
-    this.events.on('jar-delivered-to-pitcher', (data: any) => {
+    this.events.on('jar-delivered-to-pitcher', (data: JarDeliveredEvent) => {
       this.handleJarDelivered(data);
     });
 
@@ -371,7 +381,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Méretváltás kezelése
-    this.events.on('resize', (data: any) => {
+    this.events.on('resize', (data: ResizeEvent) => {
       this.resize(data);
     });
   }
@@ -380,39 +390,41 @@ export default class GameScene extends Phaser.Scene {
    * Játék indítása
    */
   public startGame(): void {
-    console.log('=== JÁTÉK INDÍTÁSA ===');
-    console.log('1 másodperces várakozás a babok és interaktív elemek megjelenése előtt...');
+    Logger.info('=== JÁTÉK INDÍTÁSA ===');
+    Logger.info('1 másodperces várakozás a babok és interaktív elemek megjelenése előtt...');
     
     // 1 másodperc várakozás majd minden egyszerre megjelenik
     setTimeout(() => {
-      console.log('250 bab spawn-ja indul...');
+      Logger.info('250 bab spawn-ja indul...');
       this.beanManager.spawnAllBeans();
       
       // Interaktív elemek megjelenítése (üvegek, korsó, sajtok)
-      console.log('Interaktív elemek megjelenítése...');
+      Logger.debug('Interaktív elemek megjelenítése...');
       this.jarManager.setVisible(true);
       this.pitcher.setVisible(true);
       
       // Sajtok spawn-ja (5 sajt különböző pozíciókban)
-      console.log('5 sajt spawn-ja...');
+      Logger.info('5 sajt spawn-ja...');
       this.cheeseManager.spawnCheeses();
       
       // Energia csökkentés indítása
       this.startEnergyCountdown();
       
       // IDŐSZÁMLÁLÓ MEGJELENÍTÉSE ÉS INDÍTÁSA - babok betöltése után
-      console.log('⏰ Időszámláló megjelenítése és indítása - 5 perc visszaszámlálás!');
+      Logger.info('⏰ Időszámláló megjelenítése és indítása - 5 perc visszaszámlálás!');
       this.showTimerElements();
       
-    }, 1000); // 2000-ről 1000-re csökkentve
+    }, UIConstants.timings.gameStartDelay);
   }
 
   /**
    * Energia számláló indítása
    */
   private startEnergyCountdown(): void {
-    console.log('Energia számláló indítva...');
-    // TODO: Implementálni az energia csökkentést
+    Logger.debug('Energia számláló indítva...');
+    // ENERGIA RENDSZER: Jelenleg nincs implementálva, mert a játék időalapú
+    // A játékosnak van fix ideje (GameBalance.time.totalTime), nincs külön energia rendszer
+    // Ha szükséges, a jövőben itt lehetne implementálni egy energia csökkentő logikát
   }
 
   /**
@@ -426,7 +438,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.timerStarted && this.uiElements.timerText) {
       const currentTime = Date.now();
       const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
-      const newCountdownTime = Math.max(0, 20 - elapsedSeconds); // TESZT: 20 másodperc (eredetileg 5 * 60)
+      const newCountdownTime = Math.max(0, GameBalance.time.totalTime - elapsedSeconds); // Konfigurációból olvassuk az időt
       
       // Timer UI frissítése ha változott az idő
       if (newCountdownTime !== this.countdownTime) {
@@ -434,7 +446,7 @@ export default class GameScene extends Phaser.Scene {
         this.updateTimerUI();
         
         // Debug minden másodpercben
-        console.log(`⏰ Timer update: ${this.countdownTime}s (elapsed: ${elapsedSeconds}s)`);
+        Logger.debug(`⏰ Timer update: ${this.countdownTime}s (elapsed: ${elapsedSeconds}s)`);
       }
       
       // Időtúllépés ellenőrzés (game over) - csak egyszer hívjuk meg
@@ -457,7 +469,7 @@ export default class GameScene extends Phaser.Scene {
    */
   private updateTimerUI(): void {
     if (!this.uiElements.timerText) {
-      console.log('⚠️ Timer text nem létezik - skipeljük frissítést!');
+      Logger.warn('⚠️ Timer text nem létezik - skipeljük frissítést!');
       return;
     }
     
@@ -465,12 +477,12 @@ export default class GameScene extends Phaser.Scene {
     try {
       // Teszteljük, hogy az objektum még mindig valid-e
       if (!this.uiElements.timerText.scene || this.uiElements.timerText.scene !== this) {
-        console.log('⚠️ Timer text scene invalid - újralétrehozzuk!');
+        Logger.warn('⚠️ Timer text scene invalid - újralétrehozzuk!');
         this.createHiddenTimerElements();
         return;
       }
     } catch (error) {
-      console.log('⚠️ Timer text corrupt, újralétrehozzuk:', error);
+      Logger.warn('⚠️ Timer text corrupt, újralétrehozzuk:', error);
       this.createHiddenTimerElements();
       return;
     }
@@ -496,8 +508,8 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Font méret arányosítása (eredeti design: 42px)
-    const baseFontSize = 42;
-    const baseStrokeThickness = 4;
+    const baseFontSize = UIConstants.timer.baseFontSize;
+    const baseStrokeThickness = UIConstants.timer.baseStrokeThickness;
     const fontSize = Math.round(baseFontSize * gameScale);
     const strokeThickness = Math.round(baseStrokeThickness * gameScale);
     
@@ -507,20 +519,20 @@ export default class GameScene extends Phaser.Scene {
       this.uiElements.timerText.setStyle({
         fontSize: `${fontSize}px`,
         fontFamily: '"BBH Sans Hegarty", "Berlin Sans FB Demi", "Arial Black", Arial, sans-serif',
-        stroke: '#333333',
+        stroke: UIConstants.colors.timerStroke,
         strokeThickness: strokeThickness
       });
       
       // Egyszerű színbeállítás
-      if (this.countdownTime <= 30) {
-        this.uiElements.timerText.setColor('#ff0000'); // Piros 30 másodpercnél
-      } else if (this.countdownTime <= 120) {
-        this.uiElements.timerText.setColor('#ffaa00'); // Narancssárga 2 percnél
+      if (this.countdownTime <= UIConstants.thresholds.timerRedThreshold) {
+        this.uiElements.timerText.setColor(UIConstants.colors.timerRed);
+      } else if (this.countdownTime <= UIConstants.thresholds.timerOrangeThreshold) {
+        this.uiElements.timerText.setColor(UIConstants.colors.timerOrange);
       } else {
-        this.uiElements.timerText.setColor('#ffffff'); // Fehér
+        this.uiElements.timerText.setColor(UIConstants.colors.timerWhite);
       }
     } catch (error) {
-      console.log('⚠️ KRITIKUS: Timer text frissítés hiba - újralétrehozzuk!', error);
+      Logger.error('⚠️ KRITIKUS: Timer text frissítés hiba - újralétrehozzuk!', error);
       // Újralétrehozzuk a timer objektumot
       this.createHiddenTimerElements();
       return; // Ne folytassuk a frissítést
@@ -534,10 +546,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Debug minden frissítésnél (első 10 másodpercben)
-    if (this.countdownTime >= 290) { // Első 10 mp (300-290)
-      console.log(`⏰ Timer frissítve: "${timeString}" (${this.countdownTime}s maradt)`);
-      console.log(`⏰ Text pos: (${this.uiElements.timerText.x}, ${this.uiElements.timerText.y})`);
-      console.log(`⏰ Text visible: ${this.uiElements.timerText.visible}, alpha: ${this.uiElements.timerText.alpha}`);
+    if (this.countdownTime >= GameBalance.time.totalTime - UIConstants.thresholds.timerDebugRange) {
+      Logger.debug(`⏰ Timer frissítve: "${timeString}" (${this.countdownTime}s maradt)`);
+      Logger.debug(`⏰ Text pos: (${this.uiElements.timerText.x}, ${this.uiElements.timerText.y})`);
+      Logger.debug(`⏰ Text visible: ${this.uiElements.timerText.visible}, alpha: ${this.uiElements.timerText.alpha}`);
     }
   }
 
@@ -545,7 +557,7 @@ export default class GameScene extends Phaser.Scene {
    * Időtúllépés kezelése
    */
   private handleTimeUp(): void {
-    console.log('⏰ IDŐ LEJÁRT! Játék megáll, elemek látva maradnak!');
+    Logger.warn('⏰ IDŐ LEJÁRT! Játék megáll, elemek látva maradnak!');
     
     // Játék logika leállítása (de elemek látva maradnak)
     this.beanManager.stopGame();
@@ -559,14 +571,14 @@ export default class GameScene extends Phaser.Scene {
     // Timer 00:00-n marad, semmi nem tűnik el
     // Játékos szabadon nézheti a maradék elemeket
     // Visszatérés: ablakos mód gomb → MenuScene
-    console.log('⏰ Játék befagyasztva - ablakos mód gombbal lehet visszatérni');
+    Logger.info('⏰ Játék befagyasztva - ablakos mód gombbal lehet visszatérni');
   }
 
   /**
    * Minden interakció letiltása (idő lejárt vagy játék befejezve)
    */
   private disableAllInteractions(): void {
-    console.log('🚫 Minden interakció letiltása - játék vége');
+    Logger.debug('🚫 Minden interakció letiltása - játék vége');
     
     // CheeseManager letiltása
     if (this.cheeseManager) {
@@ -578,7 +590,7 @@ export default class GameScene extends Phaser.Scene {
       this.jarManager.setGameActive(false);
     }
     
-    console.log('🚫 Minden interakció letiltva - sajt evés és jar műveletek tiltva');
+    Logger.debug('🚫 Minden interakció letiltva - sajt evés és jar műveletek tiltva');
   }
 
   /**
@@ -588,40 +600,40 @@ export default class GameScene extends Phaser.Scene {
     if (this.uiElements.energyText) {
       // Eltelt időt mutatjuk, nem hátralevőt
       this.uiElements.energyText.setText(`Eltelt idő: ${elapsedSeconds}s`);
-      this.uiElements.energyText.setBackgroundColor('#4CAF50'); // mindig zöld - nincs időnyomás
+      this.uiElements.energyText.setBackgroundColor(UIConstants.colors.energyBackground);
     }
   }
 
-  private updateBeanCountUI(data: any): void {
+  private updateBeanCountUI(data: BeanCountUpdateEvent): void {
     // Bean count már nem jelenik meg a UI-on
     // Csak az időszámláló látható
   }
 
-  private updateJarUI(data: any): void {
+  private updateJarUI(data: JarUIUpdateEvent): void {
     // Jar UI frissítés már nem szükséges - vizuálisan látható az üvegeken
   }
 
   private handleAllJarsFull(): void {
-    console.log('GameScene: Minden üveg megtelt!');
+    Logger.debug('GameScene: Minden üveg megtelt!');
     // A vizuális feedback már az üvegeken látható
   }
 
-  private handleJarDelivered(data: any): void {
+  private handleJarDelivered(data: JarDeliveredEvent): void {
     const { jarIndex, totalJarsInPitcher } = data;
-    console.log(`GameScene: Jar ${jarIndex} leadva! Összesen: ${totalJarsInPitcher}/5`);
+    Logger.debug(`GameScene: Jar ${jarIndex} leadva! Összesen: ${totalJarsInPitcher}/5`);
     // A leadott üvegek száma vizuálisan követhető
   }
 
-  private handleJarHighlight(data: any): void {
+  private handleJarHighlight(data: JarHighlightEvent): void {
     const { jarIndex, message } = data;
-    console.log(`GameScene: Jar ${jarIndex} highlight - ${message}`);
+    Logger.debug(`GameScene: Jar ${jarIndex} highlight - ${message}`);
     
     // Csak console log - nincs UI üzenet változtatás
     // A villogás elég vizuális feedback
   }
 
   private handleGameComplete(): void {
-    console.log('🎉 JÁTÉK BEFEJEZVE! Mind az 5 üveg leadva!');
+    Logger.info('🎉 JÁTÉK BEFEJEZVE! Mind az 5 üveg leadva!');
     
     // Timer megállítása - győzelem esetén nincs időkorlát
     this.timerStarted = false;
@@ -629,10 +641,12 @@ export default class GameScene extends Phaser.Scene {
     // Játék logika leállítása
     this.beanManager.stopGame();
     
-    // TODO: Victory screen vagy restart opció
+    // VICTORY SCREEN: Jelenleg nincs implementálva
+    // A játék leáll, de nincs victory képernyő vagy restart opció
+    // A játékosnak manuálisan kell visszalépnie a menübe
   }
 
-  private updateJarPhaseUI(data: any): void {
+  private updateJarPhaseUI(data: any): void { // JAR PHASE UI: Nincs használatban, vizuális feedback helyett
     // Jar phase UI már nem szükséges - vizuálisan látható
 
     if (this.uiElements.instructionText) {
@@ -643,26 +657,26 @@ export default class GameScene extends Phaser.Scene {
         if (this.uiElements.instructionText) {
           this.uiElements.instructionText.setText('Kattints a babokra a gyűjtéshez!');
         }
-      }, 2000);
+      }, UIConstants.timings.instructionReset);
     }
   }
 
   /**
    * Üveg befejezés kezelése
    */
-  private handleJarCompletion(data: any): void {
-    console.log('Üveg befejezve!', data);
+  private handleJarCompletion(data: any): void { // JAR COMPLETION: Nincs használatban, vizuális feedback helyett
+    Logger.debug('Üveg befejezve!', data);
     
     if (this.uiElements.instructionText) {
       this.uiElements.instructionText.setText('🎉 Üveg kész! Új üveg kezdődik!');
-      this.uiElements.instructionText.setBackgroundColor('#4CAF50');
+      this.uiElements.instructionText.setBackgroundColor(UIConstants.colors.energyBackground);
       
       setTimeout(() => {
         if (this.uiElements.instructionText) {
           this.uiElements.instructionText.setText('Kattints a babokra a gyűjtéshez!');
-          this.uiElements.instructionText.setBackgroundColor('#2196F3');
+          this.uiElements.instructionText.setBackgroundColor(UIConstants.colors.instructionBackground);
         }
-      }, 3000);
+      }, UIConstants.timings.jarCompletionReset);
     }
   }
 
@@ -670,7 +684,7 @@ export default class GameScene extends Phaser.Scene {
    * Játék vége - csak akkor hívjuk, ha minden bab összegyűjtve
    */
   private gameOver(): void {
-    console.log('Minden bab összegyűjtve! Gratulálunk!');
+    Logger.info('Minden bab összegyűjtve! Gratulálunk!');
     
     // Csak akkor hívjuk ha tényleg kész a játék (250 bab összegyűjtve)
     // BeanManager leállítása
@@ -721,7 +735,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.background) {
       this.updateBackgroundSizeWithDimensions(this.background, gameWidth, gameHeight);
     } else {
-      console.log('HIBA: Háttér objektum nem található!');
+      Logger.error('HIBA: Háttér objektum nem található!');
     }
     
     // UI elemek pozíciójának frissítése
@@ -731,8 +745,8 @@ export default class GameScene extends Phaser.Scene {
   /**
    * Ablakméret változás kezelése (custom esemény)
    */
-  resize(gameSize: Phaser.Structs.Size): void {
-    console.log(`Custom resize: ${gameSize.width}x${gameSize.height}`);
+  resize(gameSize: ResizeEvent): void {
+    Logger.debug(`Custom resize: ${gameSize.width}x${gameSize.height}`);
     
     // Háttér újra méretezése
     if (this.background) {
@@ -763,7 +777,7 @@ export default class GameScene extends Phaser.Scene {
   private updateUIPositionsWithDimensions(gameWidth: number, gameHeight: number): void {
     // Energia kijelző (bal felső sarok) 
     if (this.uiElements.energyText) {
-      this.uiElements.energyText.setPosition(20, 20);
+      this.uiElements.energyText.setPosition(UIConstants.positions.energyOffset, UIConstants.positions.energyOffset);
     }
 
     // Időszámláló pozíció frissítése (ha létezik)
@@ -775,7 +789,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Utasítás szöveg (lent középen)
     if (this.uiElements.instructionText) {
-      this.uiElements.instructionText.setPosition(gameWidth / 2, gameHeight - 40);
+      this.uiElements.instructionText.setPosition(gameWidth / 2, gameHeight - UIConstants.positions.instructionOffset);
     }
 
     // Játék elemek skálázása és pozícionálása

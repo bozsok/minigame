@@ -1,4 +1,5 @@
 import { Cheese } from '../gameObjects/Cheese';
+import { Logger } from '../utils/Logger';
 
 export class CheeseManager {
   private scene: Phaser.Scene;
@@ -85,21 +86,21 @@ export class CheeseManager {
   }
 
   private enableDevMode(): void {
-    console.log('🔧 DEV MODE: CHEESE-1 POZICIONÁLÓ!');
-    console.log('🎚️ Csak CHEESE-1-et pozícionáld!');
-    console.log('📝 ESC: koordináták mentése');
+    Logger.info('🔧 DEV MODE: CHEESE-1 POZICIONÁLÓ!');
+    Logger.info('🎚️ Csak CHEESE-1-et pozícionáld!');
+    Logger.info('📝 ESC: koordináták mentése');
     
     // CHEESE-5 DEBUG INFO
     const cheese5 = this.cheeses.get(5);
     if (cheese5) {
-      console.log(`🧀 DEV MODE - CHEESE-5 JELENLEGI POZÍCIÓ: (${cheese5.x}, ${cheese5.y})`);
+      Logger.debug(`🧀 DEV MODE - CHEESE-5 JELENLEGI POZÍCIÓ: (${cheese5.x}, ${cheese5.y})`);
       cheese5.setAlpha(0.8);
       
-      console.log(`✅ CHEESE-5 pozíció megmarad: (${cheese5.x}, ${cheese5.y})`);
+      Logger.debug(`✅ CHEESE-5 pozíció megmarad: (${cheese5.x}, ${cheese5.y})`);
     }
     
     // Babok elrejtése dev mode alatt
-    const gameScene = this.scene as any;
+    const gameScene = this.scene as any; // TODO: GameScene interfész - körkörös függőség miatt any
     if (gameScene.beanManager) {
       gameScene.beanManager.hideAllBeans();
     }
@@ -109,13 +110,13 @@ export class CheeseManager {
   }
 
   private disableDevMode(): void {
-    console.log('🔧 DEV MODE KIKAPCSOLVA');
+    Logger.info('🔧 DEV MODE KIKAPCSOLVA');
     
     // Slider UI eltávolítása
     this.removeSliderUI();
     
     // Babok visszamutatása
-    const gameScene = this.scene as any;
+    const gameScene = this.scene as any; // TODO: GameScene interfész - körkörös függőség miatt any
     if (gameScene.beanManager) {
       gameScene.beanManager.showAllBeans();
     }
@@ -126,7 +127,7 @@ export class CheeseManager {
       cheese.resetInteraction();
     });
     
-    console.log('✅ Sajtok right-click visszaállítva');
+    Logger.debug('✅ Sajtok right-click visszaállítva');
   }
 
   private exportCoordinates(): void {
@@ -135,17 +136,17 @@ export class CheeseManager {
       const x = Math.round(cheese5.x);
       const y = Math.round(cheese5.y);
       
-      console.log('🎚️ SLIDER POZICIONÁLÁS VÉGE!');
-      console.log('📊 CHEESE-5 VÉGSŐ KOORDINÁTÁI:');
-      console.log(`🎯 X: ${x}, Y: ${y}`);
-      console.log('');
-      console.log('📋 FRISSÍTSD A KÓDOT:');
-      console.log(`const cheese5 = new Cheese(this.scene, ${x}, ${y}, 5);`);
-      console.log('');
+      Logger.info('🎚️ SLIDER POZICIONÁLÁS VÉGE!');
+      Logger.info('📊 CHEESE-5 VÉGSŐ KOORDINÁTÁI:');
+      Logger.info(`🎯 X: ${x}, Y: ${y}`);
+      Logger.info('');
+      Logger.info('📋 FRISSÍTSD A KÓDOT:');
+      Logger.info(`const cheese5 = new Cheese(this.scene, ${x}, ${y}, 5);`);
+      Logger.info('');
       
       // Pozíció mentése
       this.originalPositions.set(5, {x, y});
-      console.log('✅ CHEESE-5 pozíció elmentve! Dev mode kikapcsolva.');
+      Logger.debug('✅ CHEESE-5 pozíció elmentve! Dev mode kikapcsolva.');
     }
   }
 
@@ -153,18 +154,18 @@ export class CheeseManager {
   public updateScale(gameScale: number, gameWidth: number, gameHeight: number): void {
     // Dev mode-ban nincs scaling
     if (this.devMode) {
-      console.log('🧀 CheeseManager: Dev mode aktív - scaling letiltva');
+      Logger.debug('🧀 CheeseManager: Dev mode aktív - scaling letiltva');
       return;
     }
     
     const isFullscreen = gameScale >= 1.0;
-    console.log(`🧀 CheeseManager ${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'} skálázás: ${gameScale.toFixed(3)}`);
+    Logger.debug(`🧀 CheeseManager ${isFullscreen ? 'FULLSCREEN' : 'ABLAKOS'} skálázás: ${gameScale.toFixed(3)}`);
     
     this.cheeses.forEach((cheese, cheeseId) => {
       const originalPos = this.originalPositions.get(cheeseId);
       
       if (!originalPos) {
-        console.warn(`Nincs eredeti pozíció tárolva a sajt számára: ${cheeseId}`);
+        Logger.warn(`Nincs eredeti pozíció tárolva a sajt számára: ${cheeseId}`);
         return;
       }
       
@@ -172,7 +173,7 @@ export class CheeseManager {
         // Fullscreen: eredeti pozíciók és natív méret
         cheese.setScale(1.0);
         cheese.setPosition(originalPos.x, originalPos.y);
-        console.log(`🧀 CHEESE-${cheeseId} fullscreen: (${originalPos.x}, ${originalPos.y}) scale: 1.0`);
+        Logger.debug(`🧀 CHEESE-${cheeseId} fullscreen: (${originalPos.x}, ${originalPos.y}) scale: 1.0`);
       } else {
         // Ablakos: valós arányosítás alapján
         const scaledX = originalPos.x * gameScale;
@@ -180,24 +181,24 @@ export class CheeseManager {
         
         cheese.setScale(gameScale);
         cheese.setPosition(scaledX, scaledY);
-        console.log(`🧀 CHEESE-${cheeseId} ablakos: (${Math.round(scaledX)}, ${Math.round(scaledY)}) scale: ${gameScale.toFixed(3)}`);
+        Logger.debug(`🧀 CHEESE-${cheeseId} ablakos: (${Math.round(scaledX)}, ${Math.round(scaledY)}) scale: ${gameScale.toFixed(3)}`);
       }
     });
     
-    console.log(`🧀 CheeseManager: ${this.cheeses.size} sajt újrapozícionálva (${isFullscreen ? 'nagy' : 'arányos'} méret)`);
+    Logger.debug(`🧀 CheeseManager: ${this.cheeses.size} sajt újrapozícionálva (${isFullscreen ? 'nagy' : 'arányos'} méret)`);
   }
 
   private createSliderUI(): void {
-    console.log('🎯 VALÓS TELJES KÉPERNYŐ ALAPÚ SLIDER');
+    Logger.debug('🎯 VALÓS TELJES KÉPERNYŐ ALAPÚ SLIDER');
     
     // VALÓS KÉPERNYŐ MÉRETEK - DINAMIKUS!
-    const gameScene = this.scene as any;
+    const gameScene = this.scene as any; // TODO: GameScene interfész - körkörös függőség miatt any
     const CANVAS_WIDTH = gameScene.scale.width;   // Valós teljes képernyő szélesség
     const CANVAS_HEIGHT = gameScene.scale.height; // Valós teljes képernyő magasság
     const CANVAS_CENTER_X = Math.round(CANVAS_WIDTH / 2);  // Valós közepe X
     const CANVAS_CENTER_Y = Math.round(CANVAS_HEIGHT / 2); // Valós közepe Y
     
-    console.log(`📐 VALÓS KÉPERNYŐ: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}, KÖZÉP: (${CANVAS_CENTER_X}, ${CANVAS_CENTER_Y})`);
+    Logger.debug(`📐 VALÓS KÉPERNYŐ: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}, KÖZÉP: (${CANVAS_CENTER_X}, ${CANVAS_CENTER_Y})`);
     
     // Slider UI konstansok
     const SLIDER_START = 100;
@@ -243,9 +244,9 @@ export class CheeseManager {
       xText.setText(`X: ${Math.round(currentCanvasX)}`);
       yText.setText(`Y: ${Math.round(currentCanvasY)}`);
       
-      console.log(`🧀 CHEESE-5 Canvas pozíció: (${currentCanvasX}, ${currentCanvasY})`);
-      console.log(`🎚️ Slider handle → bal szélre (canvas 0,0 miatt)`);
-      console.log(`🎚️ Handle pozíciók: X=${Math.round(xHandlePos)}, Y=${Math.round(yHandlePos)}`);
+      Logger.debug(`🧀 CHEESE-5 Canvas pozíció: (${currentCanvasX}, ${currentCanvasY})`);
+      Logger.debug(`🎚️ Slider handle → bal szélre (canvas 0,0 miatt)`);
+      Logger.debug(`🎚️ Handle pozíciók: X=${Math.round(xHandlePos)}, Y=${Math.round(yHandlePos)}`);
     }
     
     // Drag rendszer
@@ -300,7 +301,7 @@ export class CheeseManager {
     // UI elemek tárolása cleanup-hoz
     (this as any).sliderElements = [bg, title, xBg, xHandle, xText, yBg, yHandle, yText, doneBtn, doneText];
     
-    console.log('✅ Canvas koordináta alapú slider kész!');
+    Logger.debug('✅ Canvas koordináta alapú slider kész!');
   }
 
   private moveCheeseToCanvas(cheeseId: number, canvasX: number, canvasY: number): void {
@@ -308,8 +309,8 @@ export class CheeseManager {
     if (cheese) {
       // Canvas koordinátára helyezzük - PONT!
       cheese.setPosition(canvasX, canvasY);
-      console.log(`🧀 CHEESE-${cheeseId} → setPosition(${canvasX}, ${canvasY})`);
-      console.log(`🎯 Ellenőrzés - tényleges pozíció: (${cheese.x}, ${cheese.y})`);
+      Logger.debug(`🧀 CHEESE-${cheeseId} → setPosition(${canvasX}, ${canvasY})`);
+      Logger.debug(`🎯 Ellenőrzés - tényleges pozíció: (${cheese.x}, ${cheese.y})`);
     }
   }
 
@@ -325,7 +326,7 @@ export class CheeseManager {
         }
       });
       (this as any).sliderElements = null;
-      console.log('🎚️ Phaser Slider UI eltávolítva');
+      Logger.debug('🎚️ Phaser Slider UI eltávolítva');
     }
   }
 

@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { Jar } from '../gameObjects/Jar';
+import { Logger } from '../utils/Logger';
 
 export class JarManager {
   private scene: Phaser.Scene;
@@ -29,7 +30,7 @@ export class JarManager {
       this.jars.push(jar);
     }
 
-    console.log('JarManager: 5 üveg létrehozva');
+    Logger.debug('JarManager: 5 üveg létrehozva');
   }
 
   private setupEventListeners(): void {
@@ -41,40 +42,40 @@ export class JarManager {
    * Bab gyűjtés megkísérlése - visszaadja, hogy sikerült-e
    */
   public tryCollectBean(): boolean {
-    console.log('=== JAR MANAGER TRY COLLECT ===');
+    Logger.debug('=== JAR MANAGER TRY COLLECT ===');
     
     // Először ellenőrizzük, hogy az aktív üveg használható-e
     let activeJar = this.getCurrentActiveJar();
     
     if (!activeJar) {
-      console.log('JarManager: Nincs aktív üveg!');
+      Logger.debug('JarManager: Nincs aktív üveg!');
       return false;
     }
 
     // Ha az aktív üveg tele van, automatikusan váltunk a következőre
     if (activeJar.getIsFull()) {
-      console.log(`Aktív üveg ${activeJar.getJarIndex()} tele - automatikus váltás következőre`);
+      Logger.debug(`Aktív üveg ${activeJar.getJarIndex()} tele - automatikus váltás következőre`);
       this.switchToNextJar();
       activeJar = this.getCurrentActiveJar();
       
       if (!activeJar) {
-        console.log('JarManager: Minden üveg tele!');
+        Logger.debug('JarManager: Minden üveg tele!');
         return false;
       }
     }
 
-    console.log(`Aktív üveg: ${activeJar.getJarIndex()}, nyitott: ${activeJar.getIsOpen()}, tele: ${activeJar.getIsFull()}`);
+    Logger.debug(`Aktív üveg: ${activeJar.getJarIndex()}, nyitott: ${activeJar.getIsOpen()}, tele: ${activeJar.getIsFull()}`);
     
     // Megpróbáljuk hozzáadni a babot az aktív üveghez
     const success = activeJar.addBean();
-    console.log(`addBean() eredménye: ${success}`);
+    Logger.debug(`addBean() eredménye: ${success}`);
     
     if (!success) {
-      console.log(`JarManager: Nem sikerült bab hozzáadás - Jar ${activeJar.getJarIndex()} (nyitott: ${activeJar.getIsOpen()}, tele: ${activeJar.getIsFull()})`);
+      Logger.debug(`JarManager: Nem sikerült bab hozzáadás - Jar ${activeJar.getJarIndex()} (nyitott: ${activeJar.getIsOpen()}, tele: ${activeJar.getIsFull()})`);
       
       // Ha az üveg zárt, következő nyitott üveget keressük és villogtatjuk
       if (!activeJar.getIsOpen() && !activeJar.getIsFull()) {
-        console.log('Következő nyitott üveg keresése...');
+        Logger.debug('Következő nyitott üveg keresése...');
         this.highlightNextAvailableJar();
       }
       
@@ -84,7 +85,7 @@ export class JarManager {
     // Ha most lett tele az üveg, jelezzük de NEM váltunk automatikusan
     // (a játékos dönti el, hogy lezárja-e vagy sem)
     if (activeJar.getIsFull()) {
-      console.log(`Jar ${activeJar.getJarIndex()} most lett tele!`);
+      Logger.debug(`Jar ${activeJar.getJarIndex()} most lett tele!`);
     }
 
     // UI frissítés
@@ -109,23 +110,23 @@ export class JarManager {
     this.currentActiveJarIndex++;
     
     if (this.currentActiveJarIndex >= this.jars.length) {
-      console.log('JarManager: Minden üveg megtelt!');
+      Logger.debug('JarManager: Minden üveg megtelt!');
       this.scene.events.emit('all-jars-full');
       return;
     }
 
-    console.log(`JarManager: Átváltás következő üvegre: ${this.currentActiveJarIndex}`);
+    Logger.debug(`JarManager: Átváltás következő üvegre: ${this.currentActiveJarIndex}`);
   }
 
   private highlightNextAvailableJar(): void {
-    console.log('Következő elérhető üveg keresése...');
+    Logger.debug('Következő elérhető üveg keresése...');
     
     // Először keresünk nyitott, nem teli üveget
     for (let i = 0; i < this.jars.length; i++) {
       const jar = this.jars[i];
       if (jar.getIsOpen() && !jar.getIsFull()) {
         jar.startBlinking();
-        console.log(`JarManager: Jar ${i} villogtatás - már nyitott és használható`);
+        Logger.debug(`JarManager: Jar ${i} villogtatás - már nyitott és használható`);
         
         this.scene.events.emit('jar-highlight', {
           jarIndex: i,
@@ -140,7 +141,7 @@ export class JarManager {
       const jar = this.jars[i];
       if (!jar.getIsFull()) {
         jar.startBlinking();
-        console.log(`JarManager: Jar ${i} villogtatás - dupla klikkel nyisd ki!`);
+        Logger.debug(`JarManager: Jar ${i} villogtatás - dupla klikkel nyisd ki!`);
         
         this.scene.events.emit('jar-highlight', {
           jarIndex: i,
@@ -150,7 +151,7 @@ export class JarManager {
       }
     }
     
-    console.log('JarManager: Minden üveg tele van!');
+    Logger.debug('JarManager: Minden üveg tele van!');
   }
 
   private updateUI(): void {
@@ -227,7 +228,7 @@ export class JarManager {
   public reset(): void {
     this.jars.forEach(jar => jar.reset());
     this.currentActiveJarIndex = 0;
-    console.log('JarManager: Reset complete');
+    Logger.debug('JarManager: Reset complete');
   }
 
   /**
@@ -235,7 +236,7 @@ export class JarManager {
    */
   public setVisible(visible: boolean): void {
     this.jars.forEach(jar => jar.setVisible(visible));
-    console.log(`JarManager: Üvegek láthatósága beállítva: ${visible}`);
+    Logger.debug(`JarManager: Üvegek láthatósága beállítva: ${visible}`);
   }
 
   /**

@@ -1,4 +1,6 @@
 import * as Phaser from 'phaser';
+import { Logger } from '../utils/Logger';
+import { Jar } from './Jar';
 
 export class Pitcher extends Phaser.GameObjects.Image {
   private dropZone!: Phaser.GameObjects.Zone;
@@ -22,7 +24,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
     // Z-index beállítása - pitcher háttérben legyen
     this.setDepth(10); // Alacsony depth - háttérben
     
-    console.log('Pitcher létrehozva pozíción:', this.x, this.y);
+    Logger.debug('Pitcher létrehozva pozíción:', this.x, this.y);
   }
 
   private setupPreFXGlow(): void {
@@ -62,7 +64,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
       });
     }
     
-    console.log('Pitcher PreFX glow effect bekapcsolva');
+    Logger.debug('Pitcher PreFX glow effect bekapcsolva');
   }
 
   public hideGlow(): void {
@@ -85,7 +87,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
       }
     });
     
-    console.log('Pitcher PreFX glow effect kikapcsolva');
+    Logger.debug('Pitcher PreFX glow effect kikapcsolva');
   }
 
   private createDropZone(): void {
@@ -107,24 +109,24 @@ export class Pitcher extends Phaser.GameObjects.Image {
     this.dropZone.setRectangleDropZone(dropZoneWidth, dropZoneHeight);
     
     // Drop zone sikeresen létrehozva - clean UI
-    console.log(`🎯 Drop zone létrehozva: center(${zoneCenterX}, ${zoneCenterY}), size(${dropZoneWidth}x${dropZoneHeight})`);
+    Logger.debug(`🎯 Drop zone létrehozva: center(${zoneCenterX}, ${zoneCenterY}), size(${dropZoneWidth}x${dropZoneHeight})`);
 
     // Drop zone események
-    this.dropZone.on('drop', (pointer: Phaser.Input.Pointer, gameObject: any) => {
+    this.dropZone.on('drop', (pointer: Phaser.Input.Pointer, gameObject: Jar) => {
       this.handleJarDrop(gameObject);
     });
   }
 
-  public handleJarDrop(jar: any): void {
+  public handleJarDrop(jar: Jar): void {
     // Ellenőrizzük, hogy valóban Jar objektum-e és drag-elhető-e
     if (!jar || typeof jar.getIsDragEnabled !== 'function' || !jar.getIsDragEnabled()) {
-      console.log('Pitcher: Helytelen objektum vagy nem drag-elhető jar');
+      Logger.debug('Pitcher: Helytelen objektum vagy nem drag-elhető jar');
       return;
     }
 
     // Ellenőrizzük, hogy tele van-e és zárt-e
     if (!jar.getIsFull() || jar.getIsOpen()) {
-      console.log('Pitcher: Jar nem tele vagy nyitott - visszahelyezés');
+      Logger.debug('Pitcher: Jar nem tele vagy nyitott - visszahelyezés');
       this.returnJarToOriginalPosition(jar);
       return;
     }
@@ -133,7 +135,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
     this.acceptJar(jar);
   }
 
-  private acceptJar(jar: any): void {
+  private acceptJar(jar: Jar): void {
     this.jarCount++;
     
     // Jar "esés" animációja a pitcher-be
@@ -150,7 +152,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
       }
     });
 
-    console.log(`Pitcher: Jar ${jar.getJarIndex()} elfogadva! Összesen: ${this.jarCount}`);
+    Logger.debug(`Pitcher: Jar ${jar.getJarIndex()} elfogadva! Összesen: ${this.jarCount}`);
     
     // Event küldése a GameScene-nek
     this.scene.events.emit('jar-delivered-to-pitcher', {
@@ -161,11 +163,11 @@ export class Pitcher extends Phaser.GameObjects.Image {
     // Ellenőrizzük, hogy mind az 5 üveg benne van-e
     if (this.jarCount >= 5) {
       this.scene.events.emit('all-jars-delivered');
-      console.log('Pitcher: Mind az 5 üveg leadva - játék befejezve!');
+    Logger.info('Pitcher: Mind az 5 üveg leadva - játék befejezve!');
     }
   }
 
-  private returnJarToOriginalPosition(jar: any): void {
+  private returnJarToOriginalPosition(jar: Jar): void {
     // Jar visszahelyezése az eredeti pozíciójába (JarManager konstansok alapján)
     const originalX = 80 + (jar.getJarIndex() * (60 + 50)); // startX + index * (jarWidth + spacing)
     const originalY = 100;
@@ -178,7 +180,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
       ease: 'Power2.easeOut'
     });
 
-    console.log(`Pitcher: Jar ${jar.getJarIndex()} visszahelyezve eredeti pozícióba`);
+    Logger.debug(`Pitcher: Jar ${jar.getJarIndex()} visszahelyezve eredeti pozícióba`);
   }
 
   /**
@@ -197,7 +199,7 @@ export class Pitcher extends Phaser.GameObjects.Image {
    */
   public reset(): void {
     this.jarCount = 0;
-    console.log('Pitcher: Reset complete');
+    Logger.debug('Pitcher: Reset complete');
   }
 
   /**

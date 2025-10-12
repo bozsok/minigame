@@ -1,6 +1,6 @@
 {
   "name": "eger-kaland-kamraban",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "description": "2D oktatási játék egér műveletek gyakorlására - Komplett sajt evés rendszerrel",
   "main": "dist/main.js",
   "scripts": {

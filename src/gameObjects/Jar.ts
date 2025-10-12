@@ -544,30 +544,30 @@ export class Jar extends Phaser.GameObjects.Container {
    */
   public setGameActive(active: boolean): void {
     this.gameActive = active;
-    
+
     // Ha a játék inaktív, tiltjuk le az összes interakciót
     if (!active) {
-      // Drag & drop teljes letiltása
+      // Drag & drop teljes letiltása - csak ha a scene és input még létezik
       if (this.scene && this.scene.input) {
         this.scene.input.setDraggable(this, false);
       }
-      
-      // Cursor visszaállítása default-ra
-      const canvas = this.scene.game.canvas;
-      if (canvas) {
+
+      // Cursor visszaállítása default-ra - csak ha minden referencia érvényes
+      if (this.scene && this.scene.game && this.scene.game.canvas) {
+        const canvas = this.scene.game.canvas;
         canvas.style.cursor = 'default';
       }
-      
+
       // Villogás leállítása
       this.stopBlinking();
-      
+
       console.log(`🚫 Jar ${this.jarIndex} összes interakció LETILTVA - játék vége`);
     } else {
       // Ha a játék aktív és az üveg drag-elhető, visszakapcsoljuk a drag-et
-      if (this.isDragEnabled) {
+      if (this.isDragEnabled && this.scene && this.scene.input) {
         this.enableDragAndDrop();
       }
-      
+
       console.log(`✅ Jar ${this.jarIndex} interakciók VISSZAKAPCSOLVA`);
     }
   }

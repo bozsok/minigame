@@ -6,6 +6,7 @@ export class Cheese extends Phaser.GameObjects.Image {
   private frameWidth!: number;
   private frameHeight!: number;
   private isEaten: boolean = false;
+  private isEating: boolean = false; // Prevents multiple events per right-click
   private glowFX: any = null; // Glow effect referencia
   
   // Frame méretek sajt típusonként
@@ -72,7 +73,8 @@ export class Cheese extends Phaser.GameObjects.Image {
         return;
       }
 
-      if (pointer.rightButtonDown()) {
+      if (pointer.rightButtonDown() && !this.isEating) {
+        this.isEating = true;
         Logger.debug(`Right-click sajt ${this.cheeseType}-ra (frame: ${this.currentFrame}) - pixel-perfect hit!`);
         this.eatCheese();
       }
@@ -122,7 +124,7 @@ export class Cheese extends Phaser.GameObjects.Image {
       if (canvas) {
         canvas.style.cursor = 'default';
       }
-      
+
       // Glow effekt eltávolítása smooth animációval
       if (this.glowFX) {
         this.scene.tweens.add({
@@ -138,8 +140,13 @@ export class Cheese extends Phaser.GameObjects.Image {
           }
         });
       }
-      
+
       Logger.debug(`🖱️✨ Custom cursor + Glow kikapcsolva`);
+    });
+
+    // Pointer up kezelése - isEating flag reset
+    this.on('pointerup', () => {
+      this.isEating = false;
     });
   }
 

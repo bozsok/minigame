@@ -4,6 +4,51 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.8.2] - 2025-10-12 - **GAME COMPLETION & EVENT SYSTEM FIXES**
+
+### 🛡️ Játék Befejezés Teljes Letiltása
+- **GYŐZELEM UTÁNI INTERAKCIÓ LETILTÁS:** `handleGameComplete()` most hívja `disableAllInteractions()`-t
+  - Sajt evés teljes tiltása győzelemkor (nem csak időtúllépéskor)
+  - Üveg műveletek tiltása győzelemkor
+  - Egységes viselkedés minden játék vége esetén
+- **CURSOR VISSZAÁLLÍTÁS:** Minden játék vége esetén cursor visszaáll 'default'-ra
+  - Győzelemkor, időtúllépéskor, energia elfogyáskor
+  - Megakadályozza custom cursor megmaradását játék végén
+
+### 🔧 Esemény Rendszer Stabilizálás
+- **DUPLA EVENT LISTENER VÉDELEM:** `setupEventListeners()` elején `events.off('cheese-eaten')` hívás
+  - Megakadályozza többszörös listener hozzáadást scene újrainicializáláskor
+  - Dupla energia bónusz megszüntetése új játék indításakor
+- **DUPLA JÁTÉK BEFEJEZÉS VÉDELEM:** `handleGameComplete()` elején `gameActive` ellenőrzés
+  - Megakadályozza többszörös játék vége eseményt
+  - Biztonságos többszörös `all-jars-delivered` event esetén
+
+### 🎯 Üveg Bedobás Rendszer Javítása
+- **DROP ZONE KORREKCIÓ:** Visszahelyezve a manuális `pitcher.handleJarDrop()` hívás
+  - Phaser drop zone nem triggerel megfelelően, ezért manuális proximity check szükséges
+  - Biztosítja az üvegek helyes bedobását és játék befejezését
+- **SAJT EVENT DEBOUNCE ELTÁVOLÍTÁS:** Eltávolítva a felesleges `showEnergyBonusAnimationDebounced()` metódus
+  - Egyszerűsített energia bónusz animáció kezelés
+  - Megszünteti a többszörös animáció problémát forrásnál
+
+### 🐛 Kritikus Bug Javítások
+- **GYŐZELEM UTÁNI SAJT EVÉS:** Sajt evés tiltása győzelemkor (korábban aktív maradt)
+- **CURSOR MEGMARADÁS:** Custom cursor visszaállítása játék végén minden esetben
+- **DUPLA ENERGIA BÓNUSZ:** Megszüntetve a többszörös energia növelés új játékoknál
+- **DUPLA JÁTÉK VÉGE:** Megakadályozva a többszörös victory képernyő és interakció tiltás
+
+### 🔧 Technikai Optimalizálás
+- **EVENT LISTENER CLEANUP:** Biztonságos listener management scene lifecycle-ben
+- **GAME STATE PROTECTION:** Védelem többszörös game completion ellen
+- **DROP ZONE SIMPLIFICATION:** Manuális drop detection visszaállítása működőképes megoldásként
+
+### 🎯 Szakmai Összegzés
+**Kritikus problémák megoldva:** Győzelem utáni interakció tiltás + cursor visszaállítás + dupla event védelem
+**Esemény rendszer stabilitás:** Megszüntetve a többszörös listener és completion problémák
+**Production readiness:** Teljes játék vége logika konzisztens minden forgatókönyvben
+
+---
+
 ## [4.8.1] - 2025-10-12 - **ENERGY BONUS VISUAL FEEDBACK**
 
 ### ✨ Energia Bónusz Animáció (ÚJ)

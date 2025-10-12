@@ -567,6 +567,9 @@ export default class GameScene extends Phaser.Scene {
    * Esemény figyelők beállítása
    */
   private setupEventListeners(): void {
+    // Eltávolítjuk az előző listener-eket, ha léteznek (újrainicializáláskor)
+    this.events.off('cheese-eaten');
+
     // Context menu letiltása (jobb egérgomb funkciókhoz)
     this.input.mouse?.disableContextMenu();
     
@@ -829,7 +832,13 @@ export default class GameScene extends Phaser.Scene {
     
     // MINDEN INTERAKCIÓ LETILTÁSA
     this.disableAllInteractions();
-    
+
+    // Cursor visszaállítása default-ra
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
+
     // Timer 00:00-n marad, semmi nem tűnik el
     // Játékos szabadon nézheti a maradék elemeket
     // Visszatérés: ablakos mód gomb → MenuScene
@@ -896,7 +905,13 @@ export default class GameScene extends Phaser.Scene {
     
     // MINDEN INTERAKCIÓ LETILTÁSA (sajt evés is!)
     this.disableAllInteractions();
-    
+
+    // Cursor visszaállítása default-ra
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
+
     Logger.info('⚡ MINDEN interakció leállítva - sajt evés ÉS jar műveletek tiltva');
   }
 
@@ -923,7 +938,7 @@ export default class GameScene extends Phaser.Scene {
         // UI frissítése
         this.updateEnergyUI();
         
-        // Bonus animáció - + jelek az energia csík felett (elégséges vizuális feedback)
+        // Bonus animáció - + jelek az energia csík felett
         this.showEnergyBonusAnimation();
       } else {
         Logger.debug(`⚡ Sajt evés bonus nem adható: energia csík már tele van (${this.energyPixels}/${UIConstants.energy.baseWidth}px)`);
@@ -940,12 +955,12 @@ export default class GameScene extends Phaser.Scene {
     if (!this.energyBackground || !this.energyBar) {
       return; // Energia csík nem létezik
     }
-    
+
     // Aktuális energia csík pozíciója (utolsó egér pozíció alapján)
     const energyX = this.energyBackground.x;
     const energyY = this.energyBackground.y;
     const currentScale = (this.energyBackground as any)?.currentScale || 1.0;
-    
+
     // 3 db + jel létrehozása az energia csík felett
     const plusTexts: Phaser.GameObjects.Text[] = [];
     const yOffset = 18 * currentScale; // 11-22px között, scale-elt
@@ -1007,6 +1022,7 @@ export default class GameScene extends Phaser.Scene {
     Logger.debug(`⚡ Energia bónusz animáció: 3x "+" jel az energia csík felett (scale: ${currentScale.toFixed(2)})`);
   }
 
+
   private updateBeanCountUI(data: BeanCountUpdateEvent): void {
     // Bean count már nem jelenik meg a UI-on
     // Csak az időszámláló látható
@@ -1041,8 +1057,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private handleGameComplete(): void {
+    if (!this.gameActive) {
+      return; // Már befejeződött a játék
+    }
+
     Logger.info('🎉 JÁTÉK BEFEJEZVE! Mind az 5 üveg leadva!');
-    
+
     // Játék állapot inaktívvá tétele
     this.gameActive = false;
     
@@ -1058,6 +1078,15 @@ export default class GameScene extends Phaser.Scene {
     // Játék logika leállítása
     this.beanManager.stopGame();
     
+    // MINDEN INTERAKCIÓ LETILTÁSA (győzelem esetén is!)
+    this.disableAllInteractions();
+
+    // Cursor visszaállítása default-ra
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
+
     // VICTORY SCREEN: Jelenleg nincs implementálva
     // A játék leáll, de nincs victory képernyő vagy restart opció
     // A játékosnak manuálisan kell visszalépnie a menübe

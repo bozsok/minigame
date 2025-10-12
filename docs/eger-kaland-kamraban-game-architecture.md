@@ -25,6 +25,7 @@ Ez az architektúra úgy lett tervezve, hogy támogassa a játékterv dokumentum
 | 2025-10-11 | 4.4 | **GAME INTERACTION CONTROL SYSTEM** - GameActive flag rendszer kritikus biztonsághoz | Maya |
 | 2025-10-11 | 4.5 | **CODE QUALITY & UX IMPROVEMENTS** - Logger rendszer, típusbiztonság, konstansok központosítása | Maya |
 | 2025-10-12 | 4.8 | **ENERGY SYSTEM & GAME OVER FINAL REFINEMENT** - Energia csík responsive scaling + teljes game over logika | Maya |
+| 2025-10-12 | 4.8.1 | **ENERGY BONUS VISUAL FEEDBACK** - + jelek animáció sajt evés energia bónuszhoz | Maya |
 
 ## Technikai Áttekintés
 
@@ -742,18 +743,20 @@ export const GameBalance = {
 
 ## Siker Kritériumok
 
-### Technikai Metrikák ✅ **TELJES MÉRTÉKBEN ELÉRVE - VERZIÓ 4.8.0**
-- ✅ **Minden rendszer implementálva** - Bab, Üveg, Pitcher, Sajt + Visual Polish + Timer + Game Over komplett
-- ✅ **Teljesítmény célok túlteljesítve** - 60 FPS responsive energia csík + PreFX glow + arányos scaling
-- ✅ **Nulla kritikus bug** - Production-ready állapot + teljes interakció kontroll
-- ✅ **Platform kompatibilitás** - Fullscreen + responsive design + energia csík scaling
+### Technikai Metrikák ✅ **TELJES MÉRTÉKBEN ELÉRVE - VERZIÓ 4.8.1**
+- ✅ **Minden rendszer implementálva** - Bab, Üveg, Pitcher, Sajt + Visual Polish + Timer + Game Over + Bonus Animáció komplett
+- ✅ **Teljesítmény célok túlteljesítve** - 60 FPS responsive energia csík + PreFX glow + + jelek animáció
+- ✅ **Nulla kritikus bug** - Production-ready állapot + teljes interakció kontroll + animáció cleanup
+- ✅ **Platform kompatibilitás** - Fullscreen + responsive design + energia csík scaling + animáció scaling
 - ✅ **Pixel-perfect collision** - Forradalmi click-through technológia
-- ✅ **Visual feedback excellence** - Egységes PreFX glow minden elemre + piros highlighting
-- ✅ **Typography integration** - BBH Sans Hegarty font professional loading + scaling
+- ✅ **Visual feedback excellence** - Egységes PreFX glow + piros highlighting + energia bónusz animáció
+- ✅ **Typography integration** - BBH Sans Hegarty font professional loading + scaling + + jelek konzisztencia
 - ✅ **Game Over Excellence** - Teljes interakció tiltás + energia csík elrejtés + piros highlighting
-- ✅ **Energy System Perfection** - 50px cursor távolság + responsive scaling + minden vége esetén elrejtés
-- ✅ **UI Responsive Design** - Energia csík integrálva az arányosítási rendszerbe
-- ✅ **Professional UX** - Smooth animációk + egységes glow rendszer + teljes játék kontroll
+- ✅ **Energy System Perfection** - 50px cursor távolság + responsive scaling + + jelek animáció
+- ✅ **Animation Excellence** - Intelligens + jelek az energia csík végénél + véletlenszerű sorrend + automatikus cleanup
+- ✅ **Smart Positioning** - + jelek dinamikus pozicionálás energia szint szerint (piros/sárga/zöld sáv felett)
+- ✅ **Clean Visual Design** - Zöld felvillanás eltávolítva, csak természetes energia csík növekedés
+- ✅ **Professional UX** - Intuitív vizuális feedback minden energia bónuszhoz + teljes játék kontroll
 
 ### Kód Minőség
 - 90%+ teszt lefedettség játék logikán

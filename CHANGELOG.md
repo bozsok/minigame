@@ -4,6 +4,31 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
+## [4.8.1] - 2025-10-12 - **ENERGY BONUS VISUAL FEEDBACK**
+
+### ✨ Energia Bónusz Animáció (ÚJ)
+- **INTELLIGENS + JELEK ANIMÁCIÓ** - Vizuális feedback sajt evés energia bónuszhoz
+  - 3 darab "+" jel megjelenik az energia csík **végénél** (fogyás peremén)
+  - Dinamikus pozicionálás: piros/sárga/zöld sáv felett a csík aktuális állapota szerint
+  - #2daf52 zöld színkód (energia csíkkal harmonizáló)
+  - Véletlenszerű megjelenési sorrend (jobb→bal→közép)
+- **CLEAN VISUAL FEEDBACK** - Zöld felvillanás eltávolítása
+  - Csak a színátmenetes csík természetes növekedése látszik
+  - + jelek elegendő vizuális feedback a bónuszhoz
+  - Színátmenetes gradiens megőrzése minden esetben
+- **RESPONSIVE ANIMÁCIÓ** - Scale-aware pozicionálás és méretezés
+  - + jelek nagyméretű (80px), közel egymáshoz (15px)
+  - EnergyEndPosition dinamikus számítással
+  - 8-18px távolság az energia csík felett (yOffset: 18)
+
+### 🔧 Technikai Implementáció
+- **showEnergyBonusAnimation()** metódus a GameScene-ben
+- **Staggered timing** - 100ms delay minden + jel között
+- **BBH Sans Hegarty font** konzisztencia a timer fontjával
+- **Depth layering** - 10002 (energia csík felett, minden más alatt)
+
+---
+
 ## [4.8.0] - 2025-10-12 - **ENERGY SYSTEM & GAME OVER FINAL REFINEMENT**
 
 ### 🎮 Teljes Game Over Logika Implementálva

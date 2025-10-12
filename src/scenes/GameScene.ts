@@ -923,23 +923,88 @@ export default class GameScene extends Phaser.Scene {
         // UI frissítése
         this.updateEnergyUI();
         
-        // Bonus effekt - zöld felvillanás
-        if (this.energyBar) {
-          // Zöld felvillanás effekt
-          this.energyBar.fillStyle(0x00ff00); // Erős zöld
-          this.energyBar.fillRect(0, 0, this.energyPixels, UIConstants.energy.baseHeight);
-          
-          // Visszaállítás eredeti színre
-          this.time.delayedCall(500, () => {
-            this.updateEnergyUI();
-          });
-        }
+        // Bonus animáció - + jelek az energia csík felett (elégséges vizuális feedback)
+        this.showEnergyBonusAnimation();
       } else {
         Logger.debug(`⚡ Sajt evés bonus nem adható: energia csík már tele van (${this.energyPixels}/${UIConstants.energy.baseWidth}px)`);
       }
     } else {
       Logger.debug(`⚡ Sajt evés bonus nem adható: energyTimerStarted=${this.energyTimerStarted} (game over vagy még nem indult el)`);
     }
+  }
+
+  /**
+   * + jelek animációja az energia csík felett (sajt evés bónusz jelzése)
+   */
+  private showEnergyBonusAnimation(): void {
+    if (!this.energyBackground || !this.energyBar) {
+      return; // Energia csík nem létezik
+    }
+    
+    // Aktuális energia csík pozíciója (utolsó egér pozíció alapján)
+    const energyX = this.energyBackground.x;
+    const energyY = this.energyBackground.y;
+    const currentScale = (this.energyBackground as any)?.currentScale || 1.0;
+    
+    // 3 db + jel létrehozása az energia csík felett
+    const plusTexts: Phaser.GameObjects.Text[] = [];
+    const yOffset = 18 * currentScale; // 11-22px között, scale-elt
+    
+    for (let i = 0; i < 3; i++) {
+      // + jel pozíció: energia csík végénél (ahol a fogyás pereme van)
+      const energyEndPosition = this.energyPixels * currentScale; // Jelenlegi energia szint pozíciója
+      const xOffset = (i - 1) * (15 * currentScale); // Közel egymáshoz: -15px, 0px, +15px
+      
+      const plusText = this.add.text(
+        energyX + energyEndPosition + xOffset,
+        energyY - yOffset,
+        '+',
+        {
+          fontSize: `${Math.round(48 * currentScale)}px`, // 3x nagyobb (16px * 3)
+          color: '#2daf52', // Zöld szín kód
+          fontFamily: '"BBH Sans Hegarty", "Arial Black", Arial, sans-serif',
+          stroke: '#000000',
+          strokeThickness: Math.round(2 * currentScale) // Vastagabb stroke a nagy mérethez
+        }
+      ).setOrigin(0.5, 0.5);
+      
+      plusText.setDepth(10002); // Energia csík felett
+      plusText.setAlpha(0); // Kezdetben láthatatlan
+      
+      plusTexts.push(plusText);
+    }
+    
+    // Fade in-out animáció minden + jelre
+    plusTexts.forEach((plusText, index) => {
+      // Véletlenszerű sorrend: harmadik (jobb) → első (bal) → második (közép)
+      const delayMapping = [100, 200, 0]; // index 0=bal=100ms, 1=közép=200ms, 2=jobb=0ms
+      const delay = delayMapping[index];
+      
+      // Fade in
+      this.tweens.add({
+        targets: plusText,
+        alpha: 1,
+        y: plusText.y - (10 * currentScale), // Felfelé mozog
+        duration: 300,
+        ease: 'Power2.easeOut',
+        delay: delay,
+        onComplete: () => {
+          // Fade out
+          this.tweens.add({
+            targets: plusText,
+            alpha: 0,
+            y: plusText.y - (10 * currentScale), // Tovább felfelé
+            duration: 400,
+            ease: 'Power2.easeIn',
+            onComplete: () => {
+              plusText.destroy(); // Cleanup
+            }
+          });
+        }
+      });
+    });
+    
+    Logger.debug(`⚡ Energia bónusz animáció: 3x "+" jel az energia csík felett (scale: ${currentScale.toFixed(2)})`);
   }
 
   private updateBeanCountUI(data: BeanCountUpdateEvent): void {

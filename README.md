@@ -96,6 +96,18 @@ eger-kaland-kamraban/
 
 ## Fejlesztési Státusz
 
+### ✅ Phase 4.8.1 - ENERGY BONUS VISUAL FEEDBACK (2025-10-12)
+
+**✨ Energia Bónusz Animáció (ÚJ - BEFEJEZVE):**
+- **INTELLIGENS + JELEK ANIMÁCIÓ** - Vizuális feedback sajt evés energia bónuszhoz
+  - 3 darab nagy "+" jel (50px) az energia csík **végénél** (fogyás peremén)
+  - Dinamikus pozicionálás: piros/sárga/zöld sáv felett aktuális energia állapot szerint
+  - Véletlenszerű megjelenési sorrend (jobb→bal→közép)
+- **CLEAN VISUAL FEEDBACK** - Zöld felvillanás eltávolítása
+  - Csak a színátmenetes csík természetes növekedése
+  - + jelek elegendő vizuális feedback, nincs zavaró felvillanás
+- **RESPONSIVE ANIMÁCIÓ** - Scale-aware pozicionálás és méretezés
+
 ### ✅ Phase 4.8 - ENERGY SYSTEM & GAME OVER FINAL REFINEMENT (2025-10-12)
 
 **🎮 Teljes Game Over Logika Implementálva (ÚJ - BEFEJEZVE):**

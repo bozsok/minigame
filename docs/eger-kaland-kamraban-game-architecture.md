@@ -1,4 +1,4 @@
-# Egér Kaland a Kamrában Játék Architektúra Dokumentum
+# Egér Kaland a Kamrában v4.8.2 - Játék Architektúra Dokumentum
 
 ## Bevezetés
 

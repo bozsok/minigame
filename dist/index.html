@@ -1,4 +1,7 @@
-<!doctype html><html lang="hu"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="favicon.ico"><title>Egér Kaland a Kamrában</title><style>*, *::before, *::after {
+<!doctype html><html lang="hu"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="favicon.ico"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Hegarty&display=swap" rel="stylesheet"><title>Egér Kaland a Kamrában</title><style>/* Google Fonts import alternatíva */
+        @import url('https://fonts.googleapis.com/css2?family=BBH+Sans+Hegarty&display=swap');
+        
+        *, *::before, *::after {
             box-sizing: border-box;
             padding: 0;
             margin: 0;
@@ -95,7 +98,7 @@
         .instruction-text {
             font-size: 16px;
             color: #000000;
-        }</style><script defer="defer" src="main.js"></script></head><body><div class="main-screen"><div class="left-panel"><button class="play-button" id="play-button" disabled="disabled">Play</button></div><div class="right-panel"><div class="game-area" id="game-container"></div><div class="instruction-area"><div class="instruction-title">Egér Kaland a Kamrában</div><div class="instruction-description">Gyakorold az egér műveleteket játékos módon! Gyűjtögetj babokat, egyél sajtot és szállíts üvegeket.</div><div class="instruction-text">Bal klikk: bab gyűjtés<br>Jobb klikk: sajt evés<br>Dupla klikk: üveg nyitás/zárás<br>Húzás: üveg szállítás</div></div></div></div><script>document.getElementById('play-button').addEventListener('click', () => {
+        }</style><script defer="defer" src="index.js"></script></head><body><div class="main-screen"><div class="left-panel"><button class="play-button" id="play-button" disabled="disabled">Play</button></div><div class="right-panel"><div class="game-area" id="game-container"></div><div class="instruction-area"><div class="instruction-title">Egér Kaland a Kamrában</div><div class="instruction-description">Gyakorold az egér műveleteket játékos módon! Gyűjtögetj babokat, egyél sajtot és szállíts üvegeket.</div><div class="instruction-text">Bal klikk: bab gyűjtés<br>Jobb klikk: sajt evés<br>Dupla klikk: üveg nyitás/zárás<br>Húzás: üveg szállítás</div></div></div></div><script>document.getElementById('play-button').addEventListener('click', () => {
             console.log('HTML Play gomb kattintás!');
             // API elérhetőség check
             if (window.EgerKalandAPI && window.EgerKalandAPI.startGame) {

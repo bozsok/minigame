@@ -1,4 +1,4 @@
-# Egér Kaland a Kamrában
+# Egér Kaland a Kamrában v4.8.2
 
 Egy 2D oktatási játék gyerekeknek, ahol egérműveleteket gyakorolhatnak szórakoztató módon egy kamra hátteren.
 

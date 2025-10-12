@@ -293,9 +293,66 @@ export class JarManager {
   }
 
   /**
-   * Játék interakció állapot lekérdezése  
+   * Játék interakció állapot lekérdezése
    */
   public isGameActive(): boolean {
     return this.gameActive;
+  }
+
+  /**
+   * Megmaradt üvegek kiemelése piros glow-val (játék vége esetén)
+   * Minden látható üveget kiemel - akár tele, akár üres - mert nem lettek leadva
+   */
+  public highlightRemainingJars(): void {
+    Logger.debug(`🔴 Megmaradt üvegek kiemelése piros glow-val`);
+    
+    let remainingJarsCount = 0;
+    
+    this.jars.forEach((jar) => {
+      // Minden látható üveg (nem lett leadva a pitcher-be)
+      if (jar.visible) {
+        remainingJarsCount++;
+        
+        // Ellenőrizzük, hogy már van-e piros glow
+        const hasRedGlow = jar.getData('hasRedGlow') || false;
+        
+        if (!hasRedGlow) {
+          // Jar egy Container - a jarBody Image objektumon kell alkalmazni a preFX-et
+          const jarBody = jar.getJarBody();
+          
+          if (jarBody && jarBody.preFX) {
+            // PreFX padding már be van állítva a Jar konstruktorban
+            
+            // Egységes glow API - mint a baboknál
+            const redGlowFX = jarBody.preFX.addGlow();
+            
+            if (redGlowFX) {
+              // Piros színű glow beállítása
+              redGlowFX.color = 0xff0000; // Piros szín
+              redGlowFX.outerStrength = 0; // Kezdeti érték 0
+              
+              // Smooth fade-in animáció - ugyanannyi mint a baboknál
+              this.scene.tweens.add({
+                targets: redGlowFX,
+                outerStrength: 4, // Ugyanannyi mint a baboknál
+                duration: 500,
+                ease: 'sine.out'
+              });
+              
+              // Glow referencia tárolása
+              jar.setData('redGlowFX', redGlowFX);
+              jar.setData('hasRedGlow', true);
+              
+              const status = jar.getIsFull() ? 'tele, de nem leadva' : 'üres, nem töltöttük meg';
+              Logger.debug(`Jar ${jar.getJarIndex()} piros glow hozzáadva - ${status}`);
+            }
+          } else {
+            Logger.warn(`Jar ${jar.getJarIndex()} jarBody preFX nem elérhető`);
+          }
+        }
+      }
+    });
+    
+    Logger.debug(`🔴 ${remainingJarsCount} megmaradt üveg kiemelve piros glow-val`);
   }
 }

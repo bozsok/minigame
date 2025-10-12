@@ -729,15 +729,32 @@ export class BeanManager {
     
     this.beans.forEach((bean) => {
       if (bean.visible) {
-        // Egyszerűsített megoldás - csak akkor adjunk hozzá glow-t, ha még nincs
-        // Használunk egy egyszerű flag-et a bab data-jában
-        const hasGlow = bean.getData('hasRedGlow') || false;
+        // Ellenőrizzük, hogy már van-e piros glow
+        const hasRedGlow = bean.getData('hasRedGlow') || false;
         
-        if (!hasGlow) {
-          // Piros körvonal glow effekt - csak egyszer
-          bean.preFX?.addGlow(0xff0000, 4, 0, false, 0.8, 8); // Piros, 4px outer, 8px inner
-          bean.setData('hasRedGlow', true); // Jelöljük, hogy már van glow
-          Logger.debug(`Bean ${bean.getData('id')} piros glow hozzáadva`);
+        if (!hasRedGlow && bean.preFX) {
+          // EGYSÉGES GLOW API - mint a hover glow-nál
+          const redGlowFX = bean.preFX.addGlow();
+          
+          if (redGlowFX) {
+            // Piros színű glow beállítása - egyszerűsített
+            redGlowFX.color = 0xff0000; // Piros szín
+            redGlowFX.outerStrength = 0; // Kezdeti érték 0
+            
+            // Smooth fade-in animáció - erősebb mint a hover glow
+            this.scene.tweens.add({
+              targets: redGlowFX,
+              outerStrength: 4, // Erős piros glow
+              duration: 500,
+              ease: 'sine.out'
+            });
+            
+            // Glow referencia tárolása a bean-en
+            bean.setData('redGlowFX', redGlowFX);
+            bean.setData('hasRedGlow', true);
+            
+            Logger.debug(`Bean ${bean.getBeanData().id} egységes piros glow hozzáadva`);
+          }
         }
       }
     });

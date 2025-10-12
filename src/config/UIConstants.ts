@@ -21,7 +21,7 @@ export const UIConstants = {
     baseStrokeThickness: 1,
     baseBorderWidth: 1, // 1px border
     baseCornerRadius: 0, // Szögletes, nincs lekerekítés
-    cursorOffset: 30, // Távolság az egérkurzor felett
+    cursorOffset: 50, // Távolság az egérkurzor felett
     consumptionRate: 2, // 2 pixel/mp = 60 másodperc alatt merül le (120px / 60s = 2px/s)
     borderColor: '#242424' // Border szín
   },

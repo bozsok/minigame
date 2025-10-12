@@ -43,6 +43,12 @@ export class Jar extends Phaser.GameObjects.Container {
   private createJarComponents(): void {
     // Üveg test
     this.jarBody = this.scene.add.image(0, 0, 'jar-body');
+    
+    // PreFX padding beállítása a glow effekt számára
+    if (this.jarBody.preFX) {
+      this.jarBody.preFX.setPadding(32);
+    }
+    
     this.add(this.jarBody);
 
     // Üveg fedő (kezdetben zárt pozícióban - üveg tetején)
@@ -538,6 +544,32 @@ export class Jar extends Phaser.GameObjects.Container {
    */
   public setGameActive(active: boolean): void {
     this.gameActive = active;
+    
+    // Ha a játék inaktív, tiltjuk le az összes interakciót
+    if (!active) {
+      // Drag & drop teljes letiltása
+      if (this.scene && this.scene.input) {
+        this.scene.input.setDraggable(this, false);
+      }
+      
+      // Cursor visszaállítása default-ra
+      const canvas = this.scene.game.canvas;
+      if (canvas) {
+        canvas.style.cursor = 'default';
+      }
+      
+      // Villogás leállítása
+      this.stopBlinking();
+      
+      console.log(`🚫 Jar ${this.jarIndex} összes interakció LETILTVA - játék vége`);
+    } else {
+      // Ha a játék aktív és az üveg drag-elhető, visszakapcsoljuk a drag-et
+      if (this.isDragEnabled) {
+        this.enableDragAndDrop();
+      }
+      
+      console.log(`✅ Jar ${this.jarIndex} interakciók VISSZAKAPCSOLVA`);
+    }
   }
 
   /**
@@ -545,5 +577,12 @@ export class Jar extends Phaser.GameObjects.Container {
    */
   public isGameActive(): boolean {
     return this.gameActive;
+  }
+
+  /**
+   * JarBody elérhetővé tétele a JarManager számára (glow effekt alkalmazásához)
+   */
+  public getJarBody(): Phaser.GameObjects.Image {
+    return this.jarBody;
   }
 }

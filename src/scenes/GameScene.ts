@@ -281,20 +281,44 @@ export default class GameScene extends Phaser.Scene {
    * Energia háttér létrehozása
    */
   private createEnergyBackground(): void {
-    // Fekete háttér az energia csík alá - ez mindig látszik
+    // Arányosítás számítása
+    const gameWidth = this.scale.width;
+    const gameHeight = this.scale.height;
+    const isFullscreen = gameWidth > 1200;
+    let gameScale: number;
+    if (isFullscreen) {
+      gameScale = 1.0; // Fullscreen = natív méret
+    } else {
+      // Ugyanaz az arányosítás mint a többi elemnél
+      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
+      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
+      const scaleX = gameWidth / originalWidth;
+      const scaleY = gameHeight / originalHeight;
+      gameScale = Math.min(scaleX, scaleY);
+    }
+    
+    // Energia méretek arányosítása
+    const scaledWidth = UIConstants.energy.baseWidth * gameScale;
+    const scaledHeight = UIConstants.energy.baseHeight * gameScale;
+    const scaledBorderWidth = UIConstants.energy.baseBorderWidth * gameScale;
+    
+    // Fekete háttér az energia csík alá - arányosított mérettel
     this.energyBackground = this.add.image(0, 0, '__BLACK');
-    this.energyBackground.setDisplaySize(UIConstants.energy.baseWidth, UIConstants.energy.baseHeight);
+    this.energyBackground.setDisplaySize(scaledWidth, scaledHeight);
     this.energyBackground.setOrigin(0, 0);
     this.energyBackground.setDepth(9999);
     
-    // Border létrehozása külön Graphics objektummal
+    // Border létrehozása külön Graphics objektummal - arányosított mérettel
     const border = this.add.graphics();
-    border.lineStyle(UIConstants.energy.baseBorderWidth, parseInt(UIConstants.energy.borderColor.replace('#', '0x')));
-    border.strokeRect(0, 0, UIConstants.energy.baseWidth, UIConstants.energy.baseHeight);
+    border.lineStyle(scaledBorderWidth, parseInt(UIConstants.energy.borderColor.replace('#', '0x')));
+    border.strokeRect(0, 0, scaledWidth, scaledHeight);
     border.setDepth(10001); // A színátmenet felett
     
     // Border referencia tárolása cleanup-hoz
     (this.energyBackground as any).border = border;
+    
+    // Scale értéket eltároljuk a későbbi frissítésekhez
+    (this.energyBackground as any).currentScale = gameScale;
   }
 
   /**
@@ -340,16 +364,22 @@ export default class GameScene extends Phaser.Scene {
   private updateEnergyBarMask(width: number): void {
     this.energyBar.clear();
     
-    // Színátmenetes energia csík rajzolása pixelenként
-    const maxWidth = UIConstants.energy.baseWidth;
-    const height = UIConstants.energy.baseHeight;
+    // Aktuális scale lekérése
+    const currentScale = (this.energyBackground as any)?.currentScale || 1.0;
     
-    for (let x = 0; x < width; x++) {
+    // Színátmenetes energia csík rajzolása pixelenként - arányosított méretekkel
+    const maxWidth = UIConstants.energy.baseWidth * currentScale;
+    const height = UIConstants.energy.baseHeight * currentScale;
+    const scaledWidth = width * currentScale / 1.0; // width már pixel alapú, de scale-elni kell
+    
+    // Pixel-pontos rajzolás a skálázott méretek szerint
+    const pixelStep = Math.max(1, currentScale); // Legalább 1 pixel lépésköz
+    for (let x = 0; x < scaledWidth; x += pixelStep) {
       const ratio = x / maxWidth; // 0..1 arány
       const color = this.interpolateEnergyColor(ratio);
       
       this.energyBar.fillStyle(color);
-      this.energyBar.fillRect(x, 0, 1, height);
+      this.energyBar.fillRect(x, 0, pixelStep, height);
     }
   }
 
@@ -382,10 +412,16 @@ export default class GameScene extends Phaser.Scene {
   private setupEnergyCursorTracking(): void {
     // Egermozgás esemény figyelése
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (this.energyBackground && this.energyBar) {
-        // Pozíció frissítése az egérkurzorhoz képest
-        const x = pointer.x - UIConstants.energy.baseWidth / 2;
-        const y = pointer.y - UIConstants.energy.cursorOffset;
+      if (this.energyBackground && this.energyBar && this.energyTimerStarted) {
+        // Aktuális scale lekérése
+        const currentScale = (this.energyBackground as any)?.currentScale || 1.0;
+        
+        // Pozíció frissítése az egérkurzorhoz képest - arányosított értékekkel
+        const scaledWidth = UIConstants.energy.baseWidth * currentScale;
+        const scaledOffset = UIConstants.energy.cursorOffset * currentScale;
+        
+        const x = pointer.x - scaledWidth / 2;
+        const y = pointer.y - scaledOffset;
         
         this.energyBackground.setPosition(x, y);
         this.energyBar.setPosition(x, y);
@@ -396,6 +432,24 @@ export default class GameScene extends Phaser.Scene {
         }
       }
     });
+  }
+
+  /**
+   * Energia elemek elrejtése (játék vége)
+   */
+  private hideEnergyElements(): void {
+    if (this.energyBackground && this.energyBar) {
+      // Elemek elrejtése
+      this.energyBackground.setVisible(false);
+      this.energyBar.setVisible(false);
+      
+      // Border is elrejtése
+      if ((this.energyBackground as any).border) {
+        (this.energyBackground as any).border.setVisible(false);
+      }
+      
+      Logger.debug('⚡ Energia kijelző elrejtve - játék vége');
+    }
   }
 
   /**
@@ -751,13 +805,27 @@ export default class GameScene extends Phaser.Scene {
    * Időtúllépés kezelése
    */
   private handleTimeUp(): void {
-    Logger.warn('⏰ IDŐ LEJÁRT! Játék megáll, elemek látva maradnak!');
+    Logger.warn('⏰ IDŐ LEJÁRT! Játék megáll, energia csík eltűnik!');
+    
+    // Játék állapot inaktívvá tétele
+    this.gameActive = false;
+    
+    // Energia timer leállítása
+    this.energyTimerStarted = false;
+    
+    // Energia csík elrejtése
+    this.hideEnergyElements();
     
     // Játék logika leállítása (de elemek látva maradnak)
     this.beanManager.stopGame();
     
     // Piros körvonal hozzáadása a maradék babokhoz
     this.beanManager.highlightRemainingBeans();
+    
+    // Piros körvonal hozzáadása a megmaradt üvegekhez
+    if (this.jarManager) {
+      this.jarManager.highlightRemainingJars();
+    }
     
     // MINDEN INTERAKCIÓ LETILTÁSA
     this.disableAllInteractions();
@@ -801,10 +869,16 @@ export default class GameScene extends Phaser.Scene {
    * Energia elfogyásának kezelése
    */
   private handleEnergyDepleted(): void {
-    Logger.warn('⚡ ENERGIA ELFogyott! Game over - csak 1x piros glow!');
+    Logger.warn('⚡ ENERGIA ELFogyott! Game over - energia csík eltűnik!');
+    
+    // Játék állapot inaktívvá tétele
+    this.gameActive = false;
     
     // Energia timer leállítása
     this.energyTimerStarted = false;
+    
+    // Energia csík elrejtése
+    this.hideEnergyElements();
     
     // Timer leállítása (ne számoljon tovább)
     this.timerStarted = false;
@@ -815,12 +889,15 @@ export default class GameScene extends Phaser.Scene {
     // Piros körvonal hozzáadása a maradék babokhoz (csak 1x)
     this.beanManager.highlightRemainingBeans();
     
-    // CSAK bab interakciót tiltjuk le, sajt evés továbbra működik
+    // Piros körvonal hozzáadása a megmaradt üvegekhez
     if (this.jarManager) {
-      this.jarManager.setGameActive(false);
+      this.jarManager.highlightRemainingJars();
     }
     
-    Logger.info('⚡ Babok interakciója leállítva - sajt evés továbbra működik');
+    // MINDEN INTERAKCIÓ LETILTÁSA (sajt evés is!)
+    this.disableAllInteractions();
+    
+    Logger.info('⚡ MINDEN interakció leállítva - sajt evés ÉS jar műveletek tiltva');
   }
 
   /**
@@ -901,11 +978,17 @@ export default class GameScene extends Phaser.Scene {
   private handleGameComplete(): void {
     Logger.info('🎉 JÁTÉK BEFEJEZVE! Mind az 5 üveg leadva!');
     
+    // Játék állapot inaktívvá tétele
+    this.gameActive = false;
+    
     // Timer megállítása - győzelem esetén nincs időkorlát
     this.timerStarted = false;
     
     // Energia timer megállítása - győzelem után ne fogyjon tovább
     this.energyTimerStarted = false;
+    
+    // Energia csík elrejtése
+    this.hideEnergyElements();
     
     // Játék logika leállítása
     this.beanManager.stopGame();
@@ -1114,6 +1197,42 @@ export default class GameScene extends Phaser.Scene {
       this.updateTimerUI(); // Ez már tartalmazza az arányosítást
       this.updateTimerPosition(gameWidth); // És a pozíciót is frissíti
     }
+    
+    // Energia csík skálázásának frissítése
+    this.updateEnergyScale(gameScale, gameWidth, gameHeight);
+  }
+
+  /**
+   * Energia csík skálázásának frissítése (fullscreen/ablakos mód váltásnál)
+   */
+  private updateEnergyScale(gameScale: number, gameWidth: number, gameHeight: number): void {
+    if (!this.energyBackground || !this.energyBar) {
+      return; // Még nem léteznek az energia elemek
+    }
+    
+    // Energia méretek újraszámítása
+    const scaledWidth = UIConstants.energy.baseWidth * gameScale;
+    const scaledHeight = UIConstants.energy.baseHeight * gameScale;
+    const scaledBorderWidth = UIConstants.energy.baseBorderWidth * gameScale;
+    
+    // Energia háttér újraskálázása
+    this.energyBackground.setDisplaySize(scaledWidth, scaledHeight);
+    
+    // Border újraskálázása
+    if ((this.energyBackground as any).border) {
+      const border = (this.energyBackground as any).border;
+      border.clear();
+      border.lineStyle(scaledBorderWidth, parseInt(UIConstants.energy.borderColor.replace('#', '0x')));
+      border.strokeRect(0, 0, scaledWidth, scaledHeight);
+    }
+    
+    // Scale érték frissítése
+    (this.energyBackground as any).currentScale = gameScale;
+    
+    // Energia csík újrarajzolása az új méretekkel
+    this.updateEnergyBarMask(this.energyPixels);
+    
+    Logger.debug(`⚡ Energia csík skálázva: ${gameScale.toFixed(3)}x (${scaledWidth}x${scaledHeight})`);
   }
 
   /**

@@ -374,6 +374,10 @@ export class CheeseManager {
    */
   public setGameActive(active: boolean): void {
     this.gameActive = active;
+    
+    // A sajtok közvetlenül a CheeseManager gameActive állapotát használják
+    // Nincs szükség további propagálásra - a Cheese objektumok ellenőrzik ezt
+    Logger.debug(`🧀 CheeseManager játék állapot: ${active ? 'AKTÍV' : 'INAKTÍV'}`);
   }
 
   /**

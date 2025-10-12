@@ -4,31 +4,44 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
 
-## [4.8.0] - 2025-10-11 - **ENERGY SYSTEM FINAL REFINEMENT**
+## [4.8.0] - 2025-10-12 - **ENERGY SYSTEM & GAME OVER FINAL REFINEMENT**
 
-### 🎮 Game Over Logika Javítva
-- **ENERGIA ELFogyása** - Game over állapot, de timer megállítva
-  - Visszaszámláló leáll, nem számol tovább
-  - Piros glow csak egyszer a babok körül (energia miatt, időzítő miatt nem)
-  - Minden interakció leállítása, de elemek láthatók maradnak
+### 🎮 Teljes Game Over Logika Implementálva
+- **ENERGIA CSÍK ELREJTÉSE** - Minden játék vége esetén eltűnik az egérkurzor mellől
+  - Időtúllépés esetén: energia csík eltűnik
+  - Energia elfogyása esetén: energia csík eltűnik
+  - Győzelem esetén: energia csík eltűnik
+- **PIROS GLOW HIGHLIGHTING** - Minden befejezetlen elem jelölése játék végén
+  - Maradék babok: egységes PreFX glow piros színnel
+  - Megmaradt üvegek: minden látható üveg (üres ÉS tele) piros glow
+- **MINDEN INTERAKCIÓ TILTÁSA** - Teljes játék leállítás minden vége esetén
+  - Sajt evés teljes letiltása energia elfogyásakor
+  - Üveg műveletek (dupla klikk, drag) teljes letiltása
+  - Cursor visszaállítása 'default'-ra minden esetben
 
-### 🎨 Energia Csík Design Újradefiniálva
+### 🎨 Energia Csík Továbbfejlesztve
+- **RESPONSIVE SCALING** - Arányosítási rendszerbe integrálva
+  - Fullscreen/ablakos mód váltásnál arányosan skálázódik
+  - cursorOffset (50px) és szélesség arányosan változik
+  - Ugyanaz a matematikai logika mint más UI elemeknél
+- **CURSOR TÁVOLSÁG** - 30px → 50px optimalizálás
 - **SZÖGLETES DESIGN** - Nincs lekerekítés, tiszta szögletes forma
 - **SZÍNÁTMENETES HÁTTÉR** - Piros-sárga-zöld gradiens háttér
-- **OPTIMIZÁLT BORDER** - 1px border, #242424 szín, nem számít a fogyásba
-- **PONTOS MÉRETEK** - 120px széles, 12px magas, cursor 30px felett
+- **OPTIMIZÁLT BORDER** - 1px border, #242424 szín, arányosított méret
 
-### 🎯 Sajt Bonus Rendszer Javítva
-- **Feltételes Bonus** - Csak aktív játék állapotban működik
-- **Debug Logging** - Részletes logolás a bonus működéséről
-- **Pontos Pixel Számítás** - 15mp × 2px/mp = 30px bonus per klikk
-- **Game Over Protection** - Bonus nem adható game over után
+### 🎯 Sajt & Interakció Rendszer Tökéletesítve
+- **TELJES TILTÁS JÁTÉK VÉGÉN** - CheeseManager.setGameActive(false) minden esetben
+- **FELTÉTELES BONUS** - Csak aktív játék állapotban működik
+- **EGYSÉGES GLOW RENDSZER** - Minden ragyogás PreFX API-val
+- **PONTOS PIXEL SZÁMÍTÁS** - 15mp × 2px/mp = 30px bonus per klikk
 
-### 🔧 Technikai Stabilizálás
-- **Game Active Flag** - Központosított játék állapot kezelés
-- **Timer Leállítás** - Energia elfogyásakor a timer is leáll
-- **Glow Duplikáció Megelőzése** - Bean data flag alapú ellenőrzés
-- **Performance Optimalizálás** - Csak aktív állapotban frissít
+### 🔧 Technikai Architektúra Javítások
+- **EGYSÉGES PREFX GLOW** - Babok és üvegek ugyanazzal a rendszerrel
+  - Hover glow: addGlow() objektum API + animáció
+  - Piros glow: addGlow() objektum API + animáció (nem paraméter API)
+- **JAR PREFX TÁMOGATÁS** - jarBody Image objektumon keresztül
+- **HIDEENERGYELEMENTS** - Új metódus energia csík teljes elrejtéséhez
+- **UPDATEENERGYSCALE** - Energia csík beillesztése az arányosítási rendszerbe
 
 ---
 

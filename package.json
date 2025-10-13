@@ -1,5 +1,5 @@
 {
-  "name": "@maya/eger-kaland-jatek",
+  "name": "@bozsok/eger-kaland-jatek",
   "version": "4.8.2",
   "description": "2D oktatási játék egér műveletek gyakorlására - React komponensként használható",
   "main": "dist/index.js",

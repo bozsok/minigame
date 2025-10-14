@@ -1,13 +1,18 @@
 /**
  * FullscreenButton - Teljesképernyős mód váltás kezelése
  * tm.png (Teljes Mód) és em.png (Eredeti Méretre) képek közötti váltás
+ * Library módban: csak event-et küld, nem közvetlenül manipulálja a DOM-ot
  */
 export class FullscreenButton extends Phaser.GameObjects.Image {
   private isFullscreen: boolean = false;
   private gameConfig: { width: number; height: number };
+  private isLibraryMode: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'tm'); // Kezdetben tm.png (Teljes Mód)
+
+    // Ellenőrizzük, hogy library módban vagyunk-e
+    this.isLibraryMode = !!(globalThis as any).EGER_KALAND_LIBRARY_MODE;
 
     // Hozzáadjuk a scene-hez
     scene.add.existing(this);
@@ -19,7 +24,11 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     };
 
     this.setupInteraction();
-    this.setupFullscreenListeners();
+    
+    // Csak standalone módban állítsuk be a fullscreen listenereket
+    if (!this.isLibraryMode) {
+      this.setupFullscreenListeners();
+    }
   }
 
   /**
@@ -41,7 +50,13 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
 
     // Kattintás kezelés
     this.on('pointerdown', () => {
-      this.toggleFullscreen();
+      if (this.isLibraryMode) {
+        // Library módban: csak event-et küldünk
+        this.scene.game.events.emit('fullscreen-request');
+      } else {
+        // Standalone módban: közvetlenül kezeljük
+        this.toggleFullscreen();
+      }
     });
   }
 

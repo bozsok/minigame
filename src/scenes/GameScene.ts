@@ -949,6 +949,26 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Aktuális játék méretarány lekérdezése - cursor és egyéb elemek számára
+   */
+  public getCurrentGameScale(): number {
+    const gameWidth = this.scale.width;
+    const gameHeight = this.scale.height;
+    const isFullscreen = gameWidth > 1200;
+    
+    if (isFullscreen) {
+      return 1.0; // Fullscreen = natív méret
+    } else {
+      // Ablakos mód - arányosítás számítása
+      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
+      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
+      const scaleX = gameWidth / originalWidth;
+      const scaleY = gameHeight / originalHeight;
+      return Math.min(scaleX, scaleY);
+    }
+  }
+
+  /**
    * + jelek animációja az energia csík felett (sajt evés bónusz jelzése)
    */
   private showEnergyBonusAnimation(): void {

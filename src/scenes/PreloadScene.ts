@@ -1,10 +1,4 @@
 import * as Phaser from 'phaser';
-import { getAssetPath } from '../assets';
-
-// Global asset configuration
-declare global {
-  var EGER_KALAND_ASSET_BASE_PATH: string | undefined;
-}
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -16,55 +10,55 @@ export default class PreloadScene extends Phaser.Scene {
     this.loadGoogleFonts();
     
     // Háttér betöltése
-    this.load.image('pantry-bg', getAssetPath('pantry-bg', globalThis.EGER_KALAND_ASSET_BASE_PATH));
+    this.load.image('pantry-bg', '/minigame/images/pantry-bg.jpg');
 
     // Sprite-ok betöltése  
     // beans.png sprite sheet betöltése (3 bab: 32x20px each, horizontally)
-    this.load.spritesheet('beans', getAssetPath('beans', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('beans', '/minigame/images/beans.png', {
       frameWidth: 32,   // Egy bab szélessége
       frameHeight: 20   // Egy bab magassága
     });
-    this.load.image('jar-body', getAssetPath('jar-body', globalThis.EGER_KALAND_ASSET_BASE_PATH));
-    this.load.image('jar-lid', getAssetPath('jar-lid', globalThis.EGER_KALAND_ASSET_BASE_PATH));
-    this.load.image('pitcher', getAssetPath('pitcher', globalThis.EGER_KALAND_ASSET_BASE_PATH));
+    this.load.image('jar-body', '/minigame/images/jar-body.png');
+    this.load.image('jar-lid', '/minigame/images/jar-lid.png');
+    this.load.image('pitcher', '/minigame/images/pitcher.png');
 
     // Sprite sheet-ek
-    this.load.spritesheet('bean-growth', getAssetPath('bean-growth', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('bean-growth', '/minigame/images/bean-growth.png', {
       frameWidth: 68,  // Helyes méret
       frameHeight: 92, // Helyes méret
     });
 
     // Sajt sprite sheet-ek (5 frame horizontálisan egymás mellett)
-    this.load.spritesheet('cheese-1', getAssetPath('cheese-1', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('cheese-1', '/minigame/images/cheese-1.png', {
       frameWidth: 234,   // CHEESE-1 frame szélessége
       frameHeight: 141   // CHEESE-1 frame magassága
     });
-    this.load.spritesheet('cheese-2', getAssetPath('cheese-2', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('cheese-2', '/minigame/images/cheese-2.png', {
       frameWidth: 412,   // CHEESE-2 frame szélessége  
       frameHeight: 199   // CHEESE-2 frame magassága
     });
-    this.load.spritesheet('cheese-3', getAssetPath('cheese-3', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('cheese-3', '/minigame/images/cheese-3.png', {
       frameWidth: 342,   // CHEESE-3 frame szélessége
       frameHeight: 104   // CHEESE-3 frame magassága
     });
-    this.load.spritesheet('cheese-4', getAssetPath('cheese-4', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('cheese-4', '/minigame/images/cheese-4.png', {
       frameWidth: 178,   // CHEESE-4 frame szélessége
       frameHeight: 74    // CHEESE-4 frame magassága
     });
-    this.load.spritesheet('cheese-5', getAssetPath('cheese-5', globalThis.EGER_KALAND_ASSET_BASE_PATH), {
+    this.load.spritesheet('cheese-5', '/minigame/images/cheese-5.png', {
       frameWidth: 214,   // CHEESE-5 frame szélessége
       frameHeight: 119   // CHEESE-5 frame magassága
     });
 
     // Ütközési térkép
-    this.load.image('pantry-collision', getAssetPath('pantry-collision', globalThis.EGER_KALAND_ASSET_BASE_PATH));
+    this.load.image('pantry-collision', '/minigame/images/pantry-collision.jpg');
 
     // Kurzor képek
-    this.load.image('cursor-eat', getAssetPath('cursor-eat', globalThis.EGER_KALAND_ASSET_BASE_PATH));
+    this.load.image('cursor-eat', '/minigame/images/cursor-eat.png');
 
     // Egyéb
-    this.load.image('em', getAssetPath('em', globalThis.EGER_KALAND_ASSET_BASE_PATH));
-    this.load.image('tm', getAssetPath('tm', globalThis.EGER_KALAND_ASSET_BASE_PATH));
+    this.load.image('em', '/minigame/images/em.png');
+    this.load.image('tm', '/minigame/images/tm.png');
 
     // Betöltés vége
     this.load.on('complete', () => {
@@ -87,10 +81,18 @@ export default class PreloadScene extends Phaser.Scene {
   }
 
   /**
-   * Google Fonts dinamikus betöltése
+   * Google Fonts dinamikus betöltése - library módban opcionális
    */
   private loadGoogleFonts(): void {
-    // BBH Sans Hegarty font betöltése
+    // Library módban a host alkalmazás felelőssége a font betöltése
+    const isLibraryMode = !!(globalThis as any).EGER_KALAND_LIBRARY_MODE;
+    
+    if (isLibraryMode) {
+      console.log('🔤 Library mód: Google Fonts betöltése kihagyva (host alkalmazás felelőssége)');
+      return;
+    }
+
+    // BBH Sans Hegarty font betöltése standalone módban
     const fontFamily = 'BBH+Sans+Hegarty';
     
     const link = document.createElement('link');

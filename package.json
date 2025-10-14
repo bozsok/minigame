@@ -1,12 +1,13 @@
 {
   "name": "@bozsok/eger-kaland-jatek",
-  "version": "4.8.2",
+  "version": "4.8.3",
   "description": "2D oktatási játék egér műveletek gyakorlására - React komponensként használható",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/library.js",
+  "types": "dist/library.d.ts",
   "files": ["dist/", "assets/"],
   "scripts": {
     "build": "webpack --mode production",
+    "build:standalone": "webpack --mode development",
     "dev": "webpack serve --mode development",
     "start": "webpack serve --mode development",
     "test": "jest",

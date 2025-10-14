@@ -2,7 +2,24 @@
 
 Minden lényeges változás ebben a projektben dokumentálva lesz.
 
-A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján készült.
+A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült.
+
+## [4.8.3] - 2025-10-14 - **CURSOR SCALING FIX & RESPONSIVE UI**
+
+### 🖱️ Cursor Méretezési Javítás
+- **RESPONSIVE CURSOR SCALING:** Sajt-evés cursor most arányosodik az ablakmérethez
+  - Ablakos módban: cursor mérete automatikusan csökken a game scale-nek megfelelően
+  - Fullscreen módban: cursor natív méretben (60%)
+  - Implementálva `getCurrentGameScale()` publikus metódus a GameScene-ben
+- **BUG FIX:** `/assets/images/` → `/minigame/images/` útvonal javítás `Cheese.ts`-ben
+  - Cursor kép betöltési hibák eliminálása
+  - Egységes asset útvonal stratégia
+
+### 🔧 Fejlesztői Támogatás  
+- **CENTRALIZÁLT SCALE SZÁMÍTÁS:** `getCurrentGameScale()` metódus GameScene-ben
+  - Újrafelhasználható scale számítás más UI elemek számára
+  - Egységes fullscreen/ablakos mód detektálás
+- **DOKUMENTÁCIÓ FRISSÍTÉS:** MANUAL_INTEGRATION.md kiegészítve cursor scaling troubleshooting-gal
 
 ## [4.8.2] - 2025-10-12 - **GAME COMPLETION & EVENT SYSTEM FIXES**
 

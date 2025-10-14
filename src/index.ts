@@ -10,7 +10,6 @@ export interface GameConfig {
   width?: number;
   height?: number;
   parent: string | HTMLElement;
-  assetBasePath?: string; // Új: asset útvonal prefix
   onGameComplete?: (stats: GameStats) => void;
   onGameStart?: () => void;
   onFullscreenRequest?: () => void;
@@ -40,9 +39,6 @@ export class EgerKalandJatek {
 
   // Initialize and start the game
   public start(): void {
-    // Set global asset base path for scenes
-    globalThis.EGER_KALAND_ASSET_BASE_PATH = this.config.assetBasePath;
-    
     const phaserConfig: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width: this.config.width,

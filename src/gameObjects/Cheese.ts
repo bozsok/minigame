@@ -90,10 +90,14 @@ export class Cheese extends Phaser.GameObjects.Image {
 
       // Csak akkor változtassuk a cursort és glow-t, ha a sajt még ehető
       if (!this.isCompletelyEaten()) {
-        // Custom egérke száj cursor - 60% méret (20%-kal kisebb mint az eredeti 80%)
+        // Custom egérke száj cursor - 60% méret * aktuális játék arány
         const canvas = this.scene.game.canvas;
         if (canvas) {
-          this.setScaledCursor(canvas, 'cursor-eat.png', 0.6);
+          // Aktuális játék méretarány lekérdezése
+          const gameScale = (this.scene as any).getCurrentGameScale ? (this.scene as any).getCurrentGameScale() : 1.0;
+          const baseCursorScale = 0.6; // 60% alapméret
+          const finalCursorScale = baseCursorScale * gameScale;
+          this.setScaledCursor(canvas, 'cursor-eat.png', finalCursorScale);
         }
         
         // Glow effekt hozzáadása
@@ -249,11 +253,11 @@ export class Cheese extends Phaser.GameObjects.Image {
         const hotspotY = scaledHeight / 2; // Középpont Y
         canvas.style.cursor = `url(${tempCanvas.toDataURL()}) ${hotspotX} ${hotspotY}, auto`;
         
-        Logger.debug(`🖱️ Egérke száj cursor méretezve ${scale * 100}%-ra: ${scaledWidth}x${scaledHeight}px`);
+        Logger.debug(`🖱️ Egérke száj cursor méretezve ${(scale * 100).toFixed(1)}%-ra: ${scaledWidth}x${scaledHeight}px`);
       }
     };
     
-    img.src = `assets/images/${cursorFileName}`;
+    img.src = `/minigame/images/${cursorFileName}`;
   }
 
 }

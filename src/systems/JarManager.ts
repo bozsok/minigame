@@ -40,52 +40,59 @@ export class JarManager {
 
   /**
    * Bab gyűjtés megkísérlése - visszaadja, hogy sikerült-e
+   * JAVÍTOTT VERZIÓ: Bármely nyitott üvegbe mehet a bab, nem csak az aktívba
    */
   public tryCollectBean(): boolean {
     Logger.debug('=== JAR MANAGER TRY COLLECT ===');
     
-    // Először ellenőrizzük, hogy az aktív üveg használható-e
-    let activeJar = this.getCurrentActiveJar();
+    // JAVÍTÁS: Először keresünk BÁRMELY nyitott, nem teli üveget
+    let targetJar: Jar | null = null;
     
-    if (!activeJar) {
-      Logger.debug('JarManager: Nincs aktív üveg!');
+    // 1. Próbáljuk az aktív üveget (ha van és használható)
+    const activeJar = this.getCurrentActiveJar();
+    if (activeJar && activeJar.getIsOpen() && !activeJar.getIsFull()) {
+      targetJar = activeJar;
+      Logger.debug(`Aktív üveg ${activeJar.getJarIndex()} használható - ide megy a bab`);
+    }
+    
+    // 2. Ha az aktív üveg nem jó, keresünk BÁRMELY nyitott üveget
+    if (!targetJar) {
+      Logger.debug('Aktív üveg nem megfelelő, keresés bármely nyitott üvegben...');
+      for (let i = 0; i < this.jars.length; i++) {
+        const jar = this.jars[i];
+        if (jar.getIsOpen() && !jar.getIsFull()) {
+          targetJar = jar;
+          Logger.debug(`Talált nyitott üveg: ${i} - ide megy a bab`);
+          
+          // FONTOS: Aktív index frissítése az új célüvegre
+          this.currentActiveJarIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // 3. Ha nincs nyitott üveg, jelezzük és utasítsuk a usert
+    if (!targetJar) {
+      Logger.debug('JarManager: Nincs nyitott üveg! Villogtatás indítása...');
+      this.highlightNextAvailableJar();
       return false;
     }
 
-    // Ha az aktív üveg tele van, automatikusan váltunk a következőre
-    if (activeJar.getIsFull()) {
-      Logger.debug(`Aktív üveg ${activeJar.getJarIndex()} tele - automatikus váltás következőre`);
-      this.switchToNextJar();
-      activeJar = this.getCurrentActiveJar();
-      
-      if (!activeJar) {
-        Logger.debug('JarManager: Minden üveg tele!');
-        return false;
-      }
-    }
-
-    Logger.debug(`Aktív üveg: ${activeJar.getJarIndex()}, nyitott: ${activeJar.getIsOpen()}, tele: ${activeJar.getIsFull()}`);
+    Logger.debug(`Cél üveg: ${targetJar.getJarIndex()}, nyitott: ${targetJar.getIsOpen()}, tele: ${targetJar.getIsFull()}`);
     
-    // Megpróbáljuk hozzáadni a babot az aktív üveghez
-    const success = activeJar.addBean();
+    // 4. Bab hozzáadása a kiválasztott üveghez
+    const success = targetJar.addBean();
     Logger.debug(`addBean() eredménye: ${success}`);
     
     if (!success) {
-      Logger.debug(`JarManager: Nem sikerült bab hozzáadás - Jar ${activeJar.getJarIndex()} (nyitott: ${activeJar.getIsOpen()}, tele: ${activeJar.getIsFull()})`);
-      
-      // Ha az üveg zárt, következő nyitott üveget keressük és villogtatjuk
-      if (!activeJar.getIsOpen() && !activeJar.getIsFull()) {
-        Logger.debug('Következő nyitott üveg keresése...');
-        this.highlightNextAvailableJar();
-      }
-      
+      Logger.debug(`JarManager: Váratlan hiba - a célüveg mégsem fogadta a babot`);
       return false; // Bab nem lett elfogyasztva
     }
 
     // Ha most lett tele az üveg, jelezzük de NEM váltunk automatikusan
     // (a játékos dönti el, hogy lezárja-e vagy sem)
-    if (activeJar.getIsFull()) {
-      Logger.debug(`Jar ${activeJar.getJarIndex()} most lett tele!`);
+    if (targetJar.getIsFull()) {
+      Logger.debug(`Jar ${targetJar.getJarIndex()} most lett tele!`);
     }
 
     // UI frissítés

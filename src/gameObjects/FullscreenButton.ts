@@ -179,12 +179,34 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     try {
       if (this.isFullscreen) {
         this.setTexture('em'); // Exit Mód (em.png)
+        
+        // 🚀 NEW: Fullscreen enter event emission
+        this.scene.game.events.emit('fullscreen-enter', {
+          isFullscreen: true,
+          timestamp: Date.now(),
+          screenSize: { 
+            width: window.screen.width, 
+            height: window.screen.height 
+          }
+        });
+        
         // Kis késleltetés hogy a böngésző befejezze a fullscreen váltást
         setTimeout(() => {
           this.scaleToFullscreen();
         }, 100);
       } else {
         this.setTexture('tm'); // Teljes Mód (tm.png)
+        
+        // 🚀 NEW: Fullscreen exit event emission
+        this.scene.game.events.emit('fullscreen-exit', {
+          isFullscreen: false,
+          timestamp: Date.now(),
+          windowSize: { 
+            width: window.innerWidth, 
+            height: window.innerHeight 
+          }
+        });
+        
         setTimeout(() => {
           this.scaleToOriginal();
         }, 100);

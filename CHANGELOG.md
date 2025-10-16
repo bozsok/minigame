@@ -20,6 +20,40 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült
   - `npm run dev` - UMD dev server (development)
   - Build idő: 2.3s
 
+### 🚀 MAJOR: React Integration Event System  
+- **TIMER SZINKRONIZÁCIÓ:** Timer események React alkalmazásoknak
+  - `onTimerStart`, `onTimerUpdate`, `onTimerEnd` callback hook-ok
+  - Automatikus szinkronizáció: Phaser master timer → React UI követő
+  - Dupla timer probléma megoldva (React timer lecserélhető Phaser event-ekre)
+  - `TimerEventData` interface: `{ timeRemaining, timeElapsed, formatted, totalTime }`
+- **GAME LIFECYCLE EVENTS:** 🎮 Játék indítás/befejezés szinkronizáció
+  - `onGameStart`, `onGameEnd` callback hook-ok teljes adatokkal
+  - `GameStartEventData` interface: `{ timestamp, sceneType, gameMode }`
+  - `GameEndEventData` interface: `{ reason, jarsCompleted, beansCollected, timeRemaining, completionTime, energyRemaining }`
+  - Perfect React navigation: game start → active mode, game end → results/dashboard
+  - Automatic stats collection: Victory, timeout, energia elfogyás, Stop gomb - mind külön kezelve
+- **PROGRESS TRACKING EVENTS:** 🏺 Üveg leadás szinkronizáció  
+  - `onJarDelivered` callback hook üveg korsóba dobásakor
+  - `JarDeliveredEventData` interface: `{ jarIndex, timestamp, jarsDelivered, jarsRemaining, progressPercentage }`
+  - Real-time progress tracking: React progress bar követi a játék előrehaladását
+  - Milestone celebrations: 20%, 40%, 60%, 80%, 100% completion events
+- **FULLSCREEN EVENTS:** 🖥️ Teljes képernyő szinkronizáció  
+  - `onFullscreenEnter`, `onFullscreenExit` callback hook-ok
+  - `FullscreenEventData` interface: `{ isFullscreen, timestamp, screenSize, windowSize }`
+  - Perfect React UI adaptation: Phaser fullscreen changes → React layout updates
+  - Cross-browser fullscreen API support (Chrome, Firefox, Safari, Edge)
+- **GAME STATE EVENTS:** Játék állapot szinkronizáció
+  - `onGamePause`, `onGameResume` callback hook-ok  
+  - `GameStateData` interface teljes játék állapot exportálással
+  - Perfect integration: Phaser events → React state management
+
+### �🐛 Kritikus Játék Hiba Javítás  
+- **ÜVEG GYŰJTÉS JAVÍTÁS:** Bármely nyitott üvegbe mehet bab
+  - **Régi probléma:** Csak sorrendben (1. → 2. → 3. → 4. → 5.) lehetett üvegeket használni
+  - **Új viselkedés:** Ha kinyitsz egy üveget (pl. 3.), azonnal használható babgyűjtésre
+  - `JarManager.tryCollectBean()` metódus teljes átírása
+  - Dinamikus aktív üveg váltás a user választása alapján
+
 ### 🎨 UI/UX Javítások
 - **BORDER-RADIUS CSÖKKENTÉS:** Canvas lekerekítés 15px → 8px
   - Modernabb, finomabb megjelenés

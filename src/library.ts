@@ -11,19 +11,85 @@ declare global {
   var EGER_KALAND_CONFIG: GameConfig | undefined;
 }
 
+// Timer event data interface
+export interface TimerEventData {
+  timeRemaining: number;
+  timeElapsed: number;
+  formatted: string; // "04:35" format
+  totalTime: number; // 300 (5 minutes)
+}
+
+// Game state event data interface  
+export interface GameStateData {
+  isActive: boolean;
+  isPaused: boolean;
+  isFullscreen: boolean;
+  currentScene: string;
+}
+
+// Fullscreen event data interface
+export interface FullscreenEventData {
+  isFullscreen: boolean;
+  timestamp: number;
+  screenSize?: { width: number; height: number };
+  windowSize?: { width: number; height: number };
+}
+
+// Game start event data interface
+export interface GameStartEventData {
+  timestamp: number;
+  sceneType: string;
+  gameMode: string;
+}
+
+// Game end event data interface  
+export interface GameEndEventData {
+  timestamp: number;
+  reason: 'completed' | 'timeout' | 'energy-depleted' | 'stopped';
+  jarsCompleted: number;
+  beansCollected: number;
+  timeRemaining: number;
+  completionTime: number;
+  energyRemaining: number;
+}
+
+// Jar delivered event data interface
+export interface JarDeliveredEventData {
+  jarIndex: number;
+  timestamp: number;
+  jarsDelivered: number;
+  jarsRemaining: number;
+  progressPercentage: number; // 0-100%
+}
+
 // Game configuration interface  
 export interface GameConfig {
   width?: number;
   height?: number;
   parent: string | HTMLElement;
   onGameComplete?: (stats: GameStats) => void;
-  onGameStart?: () => void;
-  onGameEnd?: () => void;
+  onGameStart?: (data: GameStartEventData) => void;
+  onGameEnd?: (data: GameEndEventData) => void;
   // Fullscreen kezelés kívülről
   onFullscreenRequest?: () => void;
   // Canvas kontroll módok
   allowFullscreen?: boolean;
   disableAutoScale?: boolean;
+  
+  // ✅ ÚJ: Timer Events - React szinkronizációhoz
+  onTimerStart?: (data: TimerEventData) => void;
+  onTimerUpdate?: (data: TimerEventData) => void;
+  onTimerPause?: (data: TimerEventData) => void;
+  onTimerResume?: (data: TimerEventData) => void;
+  onTimerEnd?: (data: TimerEventData & { reason: 'timeout' | 'completed' | 'stopped' }) => void;
+  
+  // ✅ ÚJ: Game State Events - React állapot szinkronizációhoz  
+  onGameStateChange?: (data: GameStateData) => void;
+  onJarDelivered?: (data: JarDeliveredEventData) => void;
+  onFullscreenEnter?: (data: FullscreenEventData) => void;
+  onFullscreenExit?: (data: FullscreenEventData) => void;
+  onGamePause?: () => void;
+  onGameResume?: () => void;
 }
 
 // Game statistics interface
@@ -92,6 +158,7 @@ export class EgerKalandJatek {
   private setupEventListeners(): void {
     if (!this.game) return;
 
+    // Existing events (legacy compatibility)
     if (this.config.onGameComplete) {
       this.game.events.on('game-completed', this.config.onGameComplete);
     }
@@ -106,6 +173,52 @@ export class EgerKalandJatek {
 
     if (this.config.onFullscreenRequest) {
       this.game.events.on('fullscreen-request', this.config.onFullscreenRequest);
+    }
+
+    // ✅ NEW: Timer Events - for React synchronization
+    if (this.config.onTimerStart) {
+      this.game.events.on('timer-start', this.config.onTimerStart);
+    }
+
+    if (this.config.onTimerUpdate) {
+      this.game.events.on('timer-update', this.config.onTimerUpdate);
+    }
+
+    if (this.config.onTimerPause) {
+      this.game.events.on('timer-pause', this.config.onTimerPause);
+    }
+
+    if (this.config.onTimerResume) {
+      this.game.events.on('timer-resume', this.config.onTimerResume);
+    }
+
+    if (this.config.onTimerEnd) {
+      this.game.events.on('timer-end', this.config.onTimerEnd);
+    }
+
+    // ✅ NEW: Game State Events - for React UI synchronization
+    if (this.config.onGameStateChange) {
+      this.game.events.on('game-state-change', this.config.onGameStateChange);
+    }
+
+    if (this.config.onJarDelivered) {
+      this.game.events.on('jar-delivered', this.config.onJarDelivered);
+    }
+
+    if (this.config.onFullscreenEnter) {
+      this.game.events.on('fullscreen-enter', this.config.onFullscreenEnter);
+    }
+
+    if (this.config.onFullscreenExit) {
+      this.game.events.on('fullscreen-exit', this.config.onFullscreenExit);
+    }
+
+    if (this.config.onGamePause) {
+      this.game.events.on('game-pause', this.config.onGamePause);
+    }
+
+    if (this.config.onGameResume) {
+      this.game.events.on('game-resume', this.config.onGameResume);
     }
   }
 
@@ -179,6 +292,14 @@ export class EgerKalandJatek {
       isPaused: isPaused,
       currentScene: activeScene ? activeScene.scene.key : 'unknown'
     };
+  }
+
+  // Stop the current game (emit game-ended event)
+  public stopGame(): void {
+    if (this.game) {
+      // Emit game-ended event with 'stopped' reason
+      this.game.events.emit('stop-game');
+    }
   }
 
   // Stop and destroy the game

@@ -211,6 +211,18 @@ export default class GameScene extends Phaser.Scene {
       this.gameStartTime = Date.now();
       this.countdownTime = GameBalance.time.totalTime; // Konfigurációból olvassuk az időt
       
+      // ✅ ÚJ: Timer start event emit React számára
+      const minutes = Math.floor(this.countdownTime / 60);
+      const seconds = this.countdownTime % 60;
+      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      this.game.events.emit('timer-start', {
+        timeRemaining: this.countdownTime,
+        timeElapsed: 0,
+        formatted: timeString,
+        totalTime: GameBalance.time.totalTime
+      });
+      
       // AZONNAL beállítjuk a kezdő szöveget
       this.updateTimerUI();
       
@@ -613,6 +625,11 @@ export default class GameScene extends Phaser.Scene {
     this.events.on('resize', (data: ResizeEvent) => {
       this.resize(data);
     });
+
+    // 🚀 NEW: Stop game event listener (React Stop gomb)
+    this.game.events.on('stop-game', () => {
+      this.handleGameStopped();
+    });
   }
 
   /**
@@ -621,6 +638,13 @@ export default class GameScene extends Phaser.Scene {
   public startGame(): void {
     Logger.info('=== JÁTÉK INDÍTÁSA ===');
     Logger.info('1 másodperces várakozás a babok és interaktív elemek megjelenése előtt...');
+    
+    // 🚀 NEW: Game started event emission
+    this.game.events.emit('game-started', {
+      timestamp: Date.now(),
+      sceneType: 'GameScene',
+      gameMode: 'normal'
+    });
     
     // 1 másodperc várakozás majd minden egyszerre megjelenik
     setTimeout(() => {
@@ -676,6 +700,18 @@ export default class GameScene extends Phaser.Scene {
       if (newCountdownTime !== this.countdownTime) {
         this.countdownTime = newCountdownTime;
         this.updateTimerUI();
+        
+        // ✅ ÚJ: Timer update event emit React számára
+        const minutes = Math.floor(this.countdownTime / 60);
+        const seconds = this.countdownTime % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        this.game.events.emit('timer-update', {
+          timeRemaining: this.countdownTime,
+          timeElapsed: elapsedSeconds,
+          formatted: timeString,
+          totalTime: GameBalance.time.totalTime
+        });
         
         // Debug minden másodpercben
         Logger.debug(`⏰ Timer update: ${this.countdownTime}s (elapsed: ${elapsedSeconds}s)`);
@@ -810,6 +846,15 @@ export default class GameScene extends Phaser.Scene {
   private handleTimeUp(): void {
     Logger.warn('⏰ IDŐ LEJÁRT! Játék megáll, energia csík eltűnik!');
     
+    // ✅ ÚJ: Timer end event emit React számára
+    this.game.events.emit('timer-end', {
+      timeRemaining: 0,
+      timeElapsed: GameBalance.time.totalTime,
+      formatted: '00:00',
+      totalTime: GameBalance.time.totalTime,
+      reason: 'timeout'
+    });
+    
     // Játék állapot inaktívvá tétele
     this.gameActive = false;
     
@@ -838,6 +883,17 @@ export default class GameScene extends Phaser.Scene {
     if (canvas) {
       canvas.style.cursor = 'default';
     }
+
+    // 🚀 NEW: Game ended event emission (timeout case)
+    this.game.events.emit('game-ended', {
+      timestamp: Date.now(),
+      reason: 'timeout',
+      jarsCompleted: this.jarManager.getAllJarsInfo().filter(jar => jar.isFull).length,
+      beansCollected: this.beanManager.getCollectedBeansCount(),
+      timeRemaining: 0,
+      completionTime: GameBalance.time.totalTime,
+      energyRemaining: this.energyRemaining
+    });
 
     // Timer 00:00-n marad, semmi nem tűnik el
     // Játékos szabadon nézheti a maradék elemeket
@@ -912,7 +968,74 @@ export default class GameScene extends Phaser.Scene {
       canvas.style.cursor = 'default';
     }
 
+    // 🚀 NEW: Game ended event emission - energia elfogyás
+    this.game.events.emit('game-ended', {
+      timestamp: Date.now(),
+      reason: 'energy-depleted',
+      jarsCompleted: this.jarManager.getAllJarsInfo().filter(jar => jar.isFull).length,
+      beansCollected: this.beanManager.getCollectedBeansCount(),
+      timeRemaining: this.countdownTime,
+      completionTime: GameBalance.time.totalTime - this.countdownTime,
+      energyRemaining: 0 // Energia elfogyott
+    });
+
     Logger.info('⚡ MINDEN interakció leállítva - sajt evés ÉS jar műveletek tiltva');
+  }
+
+  /**
+   * Játék leállítása Stop gombbal (React UI-ból)
+   */
+  private handleGameStopped(): void {
+    if (!this.gameActive) {
+      return; // Már leállt a játék
+    }
+
+    Logger.warn('⏹️ JÁTÉK LEÁLLÍTVA Stop gombbal!');
+    
+    // Játék állapot inaktívvá tétele
+    this.gameActive = false;
+    
+    // Timer megállítása
+    this.timerStarted = false;
+    
+    // Energia timer megállítása
+    this.energyTimerStarted = false;
+    
+    // Energia csík elrejtése
+    this.hideEnergyElements();
+    
+    // Játék logika leállítása
+    this.beanManager.stopGame();
+    
+    // Piros körvonal hozzáadása a maradék babokhoz
+    this.beanManager.highlightRemainingBeans();
+    
+    // Piros körvonal hozzáadása a megmaradt üvegekhez
+    if (this.jarManager) {
+      this.jarManager.highlightRemainingJars();
+    }
+    
+    // MINDEN INTERAKCIÓ LETILTÁSA
+    this.disableAllInteractions();
+
+    // Cursor visszaállítása default-ra
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
+
+    // 🚀 NEW: Game ended event emission - Stop gomb
+    this.game.events.emit('game-ended', {
+      timestamp: Date.now(),
+      reason: 'stopped',
+      jarsCompleted: this.jarManager.getAllJarsInfo().filter(jar => jar.isFull).length,
+      beansCollected: this.beanManager.getCollectedBeansCount(),
+      timeRemaining: this.countdownTime,
+      completionTime: GameBalance.time.totalTime - this.countdownTime,
+      energyRemaining: this.energyRemaining
+    });
+
+    Logger.info('⏹️ Játék manuálisan leállítva - Stop gombbal');
   }
 
   /**
@@ -1060,6 +1183,16 @@ export default class GameScene extends Phaser.Scene {
   private handleJarDelivered(data: JarDeliveredEvent): void {
     const { jarIndex, totalJarsInPitcher } = data;
     Logger.debug(`GameScene: Jar ${jarIndex} leadva! Összesen: ${totalJarsInPitcher}/5`);
+    
+    // 🚀 NEW: Jar delivered event emission to React
+    this.game.events.emit('jar-delivered', {
+      jarIndex: jarIndex,
+      timestamp: Date.now(),
+      jarsDelivered: totalJarsInPitcher,
+      jarsRemaining: 5 - totalJarsInPitcher,
+      progressPercentage: Math.round((totalJarsInPitcher / 5) * 100)
+    });
+    
     // A leadott üvegek száma vizuálisan követhető
   }
 
@@ -1106,6 +1239,17 @@ export default class GameScene extends Phaser.Scene {
     if (canvas) {
       canvas.style.cursor = 'default';
     }
+
+    // 🚀 NEW: Game ended event emission
+    this.game.events.emit('game-ended', {
+      timestamp: Date.now(),
+      reason: 'completed',
+      jarsCompleted: 5,
+      beansCollected: this.beanManager.getCollectedBeansCount(),
+      timeRemaining: this.countdownTime,
+      completionTime: GameBalance.time.totalTime - this.countdownTime, // Total - maradék idő
+      energyRemaining: this.energyRemaining
+    });
 
     // VICTORY SCREEN: Jelenleg nincs implementálva
     // A játék leáll, de nincs victory képernyő vagy restart opció

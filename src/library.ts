@@ -110,6 +110,32 @@ export class EgerKalandJatek {
   }
 
   // Game control methods
+  
+  /**
+   * Start the actual game (transition from MenuScene to GameScene and begin gameplay)
+   * Call this method when your external "Play" button is clicked
+   */
+  public startGame(): void {
+    if (!this.game) {
+      console.warn('EgerKalandJatek: Game not initialized, call start() first');
+      return;
+    }
+
+    // 1. Switch to GameScene
+    const menuScene = this.game.scene.getScene('MenuScene');
+    if (menuScene) {
+      menuScene.scene.start('GameScene');
+      
+      // 2. Call GameScene's startGame() after scene transition
+      setTimeout(() => {
+        const gameScene = this.game!.scene.getScene('GameScene') as any;
+        if (gameScene && typeof gameScene.startGame === 'function') {
+          gameScene.startGame();
+        }
+      }, 100); // Small delay for scene transition
+    }
+  }
+  
   public pause(): void {
     if (this.game) {
       const activeScene = this.game.scene.getScenes(true)[0];

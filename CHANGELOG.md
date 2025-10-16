@@ -4,6 +4,45 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült.
 
+## [4.9.0] - 2025-10-15 - **🎯 ES MODULE SUPPORT & REACT/VITE INTEGRATION**
+
+### ⚡ MAJOR: ES Module Build Támogatás
+- **WEBPACK MULTI-CONFIG ÁTÁLLÁS:** Dual-mode build rendszer
+  - **Library Mode (ESM):** `type: 'module'`, `experiments.outputModule: true`
+    - ES Module kimenet React/Vite kompatibilitáshoz
+    - Phaser externalizálva - 66 KB bundle (volt: 1.2 MB UMD)
+    - Named + default export: `export { M as EgerKalandJatek, I as default }`
+  - **Standalone Mode (UMD):** Dev szerver + bundled Phaser
+    - UMD formátum megőrizve standalone fejlesztéshez
+    - Teljes Phaser bundle development workflow-hoz
+- **NPM SCRIPTS FRISSÍTÉS:** `--env configName=library|standalone` paraméterezés
+  - `npm run build` - ESM library output (production)
+  - `npm run dev` - UMD dev server (development)
+  - Build idő: 2.3s
+
+### 🎨 UI/UX Javítások
+- **BORDER-RADIUS CSÖKKENTÉS:** Canvas lekerekítés 15px → 8px
+  - Modernabb, finomabb megjelenés
+  - BootScene.ts, FullscreenButton.ts, index.html frissítve
+  - Dokumentáció frissítve (eger-kaland-kamraban-game-architecture.md)
+- **BUILD OUTPUT CSÖKKENTÉS:** 1.2 MB → 66 KB (95% méretcsökkentés)
+  - Phaser peer dependency elvárás library módban
+  - Host alkalmazás biztosítja Phaser verziót
+
+### 🔧 React/Vite Integráció Fix
+- **UMD → ESM KONVERZIÓ:** ERROR_INTEGRATION.md hibák megoldása
+  - `import EgerKalandJatek from './library.js'` - most működik Vite-ban
+  - Webpack `outputModule` experiment engedélyezve
+  - ES2020 target modern bundler támogatáshoz
+- **DOKUMENTÁCIÓ FRISSÍTÉS:** MANUAL_INTEGRATION.md ESM követelményekkel
+  - Phaser peer dependency telepítési instrukciók
+  - ES Module import példakód
+
+### 📦 Breaking Change Notice
+- **LIBRARY MODE:** Phaser **NEM** része a bundle-nek
+  - Host alkalmazásnak telepítenie kell: `npm install phaser@^3.90.0`
+  - Peer dependency követelmény dokumentálva
+
 ## [4.8.3] - 2025-10-14 - **CURSOR SCALING FIX & RESPONSIVE UI**
 
 ### 🖱️ Cursor Méretezési Javítás

@@ -254,7 +254,7 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
       canvas.style.position = 'absolute';
       canvas.style.top = '0px';
       canvas.style.left = '0px';
-      canvas.style.borderRadius = '15px';
+      canvas.style.borderRadius = '8px';
     }
 
     // Phaser scale manager használata

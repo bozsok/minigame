@@ -1,15 +1,15 @@
 {
   "name": "@bozsok/eger-kaland-jatek",
-  "version": "4.8.3",
+  "version": "4.9.0",
   "description": "2D oktatási játék egér műveletek gyakorlására - React komponensként használható",
   "main": "dist/library.js",
   "types": "dist/library.d.ts",
   "files": ["dist/", "assets/"],
   "scripts": {
-    "build": "webpack --mode production",
-    "build:standalone": "webpack --mode development",
-    "dev": "webpack serve --mode development",
-    "start": "webpack serve --mode development",
+    "build": "webpack --env configName=library --mode production",
+    "build:standalone": "webpack --env configName=standalone --mode production",
+    "dev": "webpack serve --env configName=standalone --mode development",
+    "start": "webpack serve --env configName=standalone --mode development",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix"

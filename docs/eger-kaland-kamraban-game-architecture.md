@@ -64,7 +64,7 @@ A játék egyedi HTML/CSS elrendezéssel rendelkezik:
 - **Jobb panel:** 900px széles, játék terület és utasítások
 - **Játék terület:** 860x484px lekerekített téglalap (#e0e0e0, border-radius: 15px), canvas konténer
 - **Utasítás terület:** Cím, leírás, utasítások szövege
-- **Canvas:** 860x484px, pozicionálva felülre-balra, lekerekített sarkokkal (border-radius: 15px)
+- **Canvas:** 860x484px, pozicionálva felülre-balra, lekerekített sarkokkal (border-radius: 8px)
 
 ## Projekt Struktúra
 

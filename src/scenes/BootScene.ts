@@ -10,7 +10,7 @@ export default class BootScene extends Phaser.Scene {
     this.scale.canvas.style.position = 'absolute';
     this.scale.canvas.style.top = '0px';
     this.scale.canvas.style.left = '0px';
-    this.scale.canvas.style.borderRadius = '15px';
+    this.scale.canvas.style.borderRadius = '8px';
 
     // Betöltés indikátor vagy splash screen
     const progressBar = this.add.graphics();

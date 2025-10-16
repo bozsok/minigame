@@ -4,6 +4,8 @@
 
 A projekt **teljesen optimalizált** kézi másoláshoz! A `minigame/` namespace védelem biztosít a React alkalmazás assets-eivel való ütközés ellen.
 
+> **⚡ v4.9.0+ FRISSÍTÉS:** A build most **ES Module** formátumot használ, kompatibilis React/Vite környezetekkel!
+
 ---
 
 ## 🚀 **1. Build Folyamat**
@@ -12,17 +14,17 @@ A projekt **teljesen optimalizált** kézi másoláshoz! A `minigame/` namespace
 # Projekt root-ban
 cd d:\dev\projects\minigame
 
-# Library verzió buildei (React integrációhoz)
+# Library verzió buildei (React integrációhoz - ES MODULE)
 npm run build
 
-# Vagy standalone verzió (teszteléshez)
+# Vagy standalone verzió (teszteléshez - UMD)
 npm run build:standalone
 ```
 
 **Build kimenet:**
 ```
 dist/
-├── library.js              ← UMD Phaser játék (minified) ✅ KELL!
+├── library.js              ← ES MODULE Phaser játék (minified, 66KB) ✅ KELL!
 ├── library.d.ts            ← TypeScript definíciók ✅ KELL!
 ├── library.js.LICENSE.txt  ← Licence fájl (opcionális)
 ├── minigame/               ← NAMESPACE VÉDELEM! ✅ KELL!
@@ -49,10 +51,18 @@ dist/
 ```
 
 **FONTOS: Mit kell másolni React integrációhoz:**
-- ✅ **library.js** - Fő játék logika
+- ✅ **library.js** - Fő játék logika (ES Module, 66 KB)
 - ✅ **library.d.ts** - TypeScript definíciók
 - ✅ **minigame/** - Teljes mappa összes képpel
 - ❌ **assets/, config/, gameObjects/, scenes/, systems/, types/, utils/** - Belső TypeScript definíciók, NEM KELLENEK!
+
+**FONTOS: Phaser Peer Dependency**
+- A `library.js` **NEM** tartalmazza Phaser-t (externalizálva)
+- A host alkalmazásnak telepítenie kell Phaser-t:
+  ```bash
+  npm install phaser@^3.90.0
+  ```
+- Vite automatikusan kezeli az ES Module import-okat
 
 **FONTOS: Abszolút útvonalak**
 - A játék `/minigame/images/` formátumú útvonalakat használ
@@ -63,7 +73,13 @@ dist/
 
 ## 🔧 **2. Integrációs Lépések**
 
-1. **Fájlok másolása a React projektbe:**
+### **2.1. Phaser Telepítése**
+```bash
+# React projekt root-ban
+npm install phaser@^3.90.0
+```
+
+### **2.2. Fájlok másolása a React projektbe:**
 ```
 my-react-app/
 ├── public/
@@ -86,10 +102,12 @@ my-react-app/
 │           └── EgerKalandJatek.d.ts    # dist/library.d.ts (ÁTNEVEZVE!)
 ```
 
-2. **React komponensben használat:**
+### **2.3. React komponensben használat:**
 ```tsx
 import React, { useEffect, useRef } from 'react';
-import EgerKalandJatek from './EgerKalandJatek.js'; // ← Lokális import
+import EgerKalandJatek from './EgerKalandJatek.js'; // ← Lokális ES Module import
+
+// ⚡ v4.9.0+: Phaser automatikusan importálódik a library.js-ből
 // TypeScript definíció automatikusan betöltődik a library.d.ts-ből
 
 const GameComponent: React.FC = () => {

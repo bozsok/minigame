@@ -257,7 +257,7 @@ export class Cheese extends Phaser.GameObjects.Image {
       }
     };
     
-    img.src = `/minigame/images/${cursorFileName}`;
+    img.src = `./minigame/images/${cursorFileName}`;
   }
 
 }

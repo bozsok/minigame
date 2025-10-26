@@ -301,26 +301,27 @@ export default class GameScene extends Phaser.Scene {
    * Energia háttér létrehozása
    */
   private createEnergyBackground(): void {
-    // Arányosítás számítása
+    // ZOOM KOMPENZÁLT SCALING (ugyanaz mint Timer, CheeseManager, stb.)
     const gameWidth = this.scale.width;
     const gameHeight = this.scale.height;
-    const isFullscreen = gameWidth > 1200;
-    let gameScale: number;
-    if (isFullscreen) {
-      gameScale = 1.0; // Fullscreen = natív méret
-    } else {
-      // Ugyanaz az arányosítás mint a többi elemnél
-      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
-      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
-      const scaleX = gameWidth / originalWidth;
-      const scaleY = gameHeight / originalHeight;
-      gameScale = Math.min(scaleX, scaleY);
-    }
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = gameWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
     
     // Energia méretek arányosítása
-    const scaledWidth = UIConstants.energy.baseWidth * gameScale;
-    const scaledHeight = UIConstants.energy.baseHeight * gameScale;
-    const scaledBorderWidth = UIConstants.energy.baseBorderWidth * gameScale;
+    const scaledWidth = UIConstants.energy.baseWidth * finalScale;
+    const scaledHeight = UIConstants.energy.baseHeight * finalScale;
+    const scaledBorderWidth = UIConstants.energy.baseBorderWidth * finalScale;
     
     // Fekete háttér az energia csík alá - arányosított mérettel
     this.energyBackground = this.add.image(0, 0, '__BLACK');
@@ -338,7 +339,7 @@ export default class GameScene extends Phaser.Scene {
     (this.energyBackground as any).border = border;
     
     // Scale értéket eltároljuk a későbbi frissítésekhez
-    (this.energyBackground as any).currentScale = gameScale;
+    (this.energyBackground as any).currentScale = finalScale;
   }
 
   /**
@@ -1492,21 +1493,38 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Energia csík skálázásának frissítése
-    this.updateEnergyScale(gameScale, gameWidth, gameHeight);
+    this.updateEnergyScale();
   }
 
   /**
-   * Energia csík skálázásának frissítése (fullscreen/ablakos mód váltásnál)
+   * Energia csík skálázásának frissítése (zoom/ablakos mód váltásnál)
    */
-  private updateEnergyScale(gameScale: number, gameWidth: number, gameHeight: number): void {
+  private updateEnergyScale(): void {
     if (!this.energyBackground || !this.energyBar) {
       return; // Még nem léteznek az energia elemek
     }
     
+    // ZOOM KOMPENZÁLT SCALING (ugyanaz mint createEnergyBackground)
+    const gameWidth = this.scale.width;
+    const gameHeight = this.scale.height;
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése
+    const isWindowedMode = gameWidth < 1200;
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
+    
     // Energia méretek újraszámítása
-    const scaledWidth = UIConstants.energy.baseWidth * gameScale;
-    const scaledHeight = UIConstants.energy.baseHeight * gameScale;
-    const scaledBorderWidth = UIConstants.energy.baseBorderWidth * gameScale;
+    const scaledWidth = UIConstants.energy.baseWidth * finalScale;
+    const scaledHeight = UIConstants.energy.baseHeight * finalScale;
+    const scaledBorderWidth = UIConstants.energy.baseBorderWidth * finalScale;
     
     // Energia háttér újraskálázása
     this.energyBackground.setDisplaySize(scaledWidth, scaledHeight);
@@ -1520,12 +1538,12 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Scale érték frissítése
-    (this.energyBackground as any).currentScale = gameScale;
+    (this.energyBackground as any).currentScale = finalScale;
     
     // Energia csík újrarajzolása az új méretekkel
     this.updateEnergyBarMask(this.energyPixels);
     
-    Logger.debug(`⚡ Energia csík skálázva: ${gameScale.toFixed(3)}x (${scaledWidth}x${scaledHeight})`);
+    Logger.debug(`⚡ Energia csík zoom skálázva: ${finalScale.toFixed(3)}x (${scaledWidth}x${scaledHeight}) - ablakos:${isWindowedMode} zoom:${currentZoom}`);
   }
 
   /**

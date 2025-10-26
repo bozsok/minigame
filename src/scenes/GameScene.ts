@@ -55,8 +55,7 @@ export default class GameScene extends Phaser.Scene {
     this.countdownTime = GameBalance.time.totalTime; // Timer reset
 
     // Browser zoom support aktiválva
-    console.log(`🔍 GameScene: Browser zoom support active`);
-
+    
     // Natív cursor használata
     const canvas = this.game.canvas;
     if (canvas) {
@@ -677,8 +676,23 @@ export default class GameScene extends Phaser.Scene {
     
     // 1 másodperc várakozás majd minden egyszerre megjelenik
     setTimeout(() => {
-      Logger.info('250 bab spawn-ja indul...');
-      this.beanManager.spawnAllBeans();
+      try {
+        Logger.info('250 bab spawn-ja indul...');
+        
+        // Ellenőrizzük, hogy a beanManager létezik-e
+        if (!this.beanManager) {
+          Logger.error('BeanManager nem létezik!');
+          return;
+        }
+        
+        this.beanManager.spawnAllBeans();
+      } catch (error) {
+        Logger.error('HIBA a setTimeout callback-ben:', error);
+      }
+      
+      // JAVÍTÁS: Babok spawn után rögtön frissítsük a méretüket!
+      Logger.debug(`🔧 Babok spawn után: ${this.beanManager.getBeanCount()} bab létezik`);
+      this.beanManager.updateScale();
       
       // Interaktív elemek megjelenítése (üvegek, korsó, sajtok)
       Logger.debug('Interaktív elemek megjelenítése...');
@@ -1397,6 +1411,10 @@ export default class GameScene extends Phaser.Scene {
     // UI elemek pozíciójának frissítése
     this.updateUIPositions();
     
+    // JAVÍTÁS: Játék elemek skálázásának frissítése is!
+    Logger.debug(`🔧 Resize: updateGameElementsScale hívása...`);
+    this.updateGameElementsScale(gameSize.width, gameSize.height);
+    
     // BeanManager spawn pontjainak frissítése (ha szükséges)
     if (this.beanManager) {
       // A BeanManager automatikusan frissíti a spawn pontokat a scene méret alapján
@@ -1444,6 +1462,8 @@ export default class GameScene extends Phaser.Scene {
    * VALÓS ARÁNYOSÍTÁS: Fullscreen = natív méret, Ablakos = canvas arányosítás
    */
   private updateGameElementsScale(gameWidth: number, gameHeight: number): void {
+    Logger.debug(`🔧 updateGameElementsScale: ${gameWidth}x${gameHeight}`);
+    
     // Valós arányosítás: eredeti spawn canvas vs jelenlegi canvas
     const isFullscreen = gameWidth > 1200;
     
@@ -1466,6 +1486,11 @@ export default class GameScene extends Phaser.Scene {
       this.jarManager.refreshJarSizes(); // ÚJ: zoom kompenzált dual scaling
     }
 
+    // BeanManager skálázása és pozícionálása - JAVÍTÁS!
+    if (this.beanManager) {
+      this.beanManager.updateScale(); // Babok újrapozícionálása és skálázása
+    }
+
     // Pitcher skálázása és újrapozícionálása
     if (this.pitcher) {
       this.pitcher.updateScaleAndPosition(gameScale, gameWidth, gameHeight);
@@ -1473,7 +1498,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Babok skálázása
     if (this.beanManager) {
-      this.beanManager.updateScale(gameScale, gameWidth, gameHeight);
+      this.beanManager.updateScale();
     }
 
     // Sajtok frissítése az új zoom kompenzált módszerrel (kivéve dev mode-ban)

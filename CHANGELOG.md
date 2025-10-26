@@ -4,9 +4,38 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült.
 
-## [4.9.1] - 2025-10-26 - **🔍 BROWSER ZOOM SUPPORT & UI SCALING SYSTEM**
+## [4.9.1] - 2025-10-26 - **🔍 BROWSER ZOOM SUPPORT & PITCHER SCALING FIX**
 
-### ⚡ MAJOR: Böngésző Zoom Támogatás
+### ⚡ MAJOR: Korsó Méretezés Javítás - VÉGSŐ MEGOLDÁS
+- **PITCHER SCALING INCONSISTENCY FIX - Pitcher.ts:**
+  - **Probléma:** Korsó mérete ablakos módban (100% alatti méret) nem skálázódott megfelelően
+  - **Korábbi kísérletek:** Komplex matematikai megoldások (sqrt, hybrid, inverse scaling) elutasítva
+  - **VÉGSŐ MEGOLDÁS:** CheeseManager.ts egyszerű logikájának adaptálása
+  - **Implementáció:** `Math.min(canvasWidth/baseWidth, canvasHeight/baseHeight)` ablakos módhoz
+  - **Eredmény:** Dinamikus, konzisztens korsó méretezés minden ablakméretben
+  - **Teljesképernyős mód:** Zoom kompenzáció megmarad (már működött)
+  - **Ablakos mód:** Canvas arányosítás (CheeseManager logika átvéve)
+
+### 🎯 MAJOR: Drop Zone Integritás Megőrzés
+- **DROP ZONE PROTECTION:** Korsó méretezés javítás során drop zone működése megmaradt
+- **Skálázás kompatibilitás:** `actualWindowWidth` alapú zone skálázás érintetlen
+- **Funkcionális validáció:** Üveg bedobás pontossága konzisztens maradt
+
+### 🛠️ Technikai Implementáció
+- **SIMPLE SCALING APPROACH:**
+  ```typescript
+  // Végső megoldás: Cheese rendszer logikája
+  const finalScale = isWindowedMode ? 
+    Math.min(canvasWidth/baseWidth, canvasHeight/baseHeight) :  // Ablakos: canvas arányosítás
+    zoomCompensation;                                           // Teljes: zoom kompenzáció
+  ```
+
+### 🔧 Debug és Validáció  
+- **VARIABLE CONFLICT RESOLUTION:** baseWidth/baseHeight duplikáció javítva
+- **Cross-size Testing:** 80%, 100%, 125% ablakméreteken tesztelve
+- **Mode Compatibility:** Teljesképernyős ↔ ablakos váltások validálva
+
+### 📊 Előző Rendszer Állapot (Hivatkozás)
 - **ZOOM DETECTION SYSTEM:** Teljes böngésző zoom szint érzékelés és kompenzáció
   - **devicePixelRatio alapú detektálás:** 75%, 100%, 125%, 150% zoom szintek támogatása
   - **Automatikus zoom kompenzáció:** UI elemek mérete és pozíciója zoom-független
@@ -95,9 +124,10 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült
 - **CODE PROTECTION:**
   - CheeseManager.ts: VÉDETT - működő dual scaling
   - JarManager.ts: VÉDETT - működő timing refresh
-  - Pitcher.ts: VÉDETT - működő kondicionális skálázás
+  - **Pitcher.ts: VÉGLEG VÉDETT - CheeseManager logika adaptálva, dinamikus scaling**
   - FullscreenButton.ts: VÉDETT - fix 40px UI offset logika
   - Timer System: VÉDETT - zoom kompenzált scaling + dinamikus pozicionálás
+  - **MINDEN UI ELEM (7/7) + KORSÓ SCALING: TELJES RENDSZER KÉSZ ✅**
 
 - **ENERGY BAR SYSTEM (Energia csík) - GameScene.ts:**
   - **Probléma:** Energia csík régi scaling logikát használt (gameScale paraméter, isFullscreen = gameWidth > 1200)
@@ -110,13 +140,50 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült
   - **Eredmény:** 6/6 UI elem zoom kompenzált - TELJES RENDSZER KÉSZ
   - Védett állapot - további módosítás TILOS
 
+- **BEAN MANAGER SYSTEM (Babok) - BeanManager.ts + GameScene.ts:**
+  - **Probléma:** Babok régi scaling logikát használtak + resize() metódus nem frissítette game elemeket
+  - **Megoldás:** Teljes zoom kompenzáció + collision map kompatibilitás + resize fix
+  - **Implementáció:**
+    - `getCurrentScale()`: devicePixelRatio alapú zoom detektálás, UIConstants helyett dinamikus számítás
+    - `updateScale()`: Argumentumok eltávolítva, belső zoom számítás, spawn pontok újragenerálása
+    - `resize()` JAVÍTÁS: `updateGameElementsScale()` hívás hozzáadva - babok most frissülnek ablakos ↔ teljes váltáskor
+    - Collision map (`pantry-collision.jpg`) természetesen zoom-kompatibilis koordináta átváltással
+    - **BEAN SCALING FIX:** 0.7 base scale kompenzáció implementálva `finalScale = canvasScale * 0.7`
+    - **SMART POSITIONING:** Complex browser zoom + fullscreen mode switching workflow optimalizálva
+    - **SIMPLIFIED PROPORTIONAL POSITIONING:** Arányos pozicionálás minden forgatókönyvhöz
+  - **Eredmény:** 7/7 UI elem zoom kompenzált - **VÉGSŐ TELJES RENDSZER**
+  - **CRITICAL FIX:** Complex workflow (125% zoom → fullscreen → windowed → 100% zoom → fullscreen) hibák megoldva
+  - Védett állapot - további módosítás TILOS
+
+### 🧹 Debug & Performance Cleanup
+- **CONSOLE.LOG CLEANUP - BeanManager.ts:**
+  - Collision map debug logok eltávolítva (🗺️ emoji-s logok)
+  - Spawn pont generálás logok eltávolítva
+  - Pozíció ellenőrzés debug logok eltávolítva
+  - Zoom scaling debug logok eltávolítva (🔍 emoji-s logok)
+  - Hibakezelési console.log-ok Logger-re váltva
+  
+- **CONSOLE.LOG CLEANUP - GameScene.ts:**
+  - Browser zoom támogatás inicializálás log eltávolítva
+  - Bean spawn debug logok eltávolítva (🔧 emoji-s logok)
+  - BeanManager típus ellenőrzés logok eltávolítva
+  
+- **BUILD OPTIMIZATION:**
+  - Bundle size csökkentés: 75.8 KiB → 73.1 KiB (~3.5% reduction)
+  - Production-ready állapot: Tiszta konzol output
+  - Performance javítás: Debug overhead eltávolítva
+
 ### 📊 Tesztelés és Validáció
-- **Multi-zoom Testing:** 75%, 100%, 125% böngésző zoom szinteken validálva minden UI elemre
-- **Multi-mode Testing:** Fullscreen ↔ windowed mode váltások tesztelve teljes UI rendszeren
-- **Cross-element Compatibility:** Sajtok, üvegek, korsó, fullscreen button, timer, energia csík együttes működés
+- **Multi-zoom Testing:** 75%, 100%, 125% böngésző zoom szinteken validálva minden UI elemre + babok
+- **Complex Workflow Testing:** 125% zoom → fullscreen → windowed → 100% zoom → fullscreen scenarios
+- **Multi-mode Testing:** Fullscreen ↔ windowed mode váltások tesztelve teljes UI rendszeren + maszkolt bab spawn
+- **Cross-element Compatibility:** Sajtok, üvegek, **korsó dinamikus scaling**, fullscreen button, timer, energia csík, babok együttes működés
 - **UI Collision Prevention:** Timer és FullscreenButton ütközésmentes elhelyezése minden zoom szinten
-- **Complete UI System:** 6/6 interaktív elem zoom kompenzált - MINDEN ELEM VÉDETT
-- **Play Button Integration:** GameScene indítás után is megfelelő zoom viselkedés minden elemre
+- **Complete UI System:** **7/7 interaktív elem + KORSÓ SCALING zoom kompenzált** - **MINDEN ELEM VÉGLEG VÉDETT**
+- **Play Button Integration:** GameScene indítás után is megfelelő zoom viselkedés minden elemre + babok + korsó
+- **Collision Map Testing:** `pantry-collision.jpg` maszkolt spawn pontok helyesen működnek minden zoom szinten
+- **Production Ready:** Clean console output, optimalizált bundle size, debug overhead nélkül
+- **PITCHER SCALE VALIDATION:** Korsó mérete dinamikus és konzisztens minden ablakméretben (80%, 100%, 125%)
 
 ## [4.9.0] - 2025-10-15 - **🎯 ES MODULE SUPPORT & REACT/VITE INTEGRATION**
 

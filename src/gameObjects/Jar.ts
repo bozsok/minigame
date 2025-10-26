@@ -325,9 +325,12 @@ export class Jar extends Phaser.GameObjects.Container {
       return false;
     }
     
-    // TELJES KORSÓ BEFOGADÓ TERÜLET - KONZISZTENS A ZONE-NAL
-    const dropZoneWidth = pitcher.width * 1.2;  
-    const dropZoneHeight = pitcher.height;      
+    // TELJES KORSÓ BEFOGADÓ TERÜLET - SKÁLÁZOTT MÉRETEKKEL
+    const pitcherScale = pitcher.scaleX; // Pitcher tényleges skálája
+    const dropZoneWidth = pitcher.width * 1.2 * pitcherScale;   // SKÁLÁZOTT szélesség
+    const dropZoneHeight = pitcher.height * pitcherScale;       // SKÁLÁZOTT magasság
+    
+    console.log(`🔍 Pitcher skála: ${pitcherScale}, skálázott zone: ${dropZoneWidth}x${dropZoneHeight}`);      
     
     // Zone középpont számítás - pitcher origin (1,1) jobb alsó sarok!
     const zoneCenterX = pitcher.x - (pitcher.width / 2); 

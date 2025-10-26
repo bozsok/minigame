@@ -104,8 +104,6 @@ export class BeanManager {
     // Pixel adatok kinyerése
     this.collisionData = context.getImageData(0, 0, canvas.width, canvas.height);
     
-    // Collision map feldolgozva
-    
     // Érvényes területek generálása a pixel adatok alapján
     this.generateValidAreasFromPixels();
   }
@@ -158,6 +156,7 @@ export class BeanManager {
     // AKTUÁLIS képernyőméret használata (teljesképernyős esetén is)
     const gameWidth = this.scene.scale.width;
     const gameHeight = this.scene.scale.height;
+    Logger.debug(`🌱 GenerateValidAreasFromPixels: game ${gameWidth}x${gameHeight}, collision ${this.collisionData.width}x${this.collisionData.height}`);
     const collisionWidth = this.collisionData.width;
     const collisionHeight = this.collisionData.height;
 
@@ -298,18 +297,19 @@ export class BeanManager {
    * Klaszter-alapú természetes eloszlással, üres zónák hagyásával
    */
   public spawnAllBeans(): void {
+    Logger.debug(`🌱 SpawnAllBeans METÓDUS KEZDETE`);
+    
     // 250 BAB TERMÉSZETES KLASZTER SPAWN
     
     // Aktuális képernyő méret lekérése
     const gameWidth = this.scene.scale.width;
     const gameHeight = this.scene.scale.height;
     
-    // Aktuális játék méret
+    Logger.debug(`🌱 Scene méretek: ${gameWidth}x${gameHeight}`);
     
     // Eredeti canvas méret tárolása (spawn-kori méret)
     this.originalCanvasWidth = gameWidth;
     this.originalCanvasHeight = gameHeight;
-    // Eredeti canvas méret tárolva
     
     // Collision map újragenerálása aktuális méretek alapján
     this.regenerateSpawnPointsForCurrentSize();
@@ -318,10 +318,11 @@ export class BeanManager {
     let beansSpawned = 0;
     const spawnedPositions: { x: number, y: number }[] = [];
     
-    // Spawn pontok rendelkezésre állnak
+    Logger.debug(`🌱 SpawnAllBeans INDÍTÁS: ${totalBeansNeeded} bab spawn-ja szükséges, ${this.spawnPoints.length} spawn pont rendelkezésre áll`);
     
     // Klaszter-alapú spawn algoritmus
     const clusters = this.generateBeanClusters(totalBeansNeeded, gameWidth, gameHeight);
+    Logger.debug(`🌱 ${clusters.length} klaszter generálva, ${clusters[0]?.positions?.length || 0} pozíció az első klaszterben`);
     
     for (const cluster of clusters) {
       for (const position of cluster.positions) {
@@ -342,7 +343,7 @@ export class BeanManager {
           beansSpawned++;
           
           if (beansSpawned % 50 === 0) {
-            // Spawn progress
+            Logger.debug(`🌱 Spawn progress: ${beansSpawned}/${totalBeansNeeded} bab kész`);
           }
         }
       }
@@ -350,6 +351,7 @@ export class BeanManager {
     }
     
     // Spawn befejezve
+    Logger.debug(`🌱 SpawnAllBeans BEFEJEZVE: ${beansSpawned} bab spawn-olva, összesen: ${this.beans.size} aktív bab`);
   }
 
   /**
@@ -362,7 +364,6 @@ export class BeanManager {
     const maxAttempts = 1000;
     
     // Bab generálás egér gyakorláshoz
-    
     for (let i = 0; i < totalBeans; i++) {
       let attempts = 0;
       let validPosition: { x: number, y: number } | null = null;
@@ -441,13 +442,17 @@ export class BeanManager {
    * Pozíció ellenőrzése collision map-en (fehér pixel)
    */
   private isPositionOnCollisionMap(x: number, y: number, gameWidth: number, gameHeight: number): boolean {
-    if (!this.collisionData) return true; // Ha nincs collision data, minden pozíció OK
+    if (!this.collisionData) {
+      return true; // Ha nincs collision data, minden pozíció OK
+    }
     
     // Koordináta átváltás
     const collisionX = Math.floor((x / gameWidth) * this.collisionData.width);
     const collisionY = Math.floor((y / gameHeight) * this.collisionData.height);
     
-    return this.isPixelWhite(collisionX, collisionY);
+    const isValid = this.isPixelWhite(collisionX, collisionY);
+    
+    return isValid;
   }
 
   /**
@@ -478,7 +483,7 @@ export class BeanManager {
    * Spawn pontok újragenerálása aktuális képernyő mérethez
    */
   private regenerateSpawnPointsForCurrentSize(): void {
-    // Spawn pontok újragenerálása
+    Logger.debug(`🌱 RegenerateSpawnPoints INDÍTÁS: jelenlegi pontok: ${this.spawnPoints.length}`);
     
     // Korábbi spawn pontok törlése
     this.spawnPoints = [];
@@ -490,7 +495,7 @@ export class BeanManager {
       this.generateValidAreas();
     }
     
-    // Spawn pontok újragenerálva
+    Logger.debug(`🌱 RegenerateSpawnPoints BEFEJEZVE: ${this.spawnPoints.length} spawn pont generálva`);
   }
 
   /**
@@ -645,12 +650,20 @@ export class BeanManager {
 
   /**
    * Jelenlegi skála meghatározása a játékméret alapján
-   * FONTOS: Fullscreen-ben is csak 70% (eredeti beállítás)
+   * FONTOS: Bean eredeti skálája 0.7, ezt figyelembe kell venni
    */
   private getCurrentScale(): number {
     const gameWidth = this.scene.scale.width;
-    const isFullscreen = gameWidth > 1200;
-    return isFullscreen ? UIConstants.scaling.beanFullscreenScale : UIConstants.scaling.beanWindowedScale;
+    const gameHeight = this.scene.scale.height;
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
+    
+    // Bean eredeti skálája 0.7 - ezt kombinálni kell a canvas skálával
+    const beanBaseScale = 0.7;
+    const finalScale = canvasScale * beanBaseScale;
+    
+    return finalScale;
   }
 
   /**
@@ -665,11 +678,29 @@ export class BeanManager {
   }
 
   /**
-   * Babok skálázása
-   * HUSZÁRVÁGÁS: Fullscreen (1.0) vagy Ablakos (0.25)
+   * Aktív babok számának lekérése (debug célokra)
    */
-  public updateScale(gameScale: number, gameWidth: number, gameHeight: number): void {
-    const isFullscreen = gameScale >= 1.0;
+  public getBeanCount(): number {
+    return this.beans.size;
+  }
+
+  /**
+   * Babok skálázása és pozicionálása
+   * JAVÍTOTT: Bean eredeti 0.7 skálájával kombinálva
+   */
+  public updateScale(): void {
+    const gameWidth = this.scene.scale.width;
+    const gameHeight = this.scene.scale.height;
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
+    
+    // Ablakos mód észlelése
+    const isWindowedMode = gameWidth < 1200;
+    
+    // Bean eredeti skálája 0.7 - ezt kombinálni kell a canvas skálával
+    const beanBaseScale = 0.7;
+    const finalScale = canvasScale * beanBaseScale;
     
     // Minden aktív bab skálázása ÉS pozíció arányosítása
     this.beans.forEach((bean) => {
@@ -681,17 +712,11 @@ export class BeanManager {
         return;
       }
       
-      if (isFullscreen) {
-        // Fullscreen: 70% méret és eredeti pozíció
-        bean.setScale(UIConstants.scaling.beanFullscreenScale);
-        bean.setPosition(originalPos.x, originalPos.y);
-      } else {
-        // Ablakos: 17.5% méret és valós canvas arányosítás
-        bean.setScale(UIConstants.scaling.beanWindowedScale);
-        
-        // Valós arányosítás: fullscreen → ablakos canvas méret szerint
-        // originalPos alapja a spawn-kori canvas méret (pl. 1920x1080)
-        // Most át kell számolni 860x484-re
+      // Bab méret beállítása kombinált skálával
+      bean.setScale(finalScale);
+      
+      // EGYSZERŰ arányos pozíció számítás - minden esetben
+      if (this.originalCanvasWidth > 0 && this.originalCanvasHeight > 0) {
         const scaleX = gameWidth / this.originalCanvasWidth;
         const scaleY = gameHeight / this.originalCanvasHeight;
         
@@ -701,6 +726,9 @@ export class BeanManager {
         bean.setPosition(scaledX, scaledY);
       }
     });
+    
+    // Spawn pontok újragenerálása az új skálázáshoz
+    this.regenerateSpawnPointsForCurrentSize();
   }
 
   /**

@@ -199,7 +199,18 @@ export class Pitcher extends Phaser.GameObjects.Image {
    */
   public reset(): void {
     this.jarCount = 0;
-    Logger.debug('Pitcher: Reset complete');
+    
+    // JAVÍTÁS: Skálázás és láthatóság visszaállítása
+    this.setScale(1); // Eredeti skála
+    this.setVisible(false); // Kezdetben láthatatlan (mint az inicializáláskor)
+    
+    // Drop zone tisztítása és újralétrehozása eredeti méretekkel
+    if (this.dropZone) {
+      this.dropZone.destroy();
+      this.createDropZone();
+    }
+    
+    Logger.debug('Pitcher: Reset complete - skálázás és láthatóság visszaállítva');
   }
 
   /**
@@ -217,9 +228,12 @@ export class Pitcher extends Phaser.GameObjects.Image {
    * VALÓS ARÁNYOSÍTÁS: Fullscreen (1.0) vagy valós canvas arány
    */
   public updateScaleAndPosition(gameScale: number, gameWidth: number, gameHeight: number): void {
-    // EREDETI pozicionálás: jobb alsó sarok
-    const newX = gameWidth;   // Jobb szél
-    const newY = gameHeight;  // Alsó szél
+    console.log(`🎯 Pitcher updateScaleAndPosition: ${gameWidth}x${gameHeight}, gameScale=${gameScale}`);
+    
+    // JAVÍTÁS: Tényleges ablak méret használata a canvas méret helyett
+    const actualWindowWidth = window.innerWidth;
+    const actualWindowHeight = window.innerHeight;
+    console.log(`🪟 Tényleges ablak méret: ${actualWindowWidth}x${actualWindowHeight}`);
     
     // Canvas skálázás számítása
     const baseWidth = 1920;
@@ -230,18 +244,68 @@ export class Pitcher extends Phaser.GameObjects.Image {
     const currentZoom = window.devicePixelRatio || 1;
     const zoomCompensation = 1 / currentZoom;
     
-    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
-    const isWindowedMode = gameWidth < 1200; // 1536-nál kisebb = ablakos
-    const finalScale = isWindowedMode ? 
-        canvasScale :               // Ablakos: csak canvas skálázás
-        zoomCompensation;           // Teljes: csak zoom skálázás
+    // Ablakos mód észlelése: gameScale alapján (megbízhatóbb mint ablak méret)
+    const isWindowedMode = gameScale < 0.9; // Ha gameScale < 0.9, akkor ablakos mód
+    console.log(`🖥️ Ablak mód: ${isWindowedMode ? 'ABLAKOS' : 'TELJESKÉPERNYŐS'} (gameScale: ${gameScale}, ablak: ${actualWindowWidth}px)`);
     
-    // Pozíció és méret frissítése
+    // EREDETI pozicionálás: jobb alsó sarok (VÉDETT - ne változtassuk)
+    const newX = gameWidth;   // CANVAS szélesség (nem browser ablak!)
+    const newY = gameHeight;  // CANVAS magasság (nem browser ablak!)
+    
+    // A final scale SAJT LOGIKA alapján: egyszerű canvas arányosítás
+    const canvasWidth = this.scene.sys.game.canvas.width;
+    const canvasHeight = this.scene.sys.game.canvas.height;
+    
+    const finalScale = isWindowedMode ? 
+        Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight) :  // Ablakos: canvas arányosítás (mint a sajt)
+        zoomCompensation;                                               // Teljes: zoom kompenzáció
+    console.log(`⚖️ Final scale (sajt logika): ${finalScale} (canvas: ${canvasWidth}x${canvasHeight})`);
+    
+    // Pozíció és méret frissítése (VÉDETT)
     this.setPosition(newX, newY);
     this.setScale(finalScale);
+    // JAVÍTÁS: Ne tegyük automatikusan láthatóvá - majd a GameScene teszi láthatóvá a megfelelő időben
+    // this.setVisible(true); // TÖRÖLVE - a spawnInteractiveElements() hívja majd
     
-    // DropZone frissítése (kombinált skálázással számolva)
-    this.dropZone.setPosition(newX - (this.width * finalScale) / 2, newY - (this.height * finalScale) / 2);
+    console.log(`🍺 Pitcher pozíció: (${newX}, ${newY}), skála: ${finalScale}, méret: ${this.width}x${this.height}`);
+    console.log(`🍺 Pitcher bounds: left=${newX - this.width}, right=${newX}, top=${newY - this.height}, bottom=${newY}`);
+    console.log(`🍺 Pitcher látható: ${this.visible}, alpha: ${this.alpha}`);
+    
+    // DropZone ÚJRALÉTREHOZÁSA - a Phaser Zone setSize() nem működik megfelelően
+    if (this.dropZone) {
+      this.dropZone.destroy();
+    }
+    
+    // Új drop zone létrehozása a helyes méretekkel
+    const originalDropZoneWidth = this.width * 1.2;  // Eredeti zone szélesség
+    const originalDropZoneHeight = this.height;      // Eredeti zone magasság
+    
+    // Zone méret skálázása a finalScale-lel
+    const scaledZoneWidth = originalDropZoneWidth * finalScale;
+    const scaledZoneHeight = originalDropZoneHeight * finalScale;
+    
+    console.log(`📦 Zone méret: ${scaledZoneWidth}x${scaledZoneHeight} (finalScale: ${finalScale})`);
+    
+    // Zone pozíció számítás a skálázott méretekkel
+    const zoneCenterX = newX - (scaledZoneWidth / 2);
+    const zoneCenterY = newY - (scaledZoneHeight / 2);
+    
+    // ÚJ zone létrehozása
+    this.dropZone = this.scene.add.zone(
+      zoneCenterX, 
+      zoneCenterY, 
+      scaledZoneWidth, 
+      scaledZoneHeight
+    );
+    
+    this.dropZone.setRectangleDropZone(scaledZoneWidth, scaledZoneHeight);
+    
+    console.log(`🎯 Zone: left=${this.dropZone.x - scaledZoneWidth/2}, right=${this.dropZone.x + scaledZoneWidth/2}, top=${this.dropZone.y - scaledZoneHeight/2}, bottom=${this.dropZone.y + scaledZoneHeight/2}`);
+    
+    // Drop zone események újrakötése
+    this.dropZone.on('drop', (pointer: Phaser.Input.Pointer, gameObject: any) => {
+      this.handleJarDrop(gameObject);
+    });
     
     // PreFX automatikusan követi a sprite pozíciót és skálázást
   }

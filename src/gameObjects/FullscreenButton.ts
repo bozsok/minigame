@@ -3,10 +3,13 @@
  * tm.png (Teljes Mód) és em.png (Eredeti Méretre) képek közötti váltás
  * Library módban: csak event-et küld, nem közvetlenül manipulálja a DOM-ot
  */
+import { UIConstants } from '../config/UIConstants';
+
 export class FullscreenButton extends Phaser.GameObjects.Image {
   private isFullscreen: boolean = false;
   private gameConfig: { width: number; height: number };
   private isLibraryMode: boolean = false;
+  private currentScale: number = 1.0; // Zoom-aware skálázás tárolása
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'tm'); // Kezdetben tm.png (Teljes Mód)
@@ -40,12 +43,12 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     // Hover effekt
     this.on('pointerover', () => {
       this.setTint(0xcccccc);
-      this.setScale(1.1);
+      this.setScale(this.currentScale * 1.1); // Zoom-aware hover méret
     });
 
     this.on('pointerout', () => {
       this.clearTint();
-      this.setScale(1.0);
+      this.setScale(this.currentScale); // Zoom-aware alapméret visszaállítása
     });
 
     // Kattintás kezelés
@@ -239,19 +242,18 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     // Phaser scale manager használata
     this.scene.scale.setGameSize(screenWidth, screenHeight);
     
-    // Gomb pozíció frissítése (jobb felső sarok)
-    this.setPosition(screenWidth - 40, 40);
-
     // GameScene handleResize direkt hívása AZONNAL
     if ((this.scene as any).handleResize) {
       (this.scene as any).handleResize(screenWidth, screenHeight);
     } else {
       // Alternatíva: próbáljuk meg közvetlenül a háttér frissítést
       if ((this.scene as any).background && (this.scene as any).updateBackgroundSizeWithDimensions) {
-        console.log('Alternatív háttér frissítés...');
         (this.scene as any).updateBackgroundSizeWithDimensions((this.scene as any).background, screenWidth, screenHeight);
       }
     }
+    
+    // MINDEN esetben: FullscreenButton pozíció frissítése (MenuScene és GameScene)
+    this.updateScaleAndPosition(screenWidth, screenHeight);
 
     // Scene resize esemény trigger is
     this.scene.events.emit('resize', { width: screenWidth, height: screenHeight });
@@ -282,8 +284,15 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
     // Phaser scale manager használata
     this.scene.scale.setGameSize(this.gameConfig.width, this.gameConfig.height);
 
-    // Gomb pozíció visszaállítása
-    this.setPosition(this.gameConfig.width - 40, 40);
+    // GameScene handleResize hívása
+    if ((this.scene as any).handleResize) {
+      (this.scene as any).handleResize(this.gameConfig.width, this.gameConfig.height);
+    }
+    
+    // MINDEN esetben: FullscreenButton pozíció visszaállítása AKTUÁLIS canvas mérettel
+    const actualWidth = this.scene.sys.game.canvas.width;
+    const actualHeight = this.scene.sys.game.canvas.height;
+    this.updateScaleAndPosition(actualWidth, actualHeight);
 
     // GameScene handleResize direkt hívása AZONNAL
     if ((this.scene as any).handleResize) {
@@ -300,7 +309,6 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
 
     // Még egy próbálkozás 50ms múlva
     setTimeout(() => {
-      console.log('Késleltetett eredeti méret resize trigger...');
       if ((this.scene as any).handleResize) {
         (this.scene as any).handleResize(this.gameConfig.width, this.gameConfig.height);
       }
@@ -313,6 +321,28 @@ export class FullscreenButton extends Phaser.GameObjects.Image {
   public updatePosition(): void {
     const currentWidth = this.scene.scale.width;
     this.setPosition(currentWidth - 40, 40);
+  }
+
+  /**
+   * Zoom-aware pozíció és méret frissítése
+   */
+  public updateScaleAndPosition(gameWidth: number, gameHeight: number): void {
+    // UI gomb: fix méret (1.0), zoom-független
+    const finalScale = 1.0; // UI elemek fix méretűek
+    
+    // UI elemek esetén az offset mindig fix 40px (nem skálázott!)
+    const fixedOffset = 40; // Állandó 40px offset minden canvas méretnél
+    
+    // Jobb felső sarok pozicionálás
+    const newX = gameWidth - fixedOffset;
+    const newY = fixedOffset;
+    
+    // Pozíció és méret frissítése
+    this.setPosition(newX, newY);
+    this.setScale(finalScale);
+    
+    // Aktuális skálázás tárolása a hover effekthez
+    this.currentScale = finalScale;
   }
 
   /**

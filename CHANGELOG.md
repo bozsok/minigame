@@ -4,6 +4,95 @@ Minden lényeges változás ebben a projektben dokumentálva lesz.
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült.
 
+## [4.9.1] - 2025-10-26 - **🔍 BROWSER ZOOM SUPPORT & UI SCALING SYSTEM**
+
+### ⚡ MAJOR: Böngésző Zoom Támogatás
+- **ZOOM DETECTION SYSTEM:** Teljes böngésző zoom szint érzékelés és kompenzáció
+  - **devicePixelRatio alapú detektálás:** 75%, 100%, 125%, 150% zoom szintek támogatása
+  - **Automatikus zoom kompenzáció:** UI elemek mérete és pozíciója zoom-független
+  - **Dual scaling rendszer:** Játék elemek (canvas-relatív) vs UI elemek (fix méret)
+  - **Real-time adaptáció:** Zoom váltáskor azonnali UI újrakalkuláció
+
+### 🎯 MAJOR: Interaktív Elemek Pozicionálás Javítás
+- **CHEESE SYSTEM (Sajtok) - CheeseManager.ts:**
+  - **Probléma:** 125% zoom-nál sajtok pozíciói eltolódtak, méretük 25%-kal nagyobb volt
+  - **Megoldás:** Kondicionális scaling - Teljes képernyő: zoom kompenzáció, Ablakos: canvas skálázás
+  - **Eredmény:** Tökéletes pozicionálás és méretezés minden zoom szinten
+  - Védett állapot - további módosítás TILOS
+  
+- **JAR SYSTEM (Üvegek) - JarManager.ts:**
+  - **Probléma:** Üvegek nem megfelelő méretezése és elhelyezése zoom változáskor
+  - **Megoldás:** Dual scaling logika + timing-based refresh system
+  - **Implementáció:** `refreshJarSizes()` metódus kondicionális skálázással
+  - **Eredmény:** Konzisztens üveg megjelenés fullscreen ↔ windowed mód váltáskor
+  - Védett állapot - további módosítás TILOS
+
+- **PITCHER SYSTEM (Korsó) - Pitcher.ts:**
+  - **Probléma:** Korsó pozíció instabilitás különböző zoom szinteken
+  - **Megoldás:** Egyesített canvas + zoom skálázás jobb alsó sarok pozicionáláshoz
+  - **Implementáció:** `updateScaleAndPosition()` kondicionális scaling logikával
+  - **Eredmény:** Stabil korsó pozíció minden canvas méret és zoom kombinációnál
+  - Védett állapot - további módosítás TILOS
+
+### 🖱️ MAJOR: FullscreenButton UI Rendszer Átdolgozás
+- **UI vs GAME ELEMENT MEGKÜLÖNBÖZTETÉS:**
+  - **Koncepció:** UI elemek (FullscreenButton) ≠ Játék elemek (sajt, üveg, korsó)
+  - **UI szabály:** Mindig fix 40px eltartás a canvas szélektől, zoom-független
+  - **Game szabály:** Canvas-arányos pozicionálás + zoom kompenzáció
+
+- **FULLSCREEN BUTTON FIXES - FullscreenButton.ts:**
+  - **Pozicionálás konzisztencia:** Eredeti létrehozás vs updateScaleAndPosition egységesítés
+  - **Fix offset implementáció:** 40px eltartás minden canvas méretnél (860x484, 2560x1440)
+  - **Scene compatibility:** GameScene és MenuScene unified pozicionálás
+  - **Hover effect fixes:** currentScale tracking zoom-aware hover animációkhoz
+  - **Initialization timing:** Proper scaling application at button creation
+
+- **FULLSCREEN WORKFLOW IMPROVEMENTS:**
+  - **Teljes képernyő → ablakos átmenet:** Konzisztens pozíció visszaállítás
+  - **Canvas edge collision prevention:** UI elemek sosem érnek a canvas szélához
+  - **Multi-zoom validation:** 75%, 100%, 125% zoom szinteken tesztelve
+
+### 🛠️ Technikai Implementációk
+- **UNIFIED SCALING LOGIC:**
+  ```typescript
+  // Game elemek: Kondicionális scaling
+  if (isWindowedMode) {
+    // Ablakos: canvas skálázás
+    scale = canvasWidth / baseWidth;
+  } else {
+    // Teljes képernyő: zoom kompenzáció  
+    scale = 1 / devicePixelRatio;
+  }
+  
+  // UI elemek: Fix méret + canvas-relatív pozíció
+  const fixedOffset = 40; // Mindig 40px
+  position = (canvasWidth - fixedOffset, fixedOffset);
+  ```
+
+- **CANVAS SCALE DETECTION:**
+  - Base resolution: 1920x1080 design
+  - Dynamic canvas scaling: gameWidth / 1920
+  - Zoom level detection: window.devicePixelRatio
+  - Mode detection: windowed (860x484) vs fullscreen (native resolution)
+
+### 🔧 Debug és Karbantartás
+- **CONSOLE LOG CLEANUP:** 
+  - Zoom/pozicionálás debug üzenetek eltávolítva production buildből
+  - Hibaelhárítási logok megmaradtak
+  - Bundle size optimalizáció: 72.7 KB → 72.1 KB
+
+- **CODE PROTECTION:**
+  - CheeseManager.ts: VÉDETT - működő dual scaling
+  - JarManager.ts: VÉDETT - működő timing refresh
+  - Pitcher.ts: VÉDETT - működő kondicionális skálázás
+  - FullscreenButton.ts: VÉDETT - fix 40px UI offset logika
+
+### 📊 Tesztelés és Validáció
+- **Multi-zoom Testing:** 75%, 100%, 125% böngésző zoom szinteken validálva
+- **Multi-mode Testing:** Fullscreen ↔ windowed mode váltások tesztelve
+- **Cross-element Compatibility:** Sajtok, üvegek, korsó, fullscreen button együttes működés
+- **Play Button Integration:** GameScene indítás után is megfelelő zoom viselkedés
+
 ## [4.9.0] - 2025-10-15 - **🎯 ES MODULE SUPPORT & REACT/VITE INTEGRATION**
 
 ### ⚡ MAJOR: ES Module Build Támogatás

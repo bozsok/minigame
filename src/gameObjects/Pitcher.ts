@@ -217,27 +217,31 @@ export class Pitcher extends Phaser.GameObjects.Image {
    * VALÓS ARÁNYOSÍTÁS: Fullscreen (1.0) vagy valós canvas arány
    */
   public updateScaleAndPosition(gameScale: number, gameWidth: number, gameHeight: number): void {
-    const isFullscreen = gameScale >= 1.0;
+    // EREDETI pozicionálás: jobb alsó sarok
+    const newX = gameWidth;   // Jobb szél
+    const newY = gameHeight;  // Alsó szél
     
-    // TELJESEN jobb alsó sarok - nincs offset!
-    let newX: number;
-    let newY: number;
+    // Canvas skálázás számítása
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
     
-    if (isFullscreen) {
-      // Fullscreen: teljesen jobb alsó sarok, natív méret
-      newX = gameWidth;
-      newY = gameHeight;
-      this.setScale(1.0);
-    } else {
-      // Ablakos: teljesen jobb alsó sarok, valós arányosítás
-      newX = gameWidth;
-      newY = gameHeight;
-      this.setScale(gameScale); // Valós arányosítás használata
-    }
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
     
-    // Pozíció frissítése
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = gameWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
+    
+    // Pozíció és méret frissítése
     this.setPosition(newX, newY);
-    this.dropZone.setPosition(newX - this.width / 2, newY - this.height / 2);
+    this.setScale(finalScale);
+    
+    // DropZone frissítése (kombinált skálázással számolva)
+    this.dropZone.setPosition(newX - (this.width * finalScale) / 2, newY - (this.height * finalScale) / 2);
     
     // PreFX automatikusan követi a sprite pozíciót és skálázást
   }

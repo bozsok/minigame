@@ -20,7 +20,8 @@ export default class MenuScene extends Phaser.Scene {
     this.updateBackgroundSize(this.background);
 
     // Teljesképernyős gomb (jobb felső sarok)
-    this.fullscreenButton = new FullscreenButton(this, 860 - 40, 40);
+    // UI elemek esetén fix 40px offset minden canvas méretnél
+    this.fullscreenButton = new FullscreenButton(this, this.scale.gameSize.width - 40, 40);
   }
 
   /**

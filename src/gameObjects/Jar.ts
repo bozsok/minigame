@@ -38,6 +38,9 @@ export class Jar extends Phaser.GameObjects.Container {
     this.setDepth(500); // Magas depth - babok felett
     
     scene.add.existing(this);
+    
+    // DEBUG: Jar méret ellenőrzése
+    console.log(`🍯 JAR-${jarIndex} létrehozva: pozíció(${x}, ${y}), kezdeti skála(${this.scaleX}, ${this.scaleY})`);
   }
 
   private createJarComponents(): void {

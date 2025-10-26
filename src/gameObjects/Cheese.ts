@@ -90,14 +90,18 @@ export class Cheese extends Phaser.GameObjects.Image {
 
       // Csak akkor változtassuk a cursort és glow-t, ha a sajt még ehető
       if (!this.isCompletelyEaten()) {
-        // Custom egérke száj cursor - 60% méret * aktuális játék arány
+        // Custom egérke száj cursor - eredeti méretben (canvas zoom neutralized)
         const canvas = this.scene.game.canvas;
         if (canvas) {
           // Aktuális játék méretarány lekérdezése
           const gameScale = (this.scene as any).getCurrentGameScale ? (this.scene as any).getCurrentGameScale() : 1.0;
+          
           const baseCursorScale = 0.6; // 60% alapméret
+          // Canvas zoom neutralizálva van, így eredeti scaling használható
           const finalCursorScale = baseCursorScale * gameScale;
+          
           this.setScaledCursor(canvas, 'cursor-eat.png', finalCursorScale);
+          console.log(`🖱️ Cursor scale: ${(finalCursorScale * 100).toFixed(1)}% (zoom neutralized canvas)`);
         }
         
         // Glow effekt hozzáadása

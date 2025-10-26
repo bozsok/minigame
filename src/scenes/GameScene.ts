@@ -54,6 +54,9 @@ export default class GameScene extends Phaser.Scene {
     this.gameActive = true; // Játék állapot reset
     this.countdownTime = GameBalance.time.totalTime; // Timer reset
 
+    // Browser zoom support aktiválva
+    console.log(`🔍 GameScene: Browser zoom support active`);
+
     // Natív cursor használata
     const canvas = this.game.canvas;
     if (canvas) {
@@ -89,7 +92,11 @@ export default class GameScene extends Phaser.Scene {
     this.updateGameElementsScale(this.scale.gameSize.width, this.scale.gameSize.height);
 
     // Teljesképernyős gomb létrehozása (jobb felső sarok)
-    this.fullscreenButton = new FullscreenButton(this, 860 - UIConstants.positions.fullscreenButtonOffset, UIConstants.positions.fullscreenButtonOffset);
+    // UI elemek esetén fix 40px offset minden canvas méretnél
+    this.fullscreenButton = new FullscreenButton(this, this.scale.gameSize.width - 40, 40);
+    
+    // Azonnal zoom-aware skálázás alkalmazása
+    this.fullscreenButton.updateScaleAndPosition(this.scale.gameSize.width, this.scale.gameSize.height);
 
     // UI elemek létrehozása
     this.createUI();
@@ -654,6 +661,7 @@ export default class GameScene extends Phaser.Scene {
       // Interaktív elemek megjelenítése (üvegek, korsó, sajtok)
       Logger.debug('Interaktív elemek megjelenítése...');
       this.jarManager.setVisible(true);
+      this.jarManager.refreshJarSizes(); // ← Üvegek méretének frissítése fullscreen után
       this.pitcher.setVisible(true);
       
       // Sajtok spawn-ja (5 sajt különböző pozíciókban)
@@ -1430,9 +1438,9 @@ export default class GameScene extends Phaser.Scene {
       gameScale = Math.min(scaleX, scaleY);
     }
     
-    // JarManager skálázása és újrapozícionálása
+    // JarManager frissítése az új zoom kompenzált módszerrel
     if (this.jarManager) {
-      this.jarManager.updateScale(gameScale, gameWidth, gameHeight);
+      this.jarManager.refreshJarSizes(); // ÚJ: zoom kompenzált dual scaling
     }
 
     // Pitcher skálázása és újrapozícionálása
@@ -1445,15 +1453,20 @@ export default class GameScene extends Phaser.Scene {
       this.beanManager.updateScale(gameScale, gameWidth, gameHeight);
     }
 
-    // Sajtok skálázása és pozicionálása (kivéve dev mode-ban)
+    // Sajtok frissítése az új zoom kompenzált módszerrel (kivéve dev mode-ban)
     if (this.cheeseManager && !this.cheeseManager.isDevMode()) {
-      this.cheeseManager.updateScale(gameScale, gameWidth, gameHeight);
+      this.cheeseManager.refreshCheesePositionsAndSizes(); // ÚJ: zoom kompenzált dual scaling
     }
     
     // Timer méretének és pozíciójának frissítése - csak ha háttér is létezik
     if (this.uiElements.timerText && this.timerBackground) {
       this.updateTimerUI(); // Ez már tartalmazza az arányosítást
       this.updateTimerPosition(gameWidth); // És a pozíciót is frissíti
+    }
+    
+    // FullscreenButton pozíciójának és méretének frissítése
+    if (this.fullscreenButton) {
+      this.fullscreenButton.updateScaleAndPosition(gameWidth, gameHeight);
     }
     
     // Energia csík skálázásának frissítése

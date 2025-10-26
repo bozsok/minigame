@@ -27,37 +27,67 @@ export class CheeseManager {
   }
 
   public spawnCheeses(): void {
-    // CHEESE-1 → MENTETT POZÍCIÓ (147, 461) - KÉSZ!
-    const cheese1 = new Cheese(this.scene, 147, 461, 1);
+    // Dinamikus pozíció skálázás a canvas mérethez
+    const canvasWidth = this.scene.sys.game.canvas.width;
+    const canvasHeight = this.scene.sys.game.canvas.height;
+    const baseWidth = 1920;  // Eredeti tervezési felbontás
+    const baseHeight = 1080; // Eredeti tervezési felbontás
+    
+    const scaleX = canvasWidth / baseWidth;
+    const scaleY = canvasHeight / baseHeight;
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = canvasWidth < 1200; // 1536-nál kisebb = ablakos
+    const imageScale = isWindowedMode ? 
+        scaleX :                    // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
+    
+    // CHEESE-1 → SKÁLÁZOTT POZÍCIÓ + MÉRET
+    const cheese1X = Math.round(147 * scaleX);
+    const cheese1Y = Math.round(461 * scaleY);
+    const cheese1 = new Cheese(this.scene, cheese1X, cheese1Y, 1);
+    cheese1.setScale(imageScale); // ← Zoom-kompenzált méret
     this.cheeses.set(1, cheese1);
-    this.originalPositions.set(1, {x: 147, y: 461});
+    this.originalPositions.set(1, {x: 147, y: 461}); // BASE koordináták!
     
-    // CHEESE-2 → MENTETT POZÍCIÓ (83, 805) - KÉSZ!
-    const cheese2 = new Cheese(this.scene, 83, 805, 2);
+    // CHEESE-2 → SKÁLÁZOTT POZÍCIÓ + MÉRET
+    const cheese2X = Math.round(83 * scaleX);
+    const cheese2Y = Math.round(805 * scaleY);
+    const cheese2 = new Cheese(this.scene, cheese2X, cheese2Y, 2);
+    cheese2.setScale(imageScale); // ← Zoom-kompenzált méret
     this.cheeses.set(2, cheese2);
-    this.originalPositions.set(2, {x: 83, y: 805});
+    this.originalPositions.set(2, {x: 83, y: 805}); // BASE koordináták!
     
-    // CHEESE-3 → MENTETT POZÍCIÓ (954, 612) - KÉSZ!
-    const cheese3 = new Cheese(this.scene, 954, 612, 3);
+    // CHEESE-3 → SKÁLÁZOTT POZÍCIÓ + MÉRET
+    const cheese3X = Math.round(954 * scaleX);
+    const cheese3Y = Math.round(612 * scaleY);
+    const cheese3 = new Cheese(this.scene, cheese3X, cheese3Y, 3);
+    cheese3.setScale(imageScale); // ← Zoom-kompenzált méret
     this.cheeses.set(3, cheese3);
-    this.originalPositions.set(3, {x: 954, y: 612});
+    this.originalPositions.set(3, {x: 954, y: 612}); // BASE koordináták!
     
-    // CHEESE-4 → MENTETT POZÍCIÓ (1197, 366) - KÉSZ!
-    const cheese4 = new Cheese(this.scene, 1197, 366, 4);
+    // CHEESE-4 → SKÁLÁZOTT POZÍCIÓ + MÉRET
+    const cheese4X = Math.round(1197 * scaleX);
+    const cheese4Y = Math.round(366 * scaleY);
+    const cheese4 = new Cheese(this.scene, cheese4X, cheese4Y, 4);
+    cheese4.setScale(imageScale); // ← Zoom-kompenzált méret
     this.cheeses.set(4, cheese4);
-    this.originalPositions.set(4, {x: 1197, y: 366});
+    this.originalPositions.set(4, {x: 1197, y: 366}); // BASE koordináták!
     
-    // CHEESE-5 → MENTETT POZÍCIÓ (1705, 720) - KÉSZ!
-    const cheese5 = new Cheese(this.scene, 1706, 720, 5);
+    // CHEESE-5 → SKÁLÁZOTT POZÍCIÓ + MÉRET
+    const cheese5X = Math.round(1705 * scaleX);
+    const cheese5Y = Math.round(720 * scaleY);
+    const cheese5 = new Cheese(this.scene, cheese5X, cheese5Y, 5);
+    cheese5.setScale(imageScale); // ← Zoom-kompenzált méret
     this.cheeses.set(5, cheese5);
-    this.originalPositions.set(5, {x: 1705, y: 720});
-    
-    console.log(`🧀 CHEESE-1 létrehozva: (147, 461) - KÉSZ! ✅`);
-    console.log(`🧀 CHEESE-2 létrehozva: (83, 805) - KÉSZ! ✅`);
-    console.log(`🧀 CHEESE-3 létrehozva: (954, 612) - KÉSZ! ✅`);
-    console.log(`🧀 CHEESE-4 létrehozva: (1197, 366) - KÉSZ! ✅`);
-    console.log(`🧀 CHEESE-5 létrehozva: (1705, 720) - KÉSZ! ✅`);
-    console.log(`� MINDEN SAJT POZICIONÁLVA! JÁTÉK KÉSZ! 🎉`);
+    this.originalPositions.set(5, {x: 1705, y: 720}); // BASE koordináták!
+
+
+
   }
 
   private setupDevModeControls(): void {
@@ -148,6 +178,53 @@ export class CheeseManager {
       this.originalPositions.set(5, {x, y});
       Logger.debug('✅ CHEESE-5 pozíció elmentve! Dev mode kikapcsolva.');
     }
+  }
+
+  /**
+   * Sajtok pozíciójának és méretének frissítése (zoom kompenzált)
+   */
+  public refreshCheesePositionsAndSizes(): void {
+    // Dev mode-ban nincs refresh
+    if (this.devMode) {
+      Logger.debug('🧀 CheeseManager: Dev mode aktív - refresh letiltva');
+      return;
+    }
+
+    // Canvas arányos pozíció skálázás (UGYANAZ MINT spawnCheeses-ben!)
+    const canvasWidth = this.scene.sys.game.canvas.width;
+    const canvasHeight = this.scene.sys.game.canvas.height;
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    
+    const scaleX = canvasWidth / baseWidth;  // SAME AS spawnCheeses
+    const scaleY = canvasHeight / baseHeight; // SAME AS spawnCheeses
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = canvasWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        scaleX :                    // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
+    
+    // Minden sajt frissítése
+    this.cheeses.forEach((cheese, cheeseId) => {
+      const originalPos = this.originalPositions.get(cheeseId);
+      
+      if (!originalPos) {
+        Logger.warn(`Nincs eredeti pozíció tárolva a sajt számára: ${cheeseId}`);
+        return;
+      }
+      
+      // UGYANAZ a pozíció logika mint spawnCheeses-ben!
+      const newX = Math.round(originalPos.x * scaleX);
+      const newY = Math.round(originalPos.y * scaleY);
+      
+      cheese.setPosition(newX, newY);
+      cheese.setScale(finalScale);
+    });
   }
 
   // VALÓS ARÁNYOSÍTÁS - Fullscreen (1.0) vagy canvas arányosítás

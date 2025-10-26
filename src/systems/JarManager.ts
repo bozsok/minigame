@@ -20,17 +20,60 @@ export class JarManager {
     this.setupEventListeners();
   }
 
-  private createJars(): void {
-    // 5 üveg létrehozása egymás mellett
-    for (let i = 0; i < 5; i++) {
-      const x = this.startX + (i * (this.jarWidth + this.jarSpacing));
-      const y = this.startY;
+  /**
+   * Üvegek pozíciójának ÉS méretének frissítése (fullscreen váltás után)
+   */
+  public refreshJarSizes(): void {
+    // Canvas arányos pozíció újraszámítás
+    const canvasWidth = this.scene.sys.game.canvas.width;
+    const canvasHeight = this.scene.sys.game.canvas.height;
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
+    
+    const scaledStartX = Math.round(this.startX * canvasScale);
+    const scaledStartY = Math.round(this.startY * canvasScale);
+    const scaledJarWidth = Math.round(this.jarWidth * canvasScale);
+    const scaledJarSpacing = Math.round(this.jarSpacing * canvasScale);
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = canvasWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
+    
+    // Minden üveg pozíciójának ÉS méretének frissítése
+    this.jars.forEach((jar, index) => {
+      // Új pozíció számítás
+      const newX = scaledStartX + (index * (scaledJarWidth + scaledJarSpacing));
+      const newY = scaledStartY;
       
-      const jar = new Jar(this.scene, x, y, i);
+      // Pozíció ÉS méret frissítés
+      jar.setPosition(newX, newY);
+      jar.setScale(finalScale);
+    });
+  }
+
+  private createJars(): void {
+    // EGYSZERŰSÍTETT: Alapvető létrehozás, refreshJarSizes() frissíti később a pozíciót ÉS méretet
+    console.log(`🍯 INIT: Üvegek alapvető létrehozása - teljes frissítés később refreshJarSizes()-ban`);
+    
+    // Ideiglenes pozíciók (később frissül) 
+    for (let i = 0; i < 5; i++) {
+      const tempX = this.startX + (i * (this.jarWidth + this.jarSpacing));
+      const tempY = this.startY;
+      
+      const jar = new Jar(this.scene, tempX, tempY, i);
       this.jars.push(jar);
+      
+      console.log(`🍯 JAR-${i} INIT: ideiglenes pozíció(${tempX}, ${tempY}) - frissítésre vár ✅`);
     }
 
-    Logger.debug('JarManager: 5 üveg létrehozva');
+    Logger.debug('JarManager: 5 üveg létrehozva - pozíció és méret frissítésre vár');
   }
 
   private setupEventListeners(): void {

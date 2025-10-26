@@ -146,27 +146,28 @@ export default class GameScene extends Phaser.Scene {
    * Rejtett időszámláló elemek létrehozása (scene indításakor - font már betöltött PreloadScene-ben)
    */
   private createHiddenTimerElements(): void {
-    // Valós arányosítás számítása (mint a többi elem)
+    // ZOOM KOMPENZÁLT SCALING (ugyanaz mint updateTimerPosition-ben!)
     const gameWidth = this.scale.width;
     const gameHeight = this.scale.height;
-    const isFullscreen = gameWidth > 1200;
-    let gameScale: number;
-    if (isFullscreen) {
-      gameScale = 1.0; // Fullscreen = natív méret
-    } else {
-      // Ugyanaz az arányosítás mint a többi elemnél
-      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
-      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
-      const scaleX = gameWidth / originalWidth;
-      const scaleY = gameHeight / originalHeight;
-      gameScale = Math.min(scaleX, scaleY);
-    }
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = gameWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
     
     // Font méret arányosítása (eredeti design: 42px)
     const baseFontSize = UIConstants.timer.baseFontSize;
     const baseStrokeThickness = UIConstants.timer.baseStrokeThickness;
-    const fontSize = Math.round(baseFontSize * gameScale);
-    const strokeThickness = Math.round(baseStrokeThickness * gameScale);
+    const fontSize = Math.round(baseFontSize * finalScale);
+    const strokeThickness = Math.round(baseStrokeThickness * finalScale);
     
     // Időszámláló szöveg létrehozása REJTVE - BBH Sans Hegarty már elérhető
     this.uiElements.timerText = this.add.text(0, 0, '05:00', {
@@ -477,28 +478,37 @@ export default class GameScene extends Phaser.Scene {
   private updateTimerPosition(gameWidth: number): void {
     const gameHeight = this.scale.height;
     
-    // Valós arányosítás számítása (mint a többi elem)
-    const isFullscreen = gameWidth > 1200;
-    let gameScale: number;
-    if (isFullscreen) {
-      gameScale = 1.0; // Fullscreen = natív méret
-    } else {
-      // Ugyanaz az arányosítás mint a többi elemnél
-      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
-      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
-      const scaleX = gameWidth / originalWidth;
-      const scaleY = gameHeight / originalHeight;
-      gameScale = Math.min(scaleX, scaleY);
-    }
+    // ZOOM KOMPENZÁLT SCALING (ugyanaz mint CheeseManager, JarManager, Pitcher)
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
     
-    // Timer méretei (eredeti design) * arányosítási faktor
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = gameWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
+    
+    // Timer méretei (eredeti design) * zoom kompenzált skálázás
     const baseTimerWidth = UIConstants.timer.baseWidth;
     const baseTimerHeight = UIConstants.timer.baseHeight;
-    const timerWidth = baseTimerWidth * gameScale;
-    const timerHeight = baseTimerHeight * gameScale;
+    const timerWidth = baseTimerWidth * finalScale;
+    const timerHeight = baseTimerHeight * finalScale;
     
-    const fullscreenButtonX = gameWidth - UIConstants.positions.fullscreenButtonOffset;
-    const timerX = fullscreenButtonX - UIConstants.positions.fullscreenButtonOffset - timerWidth - UIConstants.positions.timerOffsetFromButton;
+    // Pozíció számítás: DINAMIKUS GAP a FullscreenButton és Timer között
+    const fullscreenButtonOffset = 40; // FullscreenButton fix 40px offset
+    const fullscreenButtonSize = 40; // FullscreenButton mérete (kb. 40px)
+    
+    // Dinamikus gap: alapértelmezett 10px gap, de skálázott
+    const baseGap = UIConstants.positions.timerOffsetFromButton;
+    const dynamicGap = Math.round(baseGap * finalScale);
+    
+    // Timer X pozíció: canvas széle - FullscreenButton offset - FullscreenButton mérete - dinamikus gap - timer szélessége
+    const timerX = gameWidth - fullscreenButtonOffset - fullscreenButtonSize - dynamicGap - timerWidth;
     const timerY = UIConstants.positions.energyOffset;
 
     // Graphics háttér frissítése
@@ -508,8 +518,8 @@ export default class GameScene extends Phaser.Scene {
       // Border és lekerekítés arányosítása
       const baseBorderWidth = UIConstants.timer.baseBorderWidth;
       const baseCornerRadius = UIConstants.timer.baseCornerRadius;
-      const borderWidth = Math.round(baseBorderWidth * gameScale);
-      const cornerRadius = Math.round(baseCornerRadius * gameScale);
+      const borderWidth = Math.round(baseBorderWidth * finalScale);
+      const cornerRadius = Math.round(baseCornerRadius * finalScale);
       
       this.timerBackground.lineStyle(borderWidth, parseInt(UIConstants.colors.timerBorder.replace('#', '0x')));
       this.timerBackground.fillStyle(0x000000);
@@ -517,9 +527,20 @@ export default class GameScene extends Phaser.Scene {
       this.timerBackground.strokeRoundedRect(timerX, timerY, timerWidth, timerHeight, cornerRadius);
     }
 
-    // Timer szöveg pozíció frissítése
+    // Timer szöveg pozíció ÉS méret frissítése
     if (this.uiElements.timerText) {
       this.uiElements.timerText.setPosition(timerX + timerWidth / 2, timerY + timerHeight / 2);
+      
+      // Szöveg méretének frissítése zoom kompenzált skálázással
+      const baseFontSize = UIConstants.timer.baseFontSize;
+      const baseStrokeThickness = UIConstants.timer.baseStrokeThickness;
+      const fontSize = Math.round(baseFontSize * finalScale);
+      const strokeThickness = Math.round(baseStrokeThickness * finalScale);
+      
+      this.uiElements.timerText.setStyle({
+        fontSize: `${fontSize}px`,
+        strokeThickness: strokeThickness
+      });
     }
   }
 
@@ -786,27 +807,28 @@ export default class GameScene extends Phaser.Scene {
     const seconds = this.countdownTime % 60;
     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
-    // Valós arányosítás számítása (mint a többi elem)
+    // ZOOM KOMPENZÁLT SCALING (ugyanaz mint updateTimerPosition-ben és createHiddenTimerElements-ben!)
     const gameWidth = this.scale.width;
     const gameHeight = this.scale.height;
-    const isFullscreen = gameWidth > 1200;
-    let gameScale: number;
-    if (isFullscreen) {
-      gameScale = 1.0; // Fullscreen = natív méret
-    } else {
-      // Ugyanaz az arányosítás mint a többi elemnél
-      const originalWidth = this.beanManager ? this.beanManager.getOriginalCanvasWidth() : gameWidth;
-      const originalHeight = this.beanManager ? this.beanManager.getOriginalCanvasHeight() : gameHeight;
-      const scaleX = gameWidth / originalWidth;
-      const scaleY = gameHeight / originalHeight;
-      gameScale = Math.min(scaleX, scaleY);
-    }
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const canvasScale = Math.min(gameWidth / baseWidth, gameHeight / baseHeight);
+    
+    // Méret skálázás: teljes = zoom kompenzáció, ablakos = canvas skálázás
+    const currentZoom = window.devicePixelRatio || 1;
+    const zoomCompensation = 1 / currentZoom;
+    
+    // Ablakos mód észlelése: ha canvas jelentősen kisebb mint design felbontás
+    const isWindowedMode = gameWidth < 1200; // 1536-nál kisebb = ablakos
+    const finalScale = isWindowedMode ? 
+        canvasScale :               // Ablakos: csak canvas skálázás
+        zoomCompensation;           // Teljes: csak zoom skálázás
     
     // Font méret arányosítása (eredeti design: 42px)
     const baseFontSize = UIConstants.timer.baseFontSize;
     const baseStrokeThickness = UIConstants.timer.baseStrokeThickness;
-    const fontSize = Math.round(baseFontSize * gameScale);
-    const strokeThickness = Math.round(baseStrokeThickness * gameScale);
+    const fontSize = Math.round(baseFontSize * finalScale);
+    const strokeThickness = Math.round(baseStrokeThickness * finalScale);
     
     // BIZTONSÁGOS szöveg és stílus beállítása try-catch-el
     try {

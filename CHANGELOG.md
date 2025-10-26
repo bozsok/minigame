@@ -34,6 +34,17 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült
   - **Eredmény:** Stabil korsó pozíció minden canvas méret és zoom kombinációnál
   - Védett állapot - további módosítás TILOS
 
+- **TIMER SYSTEM (Időzítő) - GameScene.ts:**
+  - **Probléma:** Timer mérete és pozíciója nem megfelelő zoom váltáskor, ütközik FullscreenButton-al
+  - **Megoldás:** Zoom kompenzált dual scaling + dinamikus pozicionálás
+  - **Implementáció:** 
+    - `updateTimerPosition()`: Zoom kompenzált háttér + szöveg skálázás
+    - `createHiddenTimerElements()`: Zoom kompenzált eredeti létrehozás
+    - `updateTimerUI()`: Zoom kompenzált runtime frissítés
+    - Dinamikus gap számítás: `timerOffsetFromButton * finalScale`
+  - **Eredmény:** Timer sosem ütközik FullscreenButton-al, minden zoom szinten megfelelő méret
+  - Védett állapot - további módosítás TILOS
+
 ### 🖱️ MAJOR: FullscreenButton UI Rendszer Átdolgozás
 - **UI vs GAME ELEMENT MEGKÜLÖNBÖZTETÉS:**
   - **Koncepció:** UI elemek (FullscreenButton) ≠ Játék elemek (sajt, üveg, korsó)
@@ -86,11 +97,13 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/) alapján készült
   - JarManager.ts: VÉDETT - működő timing refresh
   - Pitcher.ts: VÉDETT - működő kondicionális skálázás
   - FullscreenButton.ts: VÉDETT - fix 40px UI offset logika
+  - Timer System: VÉDETT - zoom kompenzált scaling + dinamikus pozicionálás
 
 ### 📊 Tesztelés és Validáció
 - **Multi-zoom Testing:** 75%, 100%, 125% böngésző zoom szinteken validálva
 - **Multi-mode Testing:** Fullscreen ↔ windowed mode váltások tesztelve
-- **Cross-element Compatibility:** Sajtok, üvegek, korsó, fullscreen button együttes működés
+- **Cross-element Compatibility:** Sajtok, üvegek, korsó, fullscreen button, timer együttes működés
+- **UI Collision Prevention:** Timer és FullscreenButton ütközésmentes elhelyezése minden zoom szinten
 - **Play Button Integration:** GameScene indítás után is megfelelő zoom viselkedés
 
 ## [4.9.0] - 2025-10-15 - **🎯 ES MODULE SUPPORT & REACT/VITE INTEGRATION**
